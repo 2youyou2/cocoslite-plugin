@@ -1,8 +1,11 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cc, cl*/
+
 define(function (require, exports, module) {
     "use strict";
 
     var EventManager   = require("core/EventManager"),
-    	Undo		   = require("core/Undo"),
+    	Undo           = require("core/Undo"),
     	CommandManager = brackets.getModule("command/CommandManager"),
     	Menus          = brackets.getModule("command/Menus");
 
@@ -21,21 +24,21 @@ define(function (require, exports, module) {
     function createEmptyObject(){
     	Undo.beginUndoBatch();
 
-    	var objs = [];
-    	if(_currentObjects && _currentObjects.length>0){
-    		for(var i in _currentObjects){
-    			var obj = new cl.GameObject();
-    			_currentObjects[i].addChild(obj);
-    			objs.push(obj);
+        var objs = [];
+        if(_currentObjects && _currentObjects.length>0){
+            for(var i in _currentObjects){
+                var obj = new cl.GameObject();
+                _currentObjects[i].addChild(obj);
+                objs.push(obj);
     		}
     	} else {
-    		var scene = cc.director.getRunningScene()
+    		var scene = cc.director.getRunningScene();
 	    	var obj = new cl.GameObject();
-	    	scene.addChild(obj);
-	    	objs.push(obj);
-    	}
+            scene.addChild(obj);
+            objs.push(obj);
+        }
 
-    	Undo.endUndoBatch();
+        Undo.endUndoBatch();
 
     	EventManager.trigger("selectedObjects", objs);
     }
@@ -43,7 +46,7 @@ define(function (require, exports, module) {
     function registerCommand(){
     	CommandManager.register("Create Empty", "cl.GameObject.CreateEmpty", createEmptyObject);
 
-    	var cs = cl.ComponentManager.getAllClasses();
+        var cs = cl.ComponentManager.getAllClasses();
     	for(var k in cs){
     		// _$content.append($("<div>"+  k + " : " + cs[k].editorDir +"</div>"))
 
@@ -52,7 +55,9 @@ define(function (require, exports, module) {
 
     		(function(k){
     			CommandManager.register(k, id, function(){
-					if(!_currentObjects) return;
+					if(!_currentObjects) {
+                        return;
+                    }
 
 					for(var i in _currentObjects){
 						_currentObjects[i].addComponent(k);

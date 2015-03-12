@@ -1,10 +1,11 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global cl, cc*/
+
 define(function (require, exports, module) {
     "use strict";
 
     var EventManager      = require("core/EventManager"),
         Undo              = require("core/Undo"),
-        KeyBindingManager = brackets.getModule("command/KeyBindingManager"),
-        KeyEvent          = brackets.getModule("utils/KeyEvent"),
         Selector          = require("core/Selector");
 
     var points;
@@ -24,12 +25,14 @@ define(function (require, exports, module) {
 
 
     EventManager.on("objectPropertyChanged", function(event, o, p){
-        if((o != obj && o != path && o != terrain && o != points) || !path) return;
+        if((o !== obj && o !== path && o !== terrain && o !== points) || !path) {
+            return;
+        }
         terrain.recreatePath();
     });
 
     function renderScene (ctx, selectedObjects){
-		if(selectedObjects && selectedObjects.length == 1){
+		if(selectedObjects && selectedObjects.length === 1){
             obj = selectedObjects[0];
             path = obj.getComponent("TerrainPathComponent");
             terrain = obj.getComponent("TerrainComponent");
@@ -45,7 +48,9 @@ define(function (require, exports, module) {
     }
 
     function render (ctx, obj){
-        if(!path) return;
+        if(!path) {
+            return;
+        }
 
     	var mat = obj.getNodeToWorldTransform();
     	ctx.transform(mat.a, mat.b, mat.c, mat.d, mat.tx, mat.ty);
@@ -72,10 +77,14 @@ define(function (require, exports, module) {
 
         if(shift){
             try{
-                if(closestID == undefined || secondID == undefined || currentMousePoint == undefined ) return;
+                if(closestID === undefined || secondID === undefined || currentMousePoint === undefined ) {
+                    return;
+                }
 
                 var p1 = points[closestID], p2 = points[secondID];
-                if(!p1 || !p2) return;
+                if(!p1 || !p2) {
+                    return;
+                }
 
                 ctx.beginPath();
                 ctx.moveTo(p1.x, p1.y);
@@ -102,7 +111,9 @@ define(function (require, exports, module) {
     }
 
     function addPoint(){
-        if(!shift || !path) return;
+        if(!shift || !path) {
+            return;
+        }
 
         var firstDist  = cc.pDistance(currentMousePoint, path.pathVerts[closestID]);
         var secondDist = cc.pDistance(currentMousePoint, path.pathVerts[secondID]);
@@ -110,7 +121,7 @@ define(function (require, exports, module) {
         currentPoint = cl.p(currentMousePoint.x, currentMousePoint.y);
         var index = points.length;
 
-        if (secondID == 0) {
+        if (secondID === 0) {
             if (firstDist >= secondDist) {
                 index = 0;
             }
@@ -123,15 +134,22 @@ define(function (require, exports, module) {
     }
 
     function preAddPoint(){
-        if(!path) return;
+        if(!path) {
+            return;
+        }
+        
         closestID = path.getClosestSeg(cl.p(currentMousePoint));
         secondID  = closestID + 1 >= points.length ? 0 : closestID + 1;
     }
 
     var delegate = {
         onTouchBegan: function(touch){
-            if(!path) return false;
-            if(!currentPoint && !shift) return false;
+            if(!path) {
+                return false;
+            }
+            if(!currentPoint && !shift) {
+                return false;
+            }
 
             mouseDown = true;
 
@@ -145,7 +163,9 @@ define(function (require, exports, module) {
             return true;
         },
         onTouchMoved: function(touch){
-            if(!currentPoint) return false;
+            if(!currentPoint) {
+                return false;
+            }
 
             var worldPoint = touch.getLocation();
             var p = obj.convertToNodeSpace(worldPoint);
@@ -162,9 +182,13 @@ define(function (require, exports, module) {
             mouseDown = false;
         },
         onMouseMove: function(event){
-            if(!path || mouseDown) return;
+            if(!path || mouseDown) {
+                return;
+            }
 
-            if(currentPoint) currentPoint.hover = false;
+            if(currentPoint) {
+                currentPoint.hover = false;
+            }
             currentPoint = null;
 
             var worldPoint = event.getLocation();
@@ -181,18 +205,22 @@ define(function (require, exports, module) {
                 }
             }
 
-            if(shift) preAddPoint();
+            if(shift) {
+                preAddPoint();
+            }
         }
-    }
+    };
 
     Selector.addDelegate(delegate);
 
 
     function handleKeyDown(e){
-        control = (brackets.platform !== "mac") ? (e.ctrlKey) : (e.metaKey)
+        control = (brackets.platform !== "mac") ? (e.ctrlKey) : (e.metaKey);
         shift = e.shiftKey;
 
-        if(shift) preAddPoint();
+        if(shift) {
+            preAddPoint();
+        }
     }
 
     function handleKeyUp(event){
@@ -201,9 +229,9 @@ define(function (require, exports, module) {
     }
 
 	EventManager.on("projectOpen", function(){
-		ck.$fgCanvas.addRender(renderScene);
+		cl.$fgCanvas.addRender(renderScene);
 
         window.document.body.addEventListener("keydown", handleKeyDown, true);
         window.document.body.addEventListener("keyup",   handleKeyUp,   true);
-	})
+	});
 });

@@ -1,3 +1,6 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cl*/
+
 define(function (require, exports, module) {
     "use strict";
 
@@ -14,7 +17,6 @@ define(function (require, exports, module) {
 
     Resizer.makeResizable(_$content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 300, false);
 
-	var _selfPropertyChanged = false;
 	var _currentObject = null;
 
 	var _showing = false;
@@ -22,14 +24,20 @@ define(function (require, exports, module) {
 	function show(speed){
 		_showing = true;
 
-		if(speed == undefined) speed = 500;
+		if(speed === undefined) {
+            speed = 500;
+        }
+        
 		_$content.animate({"right":"30px"}, speed);
 	}
 
 	function hide(speed){
 		_showing = false;
 
-		if(speed == undefined) speed = 500;
+		if(speed === undefined) {
+            speed = 500;
+        }
+        
 		_$content.animate({"right":-_$content.width()-30+"px"}, speed);
 	}
 
@@ -44,23 +52,30 @@ define(function (require, exports, module) {
 		input.finishEdit = function(){
 			Undo.beginUndoBatch();
 
-			if(input.updateValue) input.updateValue();
+			if(input.updateValue) {
+                input.updateValue();
+            }
+            
 			input.innerChanged = true;
 
 			var newValue = input.realValue ? input.realValue : input.value;
 
-			if(obj.constructor == Array) {
+			if(obj.constructor === Array) {
 				obj.set(key, newValue); 
-				if(obj.valueChanged) obj.valueChanged();
+                
+				if(obj.valueChanged) {
+                    obj.valueChanged();
+                }
 			}
-			else 
-				obj[key] = newValue;
+			else {
+                obj[key] = newValue;
+            }
 
 			input.innerChanged = false;
 
 			Undo.endUndoBatch();
-		}
-	};
+		};
+	}
 
 	function createInputForArray(array, $input){
 		for(var i=0; i<array.length; i++){
@@ -68,7 +83,11 @@ define(function (require, exports, module) {
 			$item.append($("<span style='width:20%'>#"+i+"</span>"));
 			
 			var $innerInput = createInput(array, i, $item, true);
-			if($innerInput) $innerInput.css("width","70%");
+			
+            if($innerInput) {
+                $innerInput.css("width","70%");
+            }
+            
 			$input.append($item);
 		}
 	}
@@ -77,13 +96,13 @@ define(function (require, exports, module) {
 		var $input;
 		var value = obj[key];
 
-		if(typeof value != 'object') {
+		if(typeof value !== 'object') {
 			$input = $("<input>");
 			$input.css({"border-radius": "0px", "padding": "2px 2px", "border": "2px", "margin-bottom": "0px"});
 
 			var input = $input[0];
 	  		
-			if(typeof value == 'boolean'){
+			if(typeof value === 'boolean'){
 	  			input.setAttribute('type', 'checkbox');
 
 	  			cl.defineGetterSetter(input, "value", function(){
@@ -94,33 +113,37 @@ define(function (require, exports, module) {
 
 				input.onclick = function(){
 	  				$input.finishEdit();
-				}
+				};
 			}
 
 	  		else {
-	  			if(typeof value == 'string')
-		  			input.setAttribute('type', 'text');
-		  		else if(typeof value == 'number') {
+	  			if(typeof value === 'string') {
+                    input.setAttribute('type', 'text');
+                }
+		  		else if(typeof value === 'number') {
 	  				$input.updateValue = function(){
 	  					this.realValue = parseFloat(this.value);
-	  				}
+	  				};
 	  			}
 	  			$input.css({"width": "55%"});
 	  		}
 
 	  		input.onkeypress = function(event){
-	  			if(typeof $input.finishEdit == 'function' && event.keyCode == "13")    
+	  			if(typeof $input.finishEdit === 'function' && event.keyCode === "13") {
 	            	$input.finishEdit();
-	  		}
+                }
+	  		};
 
 	  		input.onblur = function(event){
-	  			if(typeof $input.finishEdit == 'function'){
-	  				if($input.updateValue) 
-	  					$input.updateValue();
-	  				if($input.realValue != obj[key])
-	  					$input.finishEdit();
+	  			if(typeof $input.finishEdit === 'function'){
+	  				if($input.updateValue) {
+                        $input.updateValue();
+                    }
+	  				if($input.realValue !== obj[key]) {
+                        $input.finishEdit();
+                    }
 	  			}    
-	  		}
+	  		};
 
   			cl.defineGetterSetter($input, "value", function(){
 				return input.value;
@@ -130,8 +153,9 @@ define(function (require, exports, module) {
 		}
 		else {
 			// cc.p
-			if(value.x != undefined && value.y != undefined){
-				$input = $("<span>\
+			if(value.x !== undefined && value.y !== undefined){
+				/*jshint multistr: true */
+                $input = $("<span>\
 							<span class='x-name'>X</span><span style='width:40%;margin:3px'><input class='x-input' style='width:98%'></span>\
 						    <span class='y-name'>Y</span><span style='width:40%;margin:3px'><input class='y-input' style='width:98%'></span>\
 						    </span>");
@@ -151,23 +175,26 @@ define(function (require, exports, module) {
 
 				$input.find("input").each(function(i, e){
 					this.onkeypress = function(event){
-			  			if(typeof $input.finishEdit == 'function' && event.keyCode == "13")    
-			            	$input.finishEdit();
-			  		}
+			  			if(typeof $input.finishEdit === 'function' && event.keyCode === "13") {
+                            $input.finishEdit();
+                        }
+			  		};
 
 			  		this.onblur = function(event){
-			  			if(typeof $input.finishEdit == 'function'){
-			  				if($input.updateValue) 
-			  					$input.updateValue();
-			  				if($input.value.x != obj[key].x || $input.value.y != obj[key].y)
-			  					$input.finishEdit();
+			  			if(typeof $input.finishEdit === 'function'){
+			  				if($input.updateValue) {
+                                $input.updateValue();
+                            }
+			  				if($input.value.x !== obj[key].x || $input.value.y !== obj[key].y) {
+                                $input.finishEdit();
+                            }
 			  			}
-			  		}
+			  		};
 				});
 
 	  			$input.css({"width": "60%"});
 			} 
-			else if(value.constructor  == Array){
+			else if(value.constructor  === Array){
 				value._inspectorInputMap = {};
 
 				$input = $("<div class='array' style='margin-left:30px'>");
@@ -210,7 +237,7 @@ define(function (require, exports, module) {
 		});
 
 		var ps = component.properties;
-		for(var k in ps){
+		for(var k=0; k<ps.length; k++){
 			var p = ps[k];
 			
 			var row = $('<div class="row">');
@@ -223,40 +250,48 @@ define(function (require, exports, module) {
 
 	function initObjectUI(obj){
 		var cs = _currentObject.components;
-		if(!cs) return;
+		if(!cs) {
+            return;
+        }
 
-		for(var key in cs){
+		for(var key=0; key<cs.length; key++){
 			initComponentUI(cs[key]);
 		}
-	};
+	}
 
 	function selectedObject(obj){
 		_$inspector.empty();
 		_currentObject = obj;
 		_$addComponent.hide();
 
-		if(obj == null) return;
+		if(obj === null) {
+            return;
+        }
 
 		_$addComponent.show();
 		initObjectUI(obj);
-	};
+	}
 
 	EventManager.on("selectedObjects", function(event, objs){
-		if(objs)
-			selectedObject(objs[0]);
+		if(objs) {
+            selectedObject(objs[0]);
+        }
 	});
 
 	EventManager.on("addComponent", function(event, component){
 		var target = component.getTarget();
-		if(target != _currentObject)
-			return;
+		if(target !== _currentObject) {
+            return;
+        }
 
 		initComponentUI(component);
 	});
 
 	EventManager.on("objectPropertyChanged", function(event, o, p){
-		if(o.constructor == Array && p==""){
-			if(o._inspectorInput.innerChanged) return;
+		if(o.constructor === Array && p===""){
+			if(o._inspectorInput.innerChanged) {
+                return;
+            }
 			o._inspectorInput.empty();
 
 			createInputForArray(o, o._inspectorInput);
@@ -264,7 +299,9 @@ define(function (require, exports, module) {
 			return;
 		}
 		var input = o._inspectorInputMap[p];
-		if(input && !input.innerChanged) input.value = o[p];
+		if(input && !input.innerChanged) {
+            input.value = o[p];
+        }
 	});
 
 

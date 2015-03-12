@@ -4,15 +4,14 @@ define(function (require, exports, module) {
     var html  		 = require("text!html/Hierarchy.html"),
 	    EventManager = require("core/EventManager"),
 	    Resizer 	 = brackets.getModule("utils/Resizer"),
-	    Vue   		 = brackets.getModule("thirdparty/vue");
+	    Vue   		 = require("thirdparty/vue");
 
     var $sidebar = $("#sidebar");
     var $content = $("<div id='hierarchy-content' class='hierarchy-content quiet-scrollbars' />");
     $content.insertAfter($sidebar.find(".horz-resizer"));
 
 
-    var _scene  = null,
-    	_data   = null,
+    var _data   = null,
     	_objMap = {};
 
     function createContent(){
@@ -25,14 +24,14 @@ define(function (require, exports, module) {
 		        open: false,
 		        selected: false
 		    }
-		})
+		});
 
 		Vue.component('hierarchy-file', {
 		    template: '#hierarchy-file-template',
 		    data: {
 		    	selected: false
 		    }
-		})
+		});
 
 		var tree = new Vue({
 			el: '#hierarchy',
@@ -47,9 +46,10 @@ define(function (require, exports, module) {
 
 					// } 
 					// else {
-						for(var i in _data.currentObjects){
-							_data.currentObjects[i].selected = false;
-						}
+                        _data.currentObjects.forEach(function(item){
+                            item.selected = false;
+                        });
+						
 						_data.currentObjects = [];
 					// }
 
@@ -59,15 +59,16 @@ define(function (require, exports, module) {
 					}
 
 					var selectedObjs = [];
-
-					for(var i in _data.currentObjects) {
-						var o = _data.currentObjects[i];
-						selectedObjs.push(_objMap[o.id]);
-					}
+                    
+                    _data.currentObjects.forEach(function(item){
+                        selectedObjs.push(_objMap[item.id]);
+                    });
 					
 					EventManager.trigger("selectedObjects", selectedObjs);
 
-					if(e) e.stopPropagation();
+					if(e) {
+                        e.stopPropagation();
+                    }
 				}
 			}
 		});
@@ -86,10 +87,12 @@ define(function (require, exports, module) {
 		_objMap[data.id] = obj;
 
 		var parent = obj.getParent();
-		if(parent)
-			parent._innerData.children.push(data);
-		else
-			_data = data;
+		if(parent) {
+            parent._innerData.children.push(data);
+        }
+		else {
+            _data = data;
+        }
 	}
 
 	function removeData(event, obj){
@@ -97,26 +100,26 @@ define(function (require, exports, module) {
 		if(parent){
 			var data = parent._innerData;
 			for(var i=0; i<data.children.length; i++){
-				if(data.children[i] == obj._innerData){
+				if(data.children[i] === obj._innerData){
 					data.children.splice(i,1);
 					return;
 				}
 			}
 		}
-
 	}
 
 	function selectedObjects(event, objs){
-		for(var i in _data.currentObjects){
-			_data.currentObjects[i].selected = false;
-		}
+        _data.currentObjects.forEach(function(item){
+            item.selected = false;
+        });
+
 		_data.currentObjects = [];
 
-		for(var i in objs){
-			var data = objs[i]._innerData;
+        objs.forEach(function(item){
+            var data = item._innerData;
 			data.selected = true;
 			_data.currentObjects.push(data);
-		}
+        });
 	}
 
 	EventManager.on("addObject", addData);

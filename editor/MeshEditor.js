@@ -1,3 +1,6 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cl*/
+
 define(function (require, exports, module) {
     "use strict";
 
@@ -11,7 +14,7 @@ define(function (require, exports, module) {
 				}
 			}
 		}
-    }
+    };
 
     var render = function(ctx, obj){
 
@@ -40,9 +43,9 @@ define(function (require, exports, module) {
     			ctx.stroke();
     		}
     	}
-    }
+    };
 
 	EventManager.on("projectOpen", function(){
 		cl.$fgCanvas.addRender(renderScene);
-	})
+	});
 });

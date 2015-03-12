@@ -1,15 +1,17 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cc, cl*/
+
 define(function (require, exports, module) {
     "use strict";
 
     var EventManager = require("core/EventManager"),
-        Undo         = require("core/Undo"),
         Selector     = require("core/Selector");
 
     var Operation = {
         Positon:  0,
         Scale:    1,
         Rotation: 2
-    }
+    };
 
     var operation = Operation.Positon;
 
@@ -26,7 +28,7 @@ define(function (require, exports, module) {
             obj = selectedObjects[0];
 			render(ctx);
 		}
-    }
+    };
 
     var range = 15;
 
@@ -40,8 +42,6 @@ define(function (require, exports, module) {
     var yPositionRect = rect(-range/3, 100, range/1.5, range/1.5);
 
     function renderPosition(ctx){
-        var r = range;
-
         ctx.lineWidth = 1;
 
         // ctx.fillStyle = "#ffffff";
@@ -113,12 +113,15 @@ define(function (require, exports, module) {
     function hitPosition(p){
         positionRect.hover = xPositionRect.hover = yPositionRect.hover = false;
 
-        if(cc.rectContainsPoint(positionRect, p))
+        if(cc.rectContainsPoint(positionRect, p)) {
             positionRect.hover  = true;
-        else if(cc.rectContainsPoint(xPositionRect, p))
+        }
+        else if(cc.rectContainsPoint(xPositionRect, p)) {
             xPositionRect.hover = true;
-        else if(cc.rectContainsPoint(yPositionRect, p))
+        }
+        else if(cc.rectContainsPoint(yPositionRect, p)) {
             yPositionRect.hover = true;
+        }
 
         return positionRect.hover || xPositionRect.hover || yPositionRect.hover;
     }
@@ -133,15 +136,18 @@ define(function (require, exports, module) {
 
 
     function handlePosition(touch){
-        for(var i in selectedObjects){
+        for(var i=0; i<selectedObjects.length; i++){
             var t = selectedObjects[i].getComponent("TransformComponent");
             var delta = touch.getDelta();
-            if(positionRect.hover)
+            if(positionRect.hover) {
                 t.position = cc.pAdd(t.position, delta);
-            else if(xPositionRect.hover)
+            }
+            else if(xPositionRect.hover) {
                 t.position = cc.pAdd(t.position, cc.p(delta.x, 0));
-            else if(yPositionRect.hover)
+            }
+            else if(yPositionRect.hover) {
                 t.position = cc.pAdd(t.position, cc.p(0, delta.y));
+            }
         }
     }
 
@@ -155,7 +161,9 @@ define(function (require, exports, module) {
 
     var delegate = {
         onTouchBegan: function(touch){
-            if(!obj) return false;
+            if(!obj) {
+                return false;
+            }
 
             mouseDown = canDoOperation;
             return canDoOperation;
@@ -180,7 +188,9 @@ define(function (require, exports, module) {
             mouseDown = false;
         },
         onMouseMove: function(event){
-            if(!obj || mouseDown) return;
+            if(!obj || mouseDown) {
+                return;
+            }
 
             var worldPoint = event.getLocation();
             var p = cc.p(worldPoint.x-wordMat.tx, worldPoint.y-wordMat.ty);
@@ -192,18 +202,18 @@ define(function (require, exports, module) {
                     canDoOperation = hitPosition(p);
                     break;
                 case Operation.Scale:
-                    canDoOperation = hitScale(P);
+                    canDoOperation = hitScale(p);
                     break;
                 case Operation.Rotation:
                     canDoOperation = hitRotation(p);
                     break;
             }
         }
-    }
+    };
 
     Selector.addDelegate(delegate, 10000);
 
 	EventManager.on("projectOpen", function(){
 		cl.$fgCanvas.addRender(renderScene);
-	})
+	});
 });

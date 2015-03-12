@@ -20,7 +20,9 @@ define(function (require, exports, module) {
 		ctor.prototype = parent.prototype;
 		child.prototype = new ctor();
 		
-		if (protoProps) extend(child.prototype, protoProps);
+		if (protoProps) {
+            extend(child.prototype, protoProps);
+        }
 		
 		child.prototype.constructor = child;
 		child.__super__ = parent.prototype;
@@ -36,7 +38,7 @@ define(function (require, exports, module) {
 			}
 		}
 		return target;
-	};
+	}
 
 
 
@@ -59,43 +61,46 @@ define(function (require, exports, module) {
 
 		this.clear = function(){
 			stack = new Undo.Stack();
-		}
+		};
 
 		this.undoing = function(){
 			return stack.undoing;
-		}
+		};
 
 		this.dirty = function(){
 			return stack.dirty();
-		}
+		};
 
 		this.save = function(){
 			stack.save();
-		}
+		};
 
 		this.undo = EditorCommandHandlers.undo = function(){
-			if(stack.canUndo())
+			if(stack.canUndo()) {
 	    		stack.undo();
-		}
+            }
+		};
 
 		this.redo = EditorCommandHandlers.redo = function(){
-			if(stack.canRedo())
+			if(stack.canRedo()) {
 	    		stack.redo();
-		}
+            }
+		};
 
 		var undoList = [];
 		this.registerUndoType = function(key){
 			undoList.push(key);
-		}
+		};
 
 		this.canInjectDocument = function(doc){
 			var name = doc.file.name;
 			for(var k in undoList){
-				if(name.endWith(undoList[k]))
+				if(name.endWith(undoList[k])) {
 					return true;
+                }
 			}
 			return false;
-		}
+		};
 	};
 
 
@@ -109,28 +114,31 @@ define(function (require, exports, module) {
 
 	extend(Undo.Stack.prototype, {
 		add: function(command) {
-			if(this.undoing) return;
-			if(!this.currentGroup){
-				// this._clearRedo();
-				// this.commands.push(command);
-				// this.stackPosition++;
-				// this.changed();
-			}
-			else {
+			if(this.undoing) { 
+                return;
+            }
+            
+			if(this.currentGroup) {
 				this.currentGroup.add(command);
 			}
 		},
 		beginBatch: function(cmd){
-			if(this.undoing) return;
+			if(this.undoing) {
+                return;
+            }
+            
 			this.groupIndex++;
-			if(this.currentGroup == null){
+			if(this.currentGroup === null){
 				this.currentGroup = new Undo.GroupCommand();
 			}
 		},
 		endBatch: function(){
-			if(this.undoing) return;
+			if(this.undoing) {
+                return;
+            }
+            
 			this.groupIndex--;
-			if(this.groupIndex == -1 && this.currentGroup.cmds.length != 0){
+			if(this.groupIndex === -1 && this.currentGroup.cmds.length !== 0){
 				this._clearRedo();
 				this.commands.push(this.currentGroup);
 				this.stackPosition++;
@@ -163,7 +171,7 @@ define(function (require, exports, module) {
 			this.changed();
 		},
 		dirty: function() {
-			return this.stackPosition != this.savePosition;
+			return this.stackPosition !== this.savePosition;
 		},
 		_clearRedo: function() {
 			// TODO there's probably a more efficient way for this
@@ -172,14 +180,15 @@ define(function (require, exports, module) {
 		changed: function() {
 			// do nothing, override
 
-			if(editor)
+			if(editor) {
 				editor.trigger("change", editor, []);
+            }
 		}
 	});
 
 	Undo.Command = function(name) {
 		this.name = name;
-	}
+	};
 
 	var up = new Error("override me!");
 
@@ -209,20 +218,24 @@ define(function (require, exports, module) {
 			this.dirty = true;
 		},
 		undo: function(){
-			if(typeof this.oldValue == "function")
+			if(typeof this.oldValue === "function") {
 				this.oldValue(this.oldValue.params);
-			else if(this.oldValue.undo)
+            }
+			else if(this.oldValue.undo) {
 				this.oldValue.undo();
+            }
 			else{
 				this.obj[this.p] = this.oldValue;
 			}
 		},
 		redo: function(){
-			if(typeof this.newValue == "function")
+			if(typeof this.newValue === "function") {
 				this.newValue(this.newValue.params);
-			else if(this.newValue.redo)
+            }
+			else if(this.newValue.redo) {
 				this.newValue.redo();
-			else{
+            }
+			else {
 				this.obj[this.p] = this.newValue;
 			}
 		}
@@ -238,7 +251,7 @@ define(function (require, exports, module) {
 			}
 		},
 		redo: function(){
-			for(var i in this.cmds){
+			for(var i=0; i<this.cmds.length; i++){
 				this.cmds[i].redo();
 			}
 		},
@@ -254,7 +267,7 @@ define(function (require, exports, module) {
 	});
 
 
-	var undo = new Undo()
+	var undo = new Undo();
 	module.exports = undo;
 
 	EventManager.on("sceneLoaded", function(event, s){
@@ -265,20 +278,25 @@ define(function (require, exports, module) {
 	var editor = null;
     EditorManager.on("activeEditorChange", function(event, current, previous){
     	editor = null;
-    	if(!current || !undo.canInjectDocument(current.document)) return;
+    	if(!current || !undo.canInjectDocument(current.document)) { 
+            return;
+        }
 
     	editor = current;
     	editor._codeMirror.isClean = function(){
     		return !undo.dirty();
-    	}
+    	};
+        
         current.undo = undo.undo;
         current.redo = undo.redo;
     });
 
 
     DocumentManager.on("documentSaved", function(event, doc){
-    	if(!editor || editor.document != doc) return;
+    	if(!editor || editor.document !== doc) { 
+            return;
+        }
 
     	undo.save();
-    })
+    });
 });

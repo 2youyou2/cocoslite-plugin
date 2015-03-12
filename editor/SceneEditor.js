@@ -1,8 +1,10 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cl, cc*/
+
 define(function (require, exports, module) {
     "use strict";
 
     var EditorManager   = brackets.getModule("editor/EditorManager"),
-        DocumentManager = brackets.getModule("document/DocumentManager"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
         EventManager    = require("core/EventManager"),
         Undo            = require("core/Undo"),
@@ -29,14 +31,14 @@ define(function (require, exports, module) {
         editor.document.getText = function(){
             var s = JSON.stringify(scene, null, '\t');
             return s;
-        }
+        };
 
         var $el = $("<div>");
         Cocos.initScene($el);
 
         editor.$el.find(".CodeMirror-scroll").css("display", "none");
         editor.$el.append($el);
-    };
+    }
 
     function test(scene){
         // var o = new cl.GameObject();
@@ -64,7 +66,7 @@ define(function (require, exports, module) {
 
     EditorManager.on("activeEditorChange", function(event, current, previous){
 
-        if(previous && previous == editor){
+        if(previous && previous === editor){
             EventManager.trigger("selectedObjects", []);
         }   
         
@@ -72,15 +74,17 @@ define(function (require, exports, module) {
 
         if(!current || !current.document.file.name.endWith(".js.scene")) {
             
-            if(Inspector.showing)
+            if(Inspector.showing) {
                 Inspector.hide();
+            }
 
             return;
         }
 
 
-        if(!Inspector.showing)
+        if(!Inspector.showing) {
             Inspector.show();
+        }
 
         initEditor(current);
 
@@ -107,16 +111,16 @@ define(function (require, exports, module) {
             json.root.res = this.res;
             var children = json.root.children = [];
 
-            for(var k in this.children){
+            for(var k=0; k<this.children.length; k++){
                 var child = this.children[k];
-                if(child.constructor == cl.GameObject){
+                if(child.constructor === cl.GameObject){
                     var cj = child.toJSON();
                     children.push(cj);
                 }
             }
 
             return json;
-        }
+        };
 
 
         cl.GameObject.prototype.toJSON = function(){
@@ -125,17 +129,18 @@ define(function (require, exports, module) {
             var components = json.components = [];
 
             var cs = this.components;
-            for(var k in cs){
-                var c = cs[k];
+            for(var i=0; i<cs.length; i++){
+                var c = cs[i];
                 components.push(c.toJSON());
             }
 
-            for(var k in this.children){
+            for(var k=0; k<this.children.length; k++){
                 var child = this.children[k];
-                if(child.constructor == cl.GameObject){
+                if(child.constructor === cl.GameObject){
                     
-                    if(json.children == null)
+                    if(json.children === null) {
                         json.children = [];
+                    }
 
                     var cj = child.toJSON();
                     json.children.push(cj);
@@ -143,22 +148,24 @@ define(function (require, exports, module) {
             }
 
             return json;
-        }
+        };
 
 
         cl.Component.prototype.toJSON = function(){
             var json = {};
             json.class = this.classname;
 
-            for(var i in this.properties){
+            for(var i=0; i<this.properties.length; i++){
                 var k = this.properties[i];
 
-                if(this["toJSON"+k])
+                if(this["toJSON"+k]) {
                     json[k] = this["toJSON"+k]();
-                else
+                }
+                else {
                     json[k] = this[k];
+                }
             }
             return json;
-        }
-    })
+        };
+    });
 });

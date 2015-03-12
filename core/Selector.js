@@ -1,3 +1,6 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, cl, cc*/
+
 define(function (require, exports, module) {
     "use strict";
 
@@ -20,19 +23,22 @@ define(function (require, exports, module) {
     	delegates.sort(function(a,b){
     		return b.priority > a.priority;
     	});
-    }
+    };
+    
     exports.removeDelegate = function(delegate){
     	var i;
     	for(i=0; i<this._delegates.length; i++){
-    		if(delegates[i] == delegate){
+    		if(delegates[i] === delegate){
     			break;
     		}
     	}
     	delegates.splice(i,1);
-    }
+    };
 
     function initListener(){
-    	if(inited) return;
+    	if(inited) {
+            return;
+        }
     	inited = true;
 
     	cc.eventManager.addListener(cc.EventListener.create({
@@ -53,19 +59,22 @@ define(function (require, exports, module) {
 	        	var worldPoint = touch.getLocation();
 
 	        	var hitTest = function(object){
-	        		if(object.constructor == cl.GameObject){
-	        			if(object.hitTest(worldPoint))
+	        		if(object.constructor === cl.GameObject){
+	        			if(object.hitTest(worldPoint)) {
 	        				return object;
+                        }
 	        		}
 
 	        		var children = object.children;
 	        		for(var i=children.length-1; i>=0; i--){
 	        			var o = hitTest(children[i]);
-	        			if(o) return o;
+	        			if(o) {
+                            return o;
+                        }
 	        		}
 
 	        		return null;
-	        	}
+	        	};
 	        	
 	        	var obj = hitTest(scene);
 	        	EventManager.trigger('selectedObjects', obj ? [obj] : []);
@@ -130,7 +139,7 @@ define(function (require, exports, module) {
 	    	}
 
 	    	Undo.objectPropertyChanged(undo, redo);
-    	})()
+    	})();
 
         selectedObjects = objs;
 

@@ -1,3 +1,6 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
+/*global define, $, window, cc, cl, setInterval*/
+
 define(function (require, exports, module) {
     "use strict";
 
@@ -55,12 +58,14 @@ define(function (require, exports, module) {
         cl.$fgCanvas._renderList = [];
         cl.$fgCanvas.addRender = function(func){
             this._renderList.push(func);
-        }
+        };
 
 
         cl.$fgCanvas.ctx = cl.$fgCanvas[0].getContext('2d');
         var render = function(){
-            if(!cc._canvas) return;
+            if(!cc._canvas) {
+                return;
+            }
 
             var fg = cl.$fgCanvas;
             var maxW = cc._canvas.width ;
@@ -78,7 +83,8 @@ define(function (require, exports, module) {
                 ctx.restore();
             }
             ctx.restore();
-        }
+        };
+        
         setInterval(render, 100);
     }
 
@@ -86,7 +92,7 @@ define(function (require, exports, module) {
         var updateSize = function(){ 
             cl.$fgCanvas[0].setAttribute("width",  cc._canvas.width);
             cl.$fgCanvas[0].setAttribute("height", cc._canvas.height);
-        }
+        };
 
         cc.game.onStart = function(){
 
@@ -112,8 +118,9 @@ define(function (require, exports, module) {
                 }
                 var width = view._frameSize.width;
                 var height = view._frameSize.height;
-                if (width > 0)
+                if (width > 0){
                     view.setDesignResolutionSize(width, height, view._resolutionPolicy);
+                }
 
                 updateSize();
             };
@@ -131,7 +138,7 @@ define(function (require, exports, module) {
         cc.game.prepare(function(){
             cc.game._prepared = true;
         });
-    }
+    };
         
     appendDefaultStyle();
     initConfig();
@@ -145,5 +152,5 @@ define(function (require, exports, module) {
     exports.initScene = function($container){
         $container.append($scene);
         cc.game.run("gameCanvas");
-    }
+    };
 });

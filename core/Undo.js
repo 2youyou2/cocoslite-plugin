@@ -128,7 +128,7 @@ define(function (require, exports, module) {
             }
             
 			this.groupIndex++;
-			if(this.currentGroup === null){
+			if(!this.currentGroup){
 				this.currentGroup = new Undo.GroupCommand();
 			}
 		},

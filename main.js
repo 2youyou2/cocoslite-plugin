@@ -18,7 +18,6 @@ define(function (require, exports, module) {
             "core/Project",
 
             "editor/SceneEditor",
-            "editor/AnimationEditor",
             "editor/MeshEditor",
             "editor/Control2D"]);
 });

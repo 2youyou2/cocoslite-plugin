@@ -109,9 +109,11 @@ define(function (require, exports, module) {
 	}
 
 	function selectedObjects(event, objs){
-        _data.currentObjects.forEach(function(item){
-            item.selected = false;
-        });
+        if(_data.currentObjects) {
+        	_data.currentObjects.forEach(function(item){
+	            item.selected = false;
+	        });
+        }
 
 		_data.currentObjects = [];
 

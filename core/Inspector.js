@@ -254,7 +254,7 @@ define(function (require, exports, module) {
             return;
         }
 
-		for(var key=0; key<cs.length; key++){
+		for(var key in cs){
 			initComponentUI(cs[key]);
 		}
 	}
@@ -264,7 +264,7 @@ define(function (require, exports, module) {
 		_currentObject = obj;
 		_$addComponent.hide();
 
-		if(obj === null) {
+		if(!obj) {
             return;
         }
 

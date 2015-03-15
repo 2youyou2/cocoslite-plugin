@@ -7,7 +7,7 @@ define(function (require, exports, module) {
 
     require("thirdparty/vue");
 
-    require(["/Users/youyou/Desktop/workspace/cocos/cocos2d-js/frameworks/cocos2d-html5/CCBoot.js",
+    require(["cocos2d-js/frameworks/cocos2d-html5/CCBoot",
             "core/Cocos",
             "core/ObjectInjector",
             "core/Hierarchy",

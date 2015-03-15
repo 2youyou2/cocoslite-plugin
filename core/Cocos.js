@@ -23,7 +23,7 @@ define(function (require, exports, module) {
 
     function initConfig(){
         window.cl = {};
-        cl.engineDir = "/Users/youyou/Desktop/workspace/cocos/cocos2d-js/frameworks/cocos2d-html5";
+        cl.engineDir = ExtensionUtils.getModulePath(module, "../cocos2d-js/frameworks/cocos2d-html5");
 
         document.ccConfig = {
             "engineDir": cl.engineDir,

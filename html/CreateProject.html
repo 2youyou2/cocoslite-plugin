@@ -1,0 +1,27 @@
+<div class="project-create-dialog modal">
+    <div class="modal-header">
+        <h1 class="dialog-title">Create Project</h1>
+    </div>
+    <div class="modal-body">
+        <div class="field-container">
+            <table style="width:100%">
+                <tr>
+                    <td>Name:</td>
+                    <td><input style="width:90%" type="text" placeholder="Your Project Name" class="name" /></td>
+                </tr>
+                <tr>
+                    <td>Location:</td>
+                    <td>
+                        <input style="width:70%" type="text" placeholder="Your Project Location" class="location" />
+                        <button style="position:absolute;right:8%" class="btn browse">Browse</button>
+                    </td>
+                </tr>
+            </table>
+            {{#errorMessage}}<div class="alert" style="margin-bottom: 0">{{{errorMessage}}}</div>{{/errorMessage}}
+         </div>
+    </div>
+    <div class="modal-footer">
+        <button class="dialog-button btn" data-button-id="cancel">{{Strings.CANCEL}}</button>
+        <button class="dialog-button btn primary" data-button-id="ok">{{Strings.DONE}}</button>
+    </div>
+</div>

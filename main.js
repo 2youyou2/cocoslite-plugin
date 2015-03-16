@@ -19,5 +19,14 @@ define(function (require, exports, module) {
 
             "editor/SceneEditor",
             "editor/MeshEditor",
-            "editor/Control2D"]);
+            "editor/Control2D"], initNodeDomain);
+
+
+    var ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
+        NodeDomain     = brackets.getModule("utils/NodeDomain");
+
+    function initNodeDomain() {
+        cl.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
+    }
+
 });

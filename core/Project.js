@@ -3,17 +3,20 @@ define(function (require, exports, module) {
 
     var ProjectManager = brackets.getModule("project/ProjectManager"),
         Menus          = brackets.getModule("command/Menus"),
+        Commands       = brackets.getModule("command/Commands"),
         CommandManager = brackets.getModule("command/CommandManager"),
         FileSystem     = brackets.getModule("filesystem/FileSystem"),
         Strings        = brackets.getModule("strings"),
         Dialogs        = brackets.getModule("widgets/Dialogs"),
         PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
-        CreateProjectTemp = require("text!html/CreateProject.html"),
-    	EventManager   = require("core/EventManager");
+        CreateProjectTemp  = require("text!html/CreateProject.html"),
+    	EventDispatcher    = brackets.getModule("utils/EventDispatcher");
 
     var isCocosProject;
     var resFolder, srcFolder;
     var sources;
+
+    EventDispatcher.makeEventDispatcher(exports);
 
     function readSource(item, cb) {
     	if(item.name.endWith(".js")) {
@@ -40,7 +43,7 @@ define(function (require, exports, module) {
     function readSources() {
     	readSource(srcFolder, function() {
 	    	require(sources, function() {
-            	EventManager.trigger("projectOpen");
+            	exports.trigger("projectOpen");
 	    	});
     	});
     }
@@ -78,8 +81,6 @@ define(function (require, exports, module) {
     });
 
 
-
-
     function handleCreateProject() {
         var dialog, $projectName, $projectLocation, $browseBtn;
 
@@ -102,7 +103,7 @@ define(function (require, exports, module) {
                         console.error("failed to create cocos project.", err);
                     });
 
-                PreferencesManager.setViewState("cocoslite.project.location", files[0]);
+                PreferencesManager.setViewState("cocoslite.project.location", $projectLocation.val());
             }
         });
 
@@ -128,12 +129,19 @@ define(function (require, exports, module) {
         });
     }
 
-    CommandManager.register("Create Project", "cl.Project.CreateProject", handleCreateProject);
-
+    
     function registerMenu() {
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
         menu.addMenuDivider();
-        menu.addMenuItem("cl.Project.CreateProject");
+        menu.addMenuItem(Commands.CMD_CREATE_COCOS_PROJECT);
     }
+
+
+    CommandManager.register("Create Project", Commands.CMD_CREATE_COCOS_PROJECT, handleCreateProject);
+
     registerMenu();
+
+    exports.getSources = function() {
+        return sources;
+    }
 });

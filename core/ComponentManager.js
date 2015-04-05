@@ -4,8 +4,10 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager   = require("core/EventManager"),
+    var Selector       = require("core/Selector"),
     	Undo           = require("core/Undo"),
+        Project        = require("core/Project"),
+        ObjectManager  = require("core/ObjectManager"),
     	CommandManager = brackets.getModule("command/CommandManager"),
     	Menus          = brackets.getModule("command/Menus");
 
@@ -15,20 +17,23 @@ define(function (require, exports, module) {
 
     // _$content.css({"left":400, "top":100});
 
-    var _currentObjects = null;
+    var currentObjects = null;
 
     var cmds = [];
     var objectMenu = null;
     var componentMenu = null;
 
-    function createEmptyObject(){
+    // 
+    var componentMap = {};
+
+    function createEmptyObject() {
     	Undo.beginUndoBatch();
 
         var objs = [];
-        if(_currentObjects && _currentObjects.length>0){
-            for(var i in _currentObjects){
+        if(currentObjects && currentObjects.length>0){
+            for(var i in currentObjects){
                 var obj = new cl.GameObject();
-                _currentObjects[i].addChild(obj);
+                currentObjects[i].addChild(obj);
                 objs.push(obj);
     		}
     	} else {
@@ -38,12 +43,11 @@ define(function (require, exports, module) {
             objs.push(obj);
         }
 
+        Selector.selectObjects(objs);
         Undo.endUndoBatch();
-
-    	EventManager.trigger("selectedObjects", objs);
     }
 
-    function registerCommand(){
+    function registerCommand() {
     	CommandManager.register("Create Empty", "cl.GameObject.CreateEmpty", createEmptyObject);
 
         var cs = cl.ComponentManager.getAllClasses();
@@ -55,20 +59,19 @@ define(function (require, exports, module) {
 
     		(function(k){
     			CommandManager.register(k, id, function(){
-					if(!_currentObjects) {
+					if(!currentObjects) {
                         return;
                     }
 
-					for(var i in _currentObjects){
-						_currentObjects[i].addComponent(k);
+					for(var i in currentObjects){
+						currentObjects[i].addComponent(k);
 					}
 	    		});
     		})(k);
     	}
     }
 
-    function registerMenus()
-    {
+    function registerMenus() {
     	objectMenu = Menus.addMenu("GameObject", "cl.GameObject");
     	objectMenu.addMenuItem("cl.GameObject.CreateEmpty");
 
@@ -79,14 +82,24 @@ define(function (require, exports, module) {
 		}
     }
 
-
-    EventManager.on("projectOpen", function(){
+    Project.on("projectOpen", function() {
 	    registerCommand();
 	    registerMenus();
     });
 
-    EventManager.on("selectedObjects", function(event, objs){
-    	_currentObjects = objs;
+    Selector.on("selectedObjects", function(event, objs) {
+    	currentObjects = objs;
 	});
+
+    ObjectManager.on("addComponent", function(event, component){
+        var components = componentMap[component.constructor.className];
+
+        if(!components) {
+            components = [];
+            componentMap[component.constructor.className] = components;
+        }
+
+        components.push(component);        
+    });
 
 });

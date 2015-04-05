@@ -4,41 +4,41 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager = require("core/EventManager"),
-    	Undo 		 = require("core/Undo"),
-    	html    	 = require("text!html/Inspector.html"),
-	    Resizer 	 = brackets.getModule("utils/Resizer");
+    var ObjectManager = require("core/ObjectManager"),
+    	Selector       = require("core/Selector"),
+    	Undo 		   = require("core/Undo"),
+    	html    	   = require("text!html/Inspector.html"),
+	    Resizer 	   = brackets.getModule("utils/Resizer");
 
-    var _$content = $(html);
-    _$content.insertAfter(".content");
+    var $content = $(html);
+    $content.insertAfter(".content");
 
-    var _$inspector = _$content.find(".inspector");
-    var _$addComponent = _$content.find(".add-component");
+    var $inspector = $content.find(".inspector");
+    var $addComponent = $content.find(".add-component");
 
-    Resizer.makeResizable(_$content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 300, false);
+    Resizer.makeResizable($content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 300, false);
 
-	var _currentObject = null;
-
-	var _showing = false;
+	var currentObject = null, tempObject = null;
+	var showing = false;
 
 	function show(speed){
-		_showing = true;
+		showing = true;
 
 		if(speed === undefined) {
             speed = 500;
         }
         
-		_$content.animate({"right":"30px"}, speed);
+		$content.animate({"right":"30px"}, speed);
 	}
 
 	function hide(speed){
-		_showing = false;
+		showing = false;
 
 		if(speed === undefined) {
             speed = 500;
         }
         
-		_$content.animate({"right":-_$content.width()-30+"px"}, speed);
+		$content.animate({"right":-$content.width()-30+"px"}, speed);
 	}
 
 	hide(0);
@@ -129,7 +129,7 @@ define(function (require, exports, module) {
 	  		}
 
 	  		input.onkeypress = function(event){
-	  			if(typeof $input.finishEdit === 'function' && event.keyCode === "13") {
+	  			if(typeof $input.finishEdit === 'function' && event.keyCode === 13) {
 	            	$input.finishEdit();
                 }
 	  		};
@@ -175,7 +175,7 @@ define(function (require, exports, module) {
 
 				$input.find("input").each(function(i, e){
 					this.onkeypress = function(event){
-			  			if(typeof $input.finishEdit === 'function' && event.keyCode === "13") {
+			  			if(typeof $input.finishEdit === 'function' && event.keyCode === 13) {
                             $input.finishEdit();
                         }
 			  		};
@@ -222,7 +222,7 @@ define(function (require, exports, module) {
 		component._inspectorInputMap = {};
 
 		var el = $('<div>');
-		el.appendTo(_$inspector);
+		el.appendTo($inspector);
 		el.attr('id', component.classname);
 		el.addClass('component');
 
@@ -249,7 +249,7 @@ define(function (require, exports, module) {
 	}
 
 	function initObjectUI(obj){
-		var cs = _currentObject.components;
+		var cs = currentObject.components;
 		if(!cs) {
             return;
         }
@@ -260,34 +260,42 @@ define(function (require, exports, module) {
 	}
 
 	function selectedObject(obj){
-		_$inspector.empty();
-		_currentObject = obj;
-		_$addComponent.hide();
+		clear();
 
 		if(!obj) {
             return;
         }
 
-		_$addComponent.show();
+		currentObject = obj;
+
+		$addComponent.show();
 		initObjectUI(obj);
 	}
 
-	EventManager.on("selectedObjects", function(event, objs){
-		if(objs) {
-            selectedObject(objs[0]);
-        }
+	function clear() {
+		currentObject = null;
+		$inspector.empty();
+		$addComponent.hide();
+	}
+
+	Selector.on("selectedObjects", function(event, objs){
+		selectedObject(objs[0]);
 	});
 
-	EventManager.on("addComponent", function(event, component){
+	ObjectManager.on("addComponent", function(event, component){
 		var target = component.getTarget();
-		if(target !== _currentObject) {
+		if(target !== currentObject) {
             return;
         }
 
 		initComponentUI(component);
 	});
 
-	EventManager.on("objectPropertyChanged", function(event, o, p){
+	ObjectManager.on("objectPropertyChanged", function(event, o, p){
+		if(!o._inspectorInputMap) {
+			return;
+		}
+
 		if(o.constructor === Array && p===""){
 			if(o._inspectorInput.innerChanged) {
                 return;
@@ -304,10 +312,23 @@ define(function (require, exports, module) {
         }
 	});
 
+	function temp() {
+		tempObject = currentObject;
+		selectedObject(null);
+	}
+
+	function recover() {
+		selectedObject(tempObject);
+		tempObject = null;
+	}
+
 
 	exports.show = show;
 	exports.hide = hide;
+	exports.clear = clear;
+	exports.temp = temp;
+	exports.recover = recover;
 	exports.__defineGetter__("showing", function(){
-		return _showing;
+		return showing;
 	});
 });

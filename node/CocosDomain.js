@@ -3,7 +3,8 @@
     
     var os = require("os");
     var exec = require('child_process').exec;
-        
+
+
     /**
      * @private
      * Handler function for the cocos.newProject command.
@@ -11,6 +12,8 @@
      * @return {number} The amount of memory.
      */
     function cmdNewProject(projectName, folder, callback) {
+        var dirname = path.dirname(process.execPath);
+        
         var child = exec("/Users/youyou/Desktop/workspace/brackets/src/extensions/default/CocosLite/cocos2d-js/tools/cocos2d-console/bin/cocos new " + projectName + " -l js -d " + folder);
 
         child.stdout.on('data', function(data) {
@@ -24,7 +27,7 @@
             callback();
         });
     }
-    
+
     /**
      * Initializes the test domain with several test commands.
      * @param {DomainManager} domainManager The DomainManager for the server
@@ -38,10 +41,11 @@
             "newProject",    // command name
             cmdNewProject,   // command handler function
             true,            // whether this command is synchronous in Node
-            "Returns the total or free memory on the user's system in bytes",
+            "Returns result",
             ["projectName", "folder"],
             ["result"]
         );
+
     }
     
     exports.init = init;

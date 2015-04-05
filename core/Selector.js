@@ -4,17 +4,25 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager    = require("core/EventManager"),
+    var EventDispatcher = brackets.getModule("utils/EventDispatcher"),
     	Undo 			= require("core/Undo");
+
 
     var inited = false;
 
-    var scene;
     var mousedown = false;
-    var selectedObjects = [];
+    
+    var scene = null, tempScene = null;
+    var tempSelectedObjects = [], selectedObjects = [];
 
     var currentDelegate = null;
     var delegates = [];
+
+    var enable = true;
+
+    function setEnable(e) {
+    	enable = e;
+    }
     
     exports.addDelegate = function(delegate, priority){
     	delegate.priority = priority ? priority : 0;
@@ -43,7 +51,12 @@ define(function (require, exports, module) {
 
     	cc.eventManager.addListener(cc.EventListener.create({
 	        event: cc.EventListener.TOUCH_ONE_BY_ONE,
-	        onTouchBegan: function (touch, event) { 	
+	        onTouchBegan: function (touch, event) {
+	        	
+	        	if(!enable) {
+	        		return;
+	        	}
+
 	        	mousedown = true;
 
 				Undo.beginUndoBatch();
@@ -77,7 +90,7 @@ define(function (require, exports, module) {
 	        	};
 	        	
 	        	var obj = hitTest(scene);
-	        	EventManager.trigger('selectedObjects', obj ? [obj] : []);
+                selectObjects(obj ? [obj] : []);
 
 	        	return true;
 	        },
@@ -118,31 +131,81 @@ define(function (require, exports, module) {
 	    }), 10000);
     }
 
-    EventManager.on("sceneLoaded", function(event, s){
-        scene = s;
+    function loadScene(s) {
+    	scene = s;
         initListener();
-    });
+    }
 
-    EventManager.on("selectedObjects", function(event, objs){
+    function selectObjects(objs) {
+
+    	// whether selectedObjects changed
+    	var selectedObjectsChanged = selectedObjects.length !== objs.length;
+
+    	if(!selectedObjectsChanged) {
+			for(var i=0; i<selectedObjects.length; i++){
+	    		if(selectedObjects[i] != objs[i]){
+	    			selectedObjectsChanged = true;
+	    			break;
+	    		}
+	    	}
+    	}
+		
+    	if(!selectedObjectsChanged) {
+    		return;
+    	}
+
+    	// pack undo
     	Undo.beginUndoBatch();
-
 
     	(function(){
 	    	var oldObjs = selectedObjects.slice(0);
 	    	var newObjs = objs.slice(0);
 
     		function undo(){
-	    		EventManager.trigger("selectedObjects", oldObjs);
+                selectObjects(oldObjs);
 	    	}
 	    	function redo(){
-	    		EventManager.trigger("selectedObjects", newObjs);
+                selectObjects(newObjs);
 	    	}
 
-	    	Undo.objectPropertyChanged(undo, redo);
+	    	Undo.objectPropertyChanged(undo, redo, false);
     	})();
 
         selectedObjects = objs;
+        exports.trigger("selectedObjects", selectedObjects);
 
         Undo.endUndoBatch();
-    });
+
+    }
+
+    function clear() {
+    	tempSelectedObjects = selectedObjects = [];
+    	tempScene = scene = null;
+    }
+
+    function temp(s) {
+    	tempSelectedObjects = selectedObjects;
+    	selectedObjects = [];
+
+    	tempScene = scene;
+    	scene = s;
+    }
+
+    function recover() {
+    	selectedObjects = tempSelectedObjects;
+    	tempSelectedObjects = [];
+
+    	scene = tempScene;
+    	tempScene = null;
+    }
+
+    EventDispatcher.makeEventDispatcher(exports);
+
+    exports.selectObjects = selectObjects;
+    exports.setEnable = setEnable;
+    exports.loadScene = loadScene;
+    exports.getSelectObjects = function() { return selectedObjects; }
+    exports.clear = clear;
+    exports.temp = temp;
+    exports.recover = recover;
 });

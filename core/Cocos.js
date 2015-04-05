@@ -5,12 +5,13 @@ define(function (require, exports, module) {
     "use strict";
 
     var Scene           = require("text!html/Scene.html"),
-        EventManager    = require("core/EventManager"),
+        Selector        = require("core/Selector"),
+        EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
-    var selectedObjects;
-
     var $scene = $(Scene);
+
+    EventDispatcher.makeEventDispatcher(exports);
 
     function appendDefaultStyle(){
         // Insert default overlay style at the beginning of head, so any custom style can overwrite it.
@@ -20,10 +21,21 @@ define(function (require, exports, module) {
         $(style).attr('href', styleUrl);
     }
 
+    function hackHtml() {
+        var $statusBar = $("#status-bar");
+        $statusBar.hide();
+    }
 
     function initConfig(){
         window.cl = {};
         cl.engineDir = ExtensionUtils.getModulePath(module, "../cocos2d-js/frameworks/cocos2d-html5");
+        cl.clDir = ExtensionUtils.getModulePath(module, "../cocos2d-js/frameworks/cocos2d-html5/cocoslite");
+        cl.getModule = function(path) {
+            if(path.indexOf(".js") === -1) {
+                path += ".js";
+            }
+            return require(cc.path.join(cl.clDir, path));
+        }
 
         document.ccConfig = {
             "engineDir": cl.engineDir,
@@ -32,12 +44,8 @@ define(function (require, exports, module) {
             "showFPS" : true,
             "frameRate" : 15,
             "id" : "gameCanvas",
-            "renderMode" : 0,
-            "modules":[
-                "cocoslite",
-                "shape-nodes",
-                "box2d"
-            ]
+            "renderMode" : 2,
+            "modules":["cocos2d"]
         };
 
         cc.game._initConfig();
@@ -52,7 +60,7 @@ define(function (require, exports, module) {
         cl.$canvas = $scene.find('#gameCanvas');
 
         cl.$fgCanvas = $scene.find("#fgCanvas");
-        cc._fgCanvas = cl.$fgCanvas[0];
+        cl.fgCanvas = cl.$fgCanvas[0];
         // cl.$fgCanvas[0].style.display = 'none';
 
         cl.$fgCanvas._renderList = [];
@@ -61,11 +69,13 @@ define(function (require, exports, module) {
         };
 
 
-        cl.$fgCanvas.ctx = cl.$fgCanvas[0].getContext('2d');
+        cl.$fgCanvas.ctx = cl.fgCanvas.getContext('2d');
         var render = function(){
             if(!cc._canvas) {
                 return;
             }
+
+            var selectedObjects = Selector.getSelectObjects();
 
             var fg = cl.$fgCanvas;
             var maxW = cc._canvas.width ;
@@ -88,18 +98,22 @@ define(function (require, exports, module) {
         setInterval(render, 100);
     }
 
-    var initCocos = function(){
+    function initCocos() {
         var updateSize = function(){ 
-            cl.$fgCanvas[0].setAttribute("width",  cc._canvas.width);
-            cl.$fgCanvas[0].setAttribute("height", cc._canvas.height);
+            cl.fgCanvas.setAttribute("width",  cc._canvas.width);
+            cl.fgCanvas.setAttribute("height", cc._canvas.height);
         };
 
+        var isRegisterEvent = false;
         cc.game.onStart = function(){
 
-            // EventManager.trigger("start");
+            exports.trigger("gameStart");
 
-            // hack style
-            // cc._canvas.style.backgroundColor = "";
+            if(!isRegisterEvent) {
+                isRegisterEvent = true;
+                cc.inputManager._isRegisterEvent = false;
+                cc.inputManager.registerSystemEvent(cl.fgCanvas);
+            }
 
             var $container = $scene.find('#Cocos2dGameContainer');
             $container.css({margin:'0'});
@@ -130,27 +144,32 @@ define(function (require, exports, module) {
             cc.view._resizeEvent();
             cc.view.resizeWithBrowserSize(true);
 
-            // $scene[0].style.display = "none";
         };
+
+        function loadCocosLiteModule(cb) {
+            var modulePath = cc.path.join(cl.clDir, "modules.js");
+            require([modulePath], cb);
+        }
         
-        // cc.game.run("gameCanvas");
         cc.loader.loadJsWithImg = cc.loader.loadJs;
         cc.game.prepare(function(){
-            cc.game._prepared = true;
+            loadCocosLiteModule(function(){
+                cc.game._prepared = true;
+            });
         });
-    };
-        
+    }
+
+
+    function initScene($container, cb) {
+        $container.append($scene);
+        cc.game.run("gameCanvas");
+    }
+
+    hackHtml();
     appendDefaultStyle();
     initConfig();
     initCanvas();
     initCocos();
 
-    EventManager.on("selectedObjects", function(event, objs){
-        selectedObjects = objs;
-    });
-
-    exports.initScene = function($container){
-        $container.append($scene);
-        cc.game.run("gameCanvas");
-    };
+    exports.initScene = initScene;
 });

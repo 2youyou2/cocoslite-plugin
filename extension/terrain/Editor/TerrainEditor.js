@@ -4,8 +4,9 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager      = require("core/EventManager"),
+    var ObjectManager    = require("core/ObjectManager"),
         Undo              = require("core/Undo"),
+        Project           = require("core/Project"),
         Selector          = require("core/Selector");
 
     var points;
@@ -24,7 +25,7 @@ define(function (require, exports, module) {
     var shift = false;
 
 
-    EventManager.on("objectPropertyChanged", function(event, o, p){
+    ObjectManager.on("objectPropertyChanged", function(event, o, p){
         if((o !== obj && o !== path && o !== terrain && o !== points) || !path) {
             return;
         }
@@ -228,7 +229,7 @@ define(function (require, exports, module) {
         shift = false;
     }
 
-	EventManager.on("projectOpen", function(){
+	Project.on("projectOpen", function(){
 		cl.$fgCanvas.addRender(renderScene);
 
         window.document.body.addEventListener("keydown", handleKeyDown, true);

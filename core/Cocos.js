@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     var Scene           = require("text!html/Scene.html"),
         Selector        = require("core/Selector"),
+        FileSystem      = brackets.getModule("filesystem/FileSystem"),
         EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
@@ -147,8 +148,36 @@ define(function (require, exports, module) {
         };
 
         function loadCocosLiteModule(cb) {
-            var modulePath = cc.path.join(cl.clDir, "modules.js");
-            require([modulePath], cb);
+            var dir = FileSystem.getDirectoryForPath(cl.clDir);
+            var sources = [];
+
+            function readSource(item, cb) {
+                if(item.name.endWith(".js")) {
+                    sources.push(item.fullPath);
+                }
+
+                if(item.isDirectory) {
+                    item.getContents(function(err, subItems) {
+                        var i = 0;
+                        subItems.forEach(function(subItem) {
+                            readSource(subItem, function() {
+                                if(++i === subItems.length) {
+                                    cb();
+                                }
+                            });
+                        });
+                    });
+                }
+                else{
+                    cb();
+                }
+            }
+
+            readSource(dir, function(){
+                require(sources, cb);
+            })
+
+            
         }
         
         cc.loader.loadJsWithImg = cc.loader.loadJs;

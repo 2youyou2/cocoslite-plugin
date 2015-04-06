@@ -1,10 +1,18 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
 /*global cl, cc*/
 
-(function(){
+(function (factory) {
+    if(typeof exports === 'object') {
+        factory(require, module.exports, module);
+    } else if(typeof define === 'function') {
+        define(factory);
+    }
+})(function(require, exports, module) {
     "use strict";
+
+    var Component = cl.getModule("component/Component");
     
-    var TerrainPathComponent = cl.Component.extendComponent("TerrainPathComponent", {
+    var TerrainPathComponent = Component.extendComponent("TerrainPathComponent", {
         ctor: function () {
             this._super(this);
 
@@ -384,5 +392,4 @@
     cl.defineGetterSetter(_p, "count", "_getCount");
     cl.defineGetterSetter(_p, "pathVerts", "_getPathVerts", "_setPathVerts");
 
-
-})();
+});

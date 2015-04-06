@@ -215,7 +215,7 @@ define(function (require, exports, module) {
     Selector.addDelegate(delegate);
 
 
-    function handleKeyDown(e){
+    function handleKeyDown(e) {
         control = (brackets.platform !== "mac") ? (e.ctrlKey) : (e.metaKey);
         shift = e.shiftKey;
 
@@ -224,7 +224,7 @@ define(function (require, exports, module) {
         }
     }
 
-    function handleKeyUp(event){
+    function handleKeyUp(event) {
         control = false;
         shift = false;
     }

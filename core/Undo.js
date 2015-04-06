@@ -1,8 +1,7 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager      	  = require("core/EventManager"),
-    	DocumentManager		  = brackets.getModule("document/DocumentManager"),
+    var DocumentManager		  = brackets.getModule("document/DocumentManager"),
     	EditorManager         = brackets.getModule("editor/EditorManager"),
     	EditorCommandHandlers = brackets.getModule("editor/EditorCommandHandlers");
 
@@ -44,9 +43,10 @@ define(function (require, exports, module) {
 
 	var Undo = function(){
 		var stack = new Undo.Stack();
+		var tempStack = null;
 
-		this.objectPropertyChanged = function(oldValue, newValue, obj, p){
-			var cmd = new Undo.PropertyCmd(oldValue, newValue, obj, p);
+		this.objectPropertyChanged = function(oldValue, newValue, obj, p, dirty){
+			var cmd = new Undo.PropertyCmd(oldValue, newValue, obj, p, dirty);
 			stack.add(cmd);
 			return cmd;
 		};
@@ -61,7 +61,17 @@ define(function (require, exports, module) {
 
 		this.clear = function(){
 			stack = new Undo.Stack();
+			tempStack = null;
 		};
+
+		this.temp = function() {
+			tempStack = stack;
+			stack = new Undo.Stack();
+		};
+
+		this.recover = function() {
+			stack = tempStack;
+		}
 
 		this.undoing = function(){
 			return stack.undoing;
@@ -171,7 +181,18 @@ define(function (require, exports, module) {
 			this.changed();
 		},
 		dirty: function() {
-			return this.stackPosition !== this.savePosition;
+			// return this.stackPosition !== this.savePosition;
+			if(this.stackPosition !== this.savePosition) {
+				var min = Math.min(this.stackPosition, this.savePosition);
+				var max = Math.max(this.stackPosition, this.savePosition);
+
+				for(var i=min+1; i<=max; i++){
+					if(this.commands[i].dirty()) {
+						return true;
+					}
+				}
+			}
+			return false;
 		},
 		_clearRedo: function() {
 			// TODO there's probably a more efficient way for this
@@ -210,12 +231,16 @@ define(function (require, exports, module) {
 
 
 	Undo.PropertyCmd = Undo.Command.extend({
-		constructor: function(oldValue, newValue, obj, p){
+		constructor: function(oldValue, newValue, obj, p, dirty){
 			this.obj = obj;
 			this.p = p;
 			this.oldValue = oldValue;
 			this.newValue = newValue;
-			this.dirty = true;
+			
+			if(typeof oldValue === "function" && typeof newValue === "function") {
+				dirty = obj;
+			}
+			this.dirty = dirty === undefined ? true : dirty;
 		},
 		undo: function(){
 			if(typeof this.oldValue === "function") {
@@ -255,6 +280,14 @@ define(function (require, exports, module) {
 				this.cmds[i].redo();
 			}
 		},
+		dirty: function() {
+			for(var i=0; i<this.cmds.length; i++){
+				if(this.cmds[i].dirty) {
+					return true;
+				}
+			}
+			return false;
+		},
 		add: function(cmd){
 			this.cmds.push(cmd);
 		},
@@ -269,10 +302,6 @@ define(function (require, exports, module) {
 
 	var undo = new Undo();
 	module.exports = undo;
-
-	EventManager.on("sceneLoaded", function(event, s){
-        undo.clear();
-    });
 
 
 	var editor = null;

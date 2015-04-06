@@ -5,19 +5,38 @@
 define(function (require, exports, module) {
     "use strict";
 
-    require("thirdparty/vue");
+    var ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
+        NodeDomain     = brackets.getModule("utils/NodeDomain");
 
-    require(["/Users/youyou/Desktop/workspace/cocos/cocos2d-js/frameworks/cocos2d-html5/CCBoot.js",
-            "core/Cocos",
-            "core/ObjectInjector",
-            "core/Hierarchy",
-            "core/Inspector",
-            "core/Undo",
-            "core/ComponentManager",
-            "core/Selector",
-            "core/Project",
+    function initNodeDomain() {
+        window.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
+    }
 
-            "editor/SceneEditor",
-            "editor/MeshEditor",
-            "editor/Control2D"]);
+    var modules;
+
+    if(brackets.editorType === "GameEditor") {
+        modules = ["thirdparty/vue",
+                "cocos2d-js/frameworks/cocos2d-html5/CCBoot",
+                "core/Cocos",
+                "core/ObjectManager",
+                "core/Hierarchy",
+                "core/Inspector",
+                "core/Undo",
+                "core/ComponentManager",
+                "core/Selector",
+                "core/Project",
+
+                "editor/SceneEditor",
+                "editor/MeshEditor",
+                "editor/Control2D",
+                "ide/server"];
+
+        initNodeDomain();
+    }
+    else if(brackets.editorType === "IDE") {
+        modules = ["ide/ide",
+                   "ide/ChromeConnect"];
+    }
+
+    require(modules);
 });

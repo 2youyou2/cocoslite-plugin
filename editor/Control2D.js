@@ -4,8 +4,8 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager = require("core/EventManager"),
-        Selector     = require("core/Selector");
+    var Project    = require("core/Project"),
+        Selector   = require("core/Selector");
 
     var Operation = {
         Positon:  0,
@@ -213,7 +213,7 @@ define(function (require, exports, module) {
 
     Selector.addDelegate(delegate, 10000);
 
-	EventManager.on("projectOpen", function(){
+	Project.on("projectOpen", function(){
 		cl.$fgCanvas.addRender(renderScene);
 	});
 });

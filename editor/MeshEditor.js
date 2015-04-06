@@ -4,7 +4,7 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager = require("core/EventManager");
+    var Project = require("core/Project");
 
     var renderScene = function(ctx, selectedObjects){
 		if(selectedObjects){
@@ -45,7 +45,7 @@ define(function (require, exports, module) {
     	}
     };
 
-	EventManager.on("projectOpen", function(){
+	Project.on("projectOpen", function(){
 		cl.$fgCanvas.addRender(renderScene);
 	});
 });

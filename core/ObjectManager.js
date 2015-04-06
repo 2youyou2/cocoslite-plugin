@@ -1,16 +1,47 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventManager    = require("core/EventManager"),
+    var EventDispatcher = brackets.getModule("utils/EventDispatcher"),
+    	Project         = require("core/Project"),
     	Undo 		    = require("core/Undo");
 
-    var _scene = null;
+
+	!function(Object, getPropertyDescriptor, getPropertyNames){
+	  if (!(getPropertyDescriptor in Object)) {
+	    var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+	    Object[getPropertyDescriptor] = function getPropertyDescriptor(o, name) {
+	      var proto = o, descriptor;
+	      while (proto && !(
+	        descriptor = getOwnPropertyDescriptor(proto, name))
+	      ) proto = proto.__proto__;
+	      return descriptor;
+	    };
+	  }
+	  if (!(getPropertyNames in Object)) {
+	    var getOwnPropertyNames = Object.getOwnPropertyNames, ObjectProto = Object.prototype, keys = Object.keys;
+	    Object[getPropertyNames] = function getPropertyNames(o) {
+	      var proto = o, unique = {}, names, i;
+	      while (proto != ObjectProto) {
+	        for (names = getOwnPropertyNames(proto), i = 0; i < names.length; i++) {
+	          unique[names[i]] = true;
+	        }
+	        proto = proto.__proto__;
+	      }
+	      return keys(unique);
+	    };
+	  }
+	}(Object, "getPropertyDescriptor", "getPropertyNames");
+	
 
     function addObject(obj){
-		EventManager.trigger("addObject",obj);
+    	if(obj.constructor !== cl.GameObject && obj.constructor !== cc.Scene && obj.constructor !== cc.Layer) {
+    		return;
+    	}
 
-		if(obj._inject) return;
-		obj._inject = true;
+		exports.trigger("addObject",obj);
+
+		if(obj._injected) return;
+		obj._injected = true;
 
 		obj._originAddChildFunc = obj.addChild;
 		obj.addChild = function(child){
@@ -45,8 +76,6 @@ define(function (require, exports, module) {
     	var children = obj.children;
 		for(var i=0; i<children.length; i++){
 			var c = children[i];
-			if(c.constructor != cl.GameObject && c.constructor != cc.Scene && c.constructor != cc.Layer)
-				continue;
 			addObject(c);
 		}
 
@@ -55,14 +84,22 @@ define(function (require, exports, module) {
 				var c = obj.components[k];
 
 				injectObject(c);
-				EventManager.trigger("addComponent", c);
+				exports.trigger("addComponent", c);
 			}
 
 			obj._originAddComponentFunc = obj.addComponent;
 			obj.addComponent = function(){
 				var c = obj._originAddComponentFunc.apply(obj, arguments);
 				injectObject(c);
-				EventManager.trigger("addComponent", c);
+				exports.trigger("addComponent", c);
+
+				return c;
+			}
+
+			obj._originRemoveComponentFunc = obj.removeComponent;
+			obj.removeComponent = function(){
+				var c = obj._originRemoveComponentFunc.apply(obj, arguments);
+				exports.trigger("removeComponent", c);
 
 				return c;
 			}
@@ -70,7 +107,7 @@ define(function (require, exports, module) {
 	};
 
 	function removeObject(obj){
-		EventManager.trigger("removeObject", obj);
+		exports.trigger("removeObject", obj);
 	};
 
 	function injectObject(obj){
@@ -101,7 +138,7 @@ define(function (require, exports, module) {
 						}
 
 						array._originPush.apply(array, item);
-						EventManager.trigger("objectPropertyChanged", array, "");
+						exports.trigger("objectPropertyChanged", array, "");
 					}
 
 					array._originSplice = array.splice;
@@ -132,14 +169,14 @@ define(function (require, exports, module) {
 								var redo = function(){
 									array._originSplice.apply(array, args);
 									
-									EventManager.trigger("objectPropertyChanged", array, "");
+									exports.trigger("objectPropertyChanged", array, "");
 								}
 								Undo.objectPropertyChanged(undo, redo);
 							})();
 						}
 
 						array._originSplice.apply(array, arguments);
-						EventManager.trigger("objectPropertyChanged", array, "");
+						exports.trigger("objectPropertyChanged", array, "");
 					}
 
 					array.set = function(index, value){
@@ -161,7 +198,7 @@ define(function (require, exports, module) {
 						}
 
 						array[index] = value;
-						EventManager.trigger("objectPropertyChanged", array, index);
+						exports.trigger("objectPropertyChanged", array, index);
 					}
 				}
 
@@ -176,7 +213,7 @@ define(function (require, exports, module) {
 
 						var func = this._originProperties[p].set;
 						func.apply(this, arguments);
-						EventManager.trigger("objectPropertyChanged", this, p);
+						exports.trigger("objectPropertyChanged", this, p);
 
 						var newValue = this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
@@ -189,7 +226,7 @@ define(function (require, exports, module) {
 						var oldValue = this[p];
 
 						this._originProperties[p] = val;
-						EventManager.trigger("objectPropertyChanged", this, p);
+						exports.trigger("objectPropertyChanged", this, p);
 
 						var newValue = this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
@@ -200,16 +237,85 @@ define(function (require, exports, module) {
 		}
 	}
 
-	function inject()
-	{
-		addObject(_scene);
+	function inject(scene) {
+		addObject(scene);
 	}
 
-	function sceneLoaded(event, scene){
-		_scene = scene;
-		inject();
-		EventManager.trigger("sceneInjected")
+	function loadScene(scene) {
+		inject(scene);
+		exports.trigger("sceneInjected")
 	}
 
-	EventManager.on("sceneLoaded", sceneLoaded);
+
+
+    function hackObjectToJson() {
+
+        cc.Scene.prototype.toJSON = function(){
+            var json = {};
+            json.root = {};
+            json.root.res = this.res;
+            var children = json.root.children = [];
+
+            for(var k=0; k<this.children.length; k++){
+                var child = this.children[k];
+                if(child.constructor === cl.GameObject){
+                    var cj = child.toJSON();
+                    children.push(cj);
+                }
+            }
+
+            return json;
+        };
+
+
+        cl.GameObject.prototype.toJSON = function(){
+            var json = {};
+
+            var components = json.components = [];
+
+            var cs = this.components;
+            for(var i in cs) {
+                components.push(cs[i].toJSON());
+            }
+
+            for(var k=0; k<this.children.length; k++){
+                var child = this.children[k];
+                if(child.constructor === cl.GameObject){
+                    
+                    if(!json.children) {
+                        json.children = [];
+                    }
+
+                    var cj = child.toJSON();
+                    json.children.push(cj);
+                }
+            }
+
+            return json;
+        };
+
+        cl.Component.prototype.toJSON = function(){
+            var json = {};
+            json.class = this.classname;
+
+            for(var i=0; i<this.properties.length; i++){
+                var k = this.properties[i];
+
+                if(this["toJSON"+k]) {
+                    json[k] = this["toJSON"+k]();
+                }
+                else {
+                    json[k] = this[k];
+                }
+            }
+            return json;
+        };
+    }
+
+    EventDispatcher.makeEventDispatcher(exports);
+
+    Project.on("projectOpen", hackObjectToJson);
+
+	exports.loadScene = loadScene;
+	exports.inject = inject;
 });

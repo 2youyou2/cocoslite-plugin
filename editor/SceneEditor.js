@@ -5,39 +5,105 @@ define(function (require, exports, module) {
     "use strict";
 
     var EditorManager   = brackets.getModule("editor/EditorManager"),
+        EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
-        EventManager    = require("core/EventManager"),
+        Project         = require("core/Project"),
         Undo            = require("core/Undo"),
         Inspector       = require("core/Inspector"),
+        Selector        = require("core/Selector"),
+        Hierarchy       = require("core/Hierarchy"),
+        ObjectManager   = require("core/ObjectManager"),
         Cocos           = require("core/Cocos");
-
-    /* 
-     * Updates the layout of the view
-     */
-    // SceneEditor.prototype.updateLayout = function () {
-    //     if(cc.view)
-    //         cc.view._resizeEvent();
-    // };
 
 
     var editor = null;
     var scene = null;
+    var $el = null;
+
+    var projectOpened = false;
+    var lazyInitEditor = false;
+
+    EventDispatcher.makeEventDispatcher(exports);
 
     Undo.registerUndoType(".js.scene");
 
-    function initEditor(current){
-        editor = current;
 
-        editor.document.getText = function(){
-            var s = JSON.stringify(scene, null, '\t');
-            return s;
-        };
+    function setSceneState() {
+        cl.fgCanvas.style.display = "";
+        Selector.setEnable(true);
+    }
 
-        var $el = $("<div>");
-        Cocos.initScene($el);
+    function setGameState() {
+        cl.fgCanvas.style.display = "none";
+        Selector.setEnable(false);
+    }
 
-        editor.$el.find(".CodeMirror-scroll").css("display", "none");
-        editor.$el.append($el);
+    var playing = false;
+    var paused = false;
+
+    var tempJson = null;
+
+    function beginPlaying() {
+        tempJson = scene.toJSON();
+
+        setGameState();
+        cl.SceneManager.parseData(tempJson, function(tempScene) {
+            cc.director.runScene(tempScene);
+
+            Undo.temp();
+            Hierarchy.temp();
+            ObjectManager.loadScene(tempScene);
+            Selector.temp(tempScene);
+            Inspector.temp();
+
+            exports.trigger("beginPlaying", tempScene);
+        });
+    }
+
+    function endPlaying() {
+        setSceneState();
+        cc.director.runScene(scene);
+
+        Undo.recover();
+        Hierarchy.recover();
+        Selector.recover();
+        Inspector.recover();
+
+        exports.trigger("endPlaying");
+    }
+
+    function play() {
+        playing = !playing;
+        
+        if(playing) {
+            beginPlaying();
+        }
+        else {
+            endPlaying();
+        }
+    }
+
+    function clickPauseBtn() {
+        if(this.checked) {
+            pause();
+        }
+        else {
+            resume();
+        }
+    }
+    function pause() {
+        paused = false;
+
+    }
+
+    function resume() {
+
+    }
+
+    function nextFrame() {
+        paused = false;
+        cc.director.getScheduler().update(cc.director.getAnimationInterval());
+        paused = true;
     }
 
     function test(scene){
@@ -64,10 +130,75 @@ define(function (require, exports, module) {
         // mesh.materials.push("RockyFill.png");
     }
 
-    EditorManager.on("activeEditorChange", function(event, current, previous){
+
+    function sceneToString() {
+        var s = JSON.stringify(scene, null, '\t');
+        return s;
+    }
+
+    function closeScene() {
+        editor = scene = $el = null;
+        playing = paused = false;
+        cc.director.runScene(new cc.Scene());
+
+        Undo.clear();
+        Hierarchy.clear();
+        Inspector.clear();
+        Selector.clear();
+
+        exports.trigger("sceneClosed");
+    }
+
+    function loadScene(s) {
+        scene = s;
+
+        cc.director.runScene(s);
+
+        test(s);
+
+        ObjectManager.loadScene(s);
+        Selector.loadScene(s);
+
+        exports.trigger("sceneLoaded", s);
+    }
+
+
+
+    function initEditor(){
+
+        editor.document.getText = sceneToString;
+
+        $el = $("<div>");
+        Cocos.initScene($el);
+
+        editor.$el.find(".CodeMirror-scroll").css("display", "none");
+        editor.$el.append($el);
+
+
+        var $gameState    = $('<button id="game-state" style="position:absolute;top:0px;left:10px" >Game </button>');
+        var $sceneState   = $('<button id="scene-state" style="position:absolute;top:0px;left:100px">Scene</button>');
+        var $playBtn      = $('<button id="play-btn" style="position:absolute;top:0px;left:200px">Play</button>');
+        var $pauseBtn     = $('<button id="pause-btn" style="position:absolute;top:0px;left:300px">Pause</button>');
+        var $nextFrameBtn = $('<button id="next-frame-btn" style="position:absolute;top:0px;left:400px">NextFrame</button>');
+
+        $el.find(".scene").append($gameState);
+        $el.find(".scene").append($sceneState);
+        $el.find(".scene").append($playBtn);
+        $el.find(".scene").append($pauseBtn);
+        $el.find(".scene").append($nextFrameBtn);
+
+        $gameState.click(setGameState);
+        $sceneState.click(setSceneState);
+        $playBtn.click(play);
+        $pauseBtn.click(clickPauseBtn);
+        $nextFrameBtn.click(nextFrame);
+    }
+
+
+    function activeEditorChange(event, current, previous) {
 
         if(previous && previous === editor){
-            EventManager.trigger("selectedObjects", []);
+            closeScene();
         }   
         
         editor = null;
@@ -81,91 +212,57 @@ define(function (require, exports, module) {
             return;
         }
 
-
         if(!Inspector.showing) {
             Inspector.show();
         }
 
-        initEditor(current);
+        editor = current;
 
+        if(projectOpened) {
+            initEditor();
+        } else {
+            lazyInitEditor = true;
+        }
+    }
+
+
+
+    function hackGameObject() {
+
+        var originGameObjectEnter = cl.GameObject.prototype.onEnter;
+        cl.GameObject.prototype.onEnter = function() {
+            if(!playing) {
+                return;
+            }
+            originGameObjectEnter.call(this);
+        }
+
+        var originGameObjectUpdate = cl.GameObject.prototype.update;
+        cl.GameObject.prototype.update = function(dt) {
+            if(paused) {
+                return;
+            }
+            originGameObjectUpdate.call(this, dt);
+        }
+    }
+
+
+    EditorManager.on("activeEditorChange", activeEditorChange);
+    Project.on("projectOpen", function() {
+
+        if(lazyInitEditor) {
+            initEditor();
+            lazyInitEditor = false;
+        }
+
+        projectOpened = true;
+        hackGameObject();
+    });
+
+    Cocos.on("gameStart", function(){
         cc.loader.resPath = ProjectManager.getProjectRoot().fullPath;
 
         var file = editor.document.file;
-        cl.SceneManager.loadScene(file.fullPath, function(s){
-
-            scene = s;
-
-            cc.director.runScene(s);
-
-            test(s);
-
-            EventManager.trigger("sceneLoaded", s);
-        }, true);
-    });
-
-
-    EventManager.on("projectOpen", function(){
-        cc.Scene.prototype.toJSON = function(){
-            var json = {};
-            json.root = {};
-            json.root.res = this.res;
-            var children = json.root.children = [];
-
-            for(var k=0; k<this.children.length; k++){
-                var child = this.children[k];
-                if(child.constructor === cl.GameObject){
-                    var cj = child.toJSON();
-                    children.push(cj);
-                }
-            }
-
-            return json;
-        };
-
-
-        cl.GameObject.prototype.toJSON = function(){
-            var json = {};
-
-            var components = json.components = [];
-
-            var cs = this.components;
-            for(var i=0; i<cs.length; i++){
-                var c = cs[i];
-                components.push(c.toJSON());
-            }
-
-            for(var k=0; k<this.children.length; k++){
-                var child = this.children[k];
-                if(child.constructor === cl.GameObject){
-                    
-                    if(json.children === null) {
-                        json.children = [];
-                    }
-
-                    var cj = child.toJSON();
-                    json.children.push(cj);
-                }
-            }
-
-            return json;
-        };
-
-
-        cl.Component.prototype.toJSON = function(){
-            var json = {};
-            json.class = this.classname;
-
-            for(var i=0; i<this.properties.length; i++){
-                var k = this.properties[i];
-
-                if(this["toJSON"+k]) {
-                    json[k] = this["toJSON"+k]();
-                }
-                else {
-                    json[k] = this[k];
-                }
-            }
-            return json;
-        };
+        cl.SceneManager.loadScene(file.fullPath, loadScene, true);
     });
 });

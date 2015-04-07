@@ -4,171 +4,179 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var Project    = require("core/Project"),
-        Selector   = require("core/Selector");
+    var EditorManager = require("editor/EditorManager");
 
-    var Operation = {
-        Positon:  0,
-        Scale:    1,
-        Rotation: 2
-    };
+    var Params = function() {
 
-    var operation = Operation.Positon;
+        this._order = 10000;
 
-    var obj = null;
-    var wordMat = null;
-    var mouseDown = false;
-    var selectedObjects = null;
-    var canDoOperation = false;
+        var Operation = {
+            Positon:  0,
+            Scale:    1,
+            Rotation: 2
+        };
 
-    var renderScene = function(ctx, objs){
-        obj = null;
-        selectedObjects = objs;
-		if(selectedObjects && selectedObjects.length>0){
-            obj = selectedObjects[0];
-			render(ctx);
-		}
-    };
+        var operation = Operation.Positon;
 
-    var range = 15;
+        var obj = null;
+        var wordMat = null;
+        var mouseDown = false;
+        var selectedObjects = null;
+        var canDoOperation = false;
 
-    function rect(x,y,width,height){
-        return {x:x, y:y, width:width, height:height};
-    }
+        var range = 15;
+
+        var positionRect  = rect(-range/2, -range/2, range, range);
+        var xPositionRect = rect(100, -range/3, range/1.5, range/1.5);
+        var yPositionRect = rect(-range/3, 100, range/1.5, range/1.5);
 
 
-    var positionRect  = rect(-range/2, -range/2, range, range);
-    var xPositionRect = rect(100, -range/3, range/1.5, range/1.5);
-    var yPositionRect = rect(-range/3, 100, range/1.5, range/1.5);
-
-    function renderPosition(ctx){
-        ctx.lineWidth = 1;
-
-        // ctx.fillStyle = "#ffffff";
-        // ctx.beginPath();
-        // ctx.moveTo(0,range/3);
-        // ctx.lineTo(range/3,0);
-        // ctx.lineTo(0,-range/3);
-        // ctx.lineTo(-range/3,0);
-        // ctx.fill();
-
-
-        // ctx.globalAlpha = yPositionRect.hover ? 1 : 0.6;
-
-        ctx.strokeStyle = "#ffff00";
-        ctx.fillStyle   = yPositionRect.hover ? "#ffffff" : "#ffff00";
-        ctx.beginPath();
-        ctx.moveTo(0,0);
-        ctx.lineTo(0,100);
-        ctx.stroke();
-
-        var yr = yPositionRect;
-        ctx.fillRect(yr.x, yr.y, yr.width, yr.height);
-
-        // ctx.globalAlpha = xPositionRect.hover ? 1 : 0.6;
-
-        ctx.strokeStyle = "#ff0000";
-        ctx.fillStyle   = xPositionRect.hover ? "#ffffff" : "#ff0000";
-        ctx.beginPath();
-        ctx.moveTo(0,0);
-        ctx.lineTo(100,0);
-        ctx.stroke();
-
-        var xr = xPositionRect;
-        ctx.fillRect(xr.x, xr.y, xr.width, xr.height);
-
-
-        // ctx.globalAlpha = positionRect.hover ? 1 : 0.6;
-        ctx.fillStyle = positionRect.hover ? "#ffffff" : "#0000ff";
-        ctx.fillRect(positionRect.x, positionRect.y, positionRect.width, positionRect.height);
-    }
-
-    function renderScale(ctx){
-
-    }
-
-    function renderRotation(ctx){
-
-    }
-
-    function render(ctx){
-
-    	wordMat = obj.getNodeToWorldTransform();
-        ctx.translate(0.5, 0.5);
-        ctx.translate(wordMat.tx, wordMat.ty);
-
-        switch(operation){
-            case Operation.Positon:
-                renderPosition(ctx);
-                break;
-            case Operation.Scale:
-                renderScale(ctx);
-                break;
-            case Operation.Rotation:
-                renderRotation(ctx);
-                break;
-        }
-    }
-
-    function hitPosition(p){
-        positionRect.hover = xPositionRect.hover = yPositionRect.hover = false;
-
-        if(cc.rectContainsPoint(positionRect, p)) {
-            positionRect.hover  = true;
-        }
-        else if(cc.rectContainsPoint(xPositionRect, p)) {
-            xPositionRect.hover = true;
-        }
-        else if(cc.rectContainsPoint(yPositionRect, p)) {
-            yPositionRect.hover = true;
-        }
-
-        return positionRect.hover || xPositionRect.hover || yPositionRect.hover;
-    }
-
-    function hitScale(p){
-
-    }
-
-    function hitRotation(p){
-
-    }
-
-
-    function handlePosition(touch){
-        for(var i=0; i<selectedObjects.length; i++){
-            var t = selectedObjects[i].getComponent("TransformComponent");
-            var delta = touch.getDelta();
-            if(positionRect.hover) {
-                t.position = cc.pAdd(t.position, delta);
+        this.renderScene = function(ctx, objs){
+            obj = null;
+            selectedObjects = objs;
+            if(selectedObjects && selectedObjects.length>0){
+                obj = selectedObjects[0];
+                render(ctx);
             }
-            else if(xPositionRect.hover) {
-                t.position = cc.pAdd(t.position, cc.p(delta.x, 0));
-            }
-            else if(yPositionRect.hover) {
-                t.position = cc.pAdd(t.position, cc.p(0, delta.y));
+        };
+
+
+        function rect(x,y,width,height){
+            return {x:x, y:y, width:width, height:height};
+        }
+
+
+        function renderPosition(ctx){
+            ctx.lineWidth = 1;
+
+            // ctx.fillStyle = "#ffffff";
+            // ctx.beginPath();
+            // ctx.moveTo(0,range/3);
+            // ctx.lineTo(range/3,0);
+            // ctx.lineTo(0,-range/3);
+            // ctx.lineTo(-range/3,0);
+            // ctx.fill();
+
+
+            // ctx.globalAlpha = yPositionRect.hover ? 1 : 0.6;
+
+            ctx.strokeStyle = "#ffff00";
+            ctx.fillStyle   = yPositionRect.hover ? "#ffffff" : "#ffff00";
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.lineTo(0,100);
+            ctx.stroke();
+
+            var yr = yPositionRect;
+            ctx.fillRect(yr.x, yr.y, yr.width, yr.height);
+
+            // ctx.globalAlpha = xPositionRect.hover ? 1 : 0.6;
+
+            ctx.strokeStyle = "#ff0000";
+            ctx.fillStyle   = xPositionRect.hover ? "#ffffff" : "#ff0000";
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.lineTo(100,0);
+            ctx.stroke();
+
+            var xr = xPositionRect;
+            ctx.fillRect(xr.x, xr.y, xr.width, xr.height);
+
+
+            // ctx.globalAlpha = positionRect.hover ? 1 : 0.6;
+            ctx.fillStyle = positionRect.hover ? "#ffffff" : "#0000ff";
+            ctx.fillRect(positionRect.x, positionRect.y, positionRect.width, positionRect.height);
+        }
+
+        function renderScale(ctx){
+
+        }
+
+        function renderRotation(ctx){
+
+        }
+
+        function render(ctx){
+
+            wordMat = obj.getNodeToWorldTransform();
+            ctx.translate(0.5, 0.5);
+            ctx.translate(wordMat.tx, wordMat.ty);
+
+            switch(operation){
+                case Operation.Positon:
+                    renderPosition(ctx);
+                    break;
+                case Operation.Scale:
+                    renderScale(ctx);
+                    break;
+                case Operation.Rotation:
+                    renderRotation(ctx);
+                    break;
             }
         }
-    }
 
-    function handleScale(touch){
 
-    }
 
-    function handleRotation(touch){
+        function hitPosition(p){
+            positionRect.hover = xPositionRect.hover = yPositionRect.hover = false;
 
-    }
+            if(cc.rectContainsPoint(positionRect, p)) {
+                positionRect.hover  = true;
+            }
+            else if(cc.rectContainsPoint(xPositionRect, p)) {
+                xPositionRect.hover = true;
+            }
+            else if(cc.rectContainsPoint(yPositionRect, p)) {
+                yPositionRect.hover = true;
+            }
 
-    var delegate = {
-        onTouchBegan: function(touch){
+            return positionRect.hover || xPositionRect.hover || yPositionRect.hover;
+        }
+
+        function hitScale(p){
+
+        }
+
+        function hitRotation(p){
+
+        }
+
+
+        function handlePosition(touch){
+            for(var i=0; i<selectedObjects.length; i++){
+                var t = selectedObjects[i].getComponent("TransformComponent");
+                var delta = touch.getDelta();
+                if(positionRect.hover) {
+                    t.position = cc.pAdd(t.position, delta);
+                }
+                else if(xPositionRect.hover) {
+                    t.position = cc.pAdd(t.position, cc.p(delta.x, 0));
+                }
+                else if(yPositionRect.hover) {
+                    t.position = cc.pAdd(t.position, cc.p(0, delta.y));
+                }
+            }
+        }
+
+        function handleScale(touch){
+
+        }
+
+        function handleRotation(touch){
+
+        }
+
+        
+        this.onTouchBegan = function(touch){
             if(!obj) {
                 return false;
             }
 
             mouseDown = canDoOperation;
             return canDoOperation;
-        },
-        onTouchMoved: function(touch){
+        };
+
+        this.onTouchMoved = function(touch){
 
             switch(operation){
                 case Operation.Positon:
@@ -183,11 +191,13 @@ define(function (require, exports, module) {
             }
             
             return true;
-        },
-        onTouchEnded: function(touch){
+        };
+
+        this.onTouchEnded = function(touch){
             mouseDown = false;
-        },
-        onMouseMove: function(event){
+        };
+
+        this.onMouseMove = function(event){
             if(!obj || mouseDown) {
                 return;
             }
@@ -208,12 +218,13 @@ define(function (require, exports, module) {
                     canDoOperation = hitRotation(p);
                     break;
             }
-        }
-    };
+        };
+    }
 
-    Selector.addDelegate(delegate, 10000);
+    function init(){
+        EditorManager.register("Control2D", new Params);
+    }
 
-	Project.on("projectOpen", function(){
-		cl.$fgCanvas.addRender(renderScene);
-	});
+    init();
+    exports.init = init;
 });

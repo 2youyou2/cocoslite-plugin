@@ -26,6 +26,7 @@ define(function (require, exports, module) {
                 "core/Selector",
                 "core/Project",
 
+                "editor/EditorManager",
                 "editor/SceneEditor",
                 "editor/MeshEditor",
                 "editor/Control2D",

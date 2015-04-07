@@ -5,6 +5,7 @@ define(function (require, exports, module) {
     "use strict";
 
     var EventDispatcher = brackets.getModule("utils/EventDispatcher"),
+        EditorManager   = require("editor/EditorManager"),
     	Undo 			= require("core/Undo");
 
 
@@ -16,7 +17,6 @@ define(function (require, exports, module) {
     var tempSelectedObjects = [], selectedObjects = [];
 
     var currentDelegate = null;
-    var delegates = [];
 
     var enable = true;
 
@@ -24,24 +24,6 @@ define(function (require, exports, module) {
     	enable = e;
     }
     
-    exports.addDelegate = function(delegate, priority){
-    	delegate.priority = priority ? priority : 0;
-
-    	delegates.push(delegate);
-    	delegates.sort(function(a,b){
-    		return b.priority > a.priority;
-    	});
-    };
-    
-    exports.removeDelegate = function(delegate){
-    	var i;
-    	for(i=0; i<this._delegates.length; i++){
-    		if(delegates[i] === delegate){
-    			break;
-    		}
-    	}
-    	delegates.splice(i,1);
-    };
 
     function initListener(){
     	if(inited) {
@@ -62,6 +44,7 @@ define(function (require, exports, module) {
 				Undo.beginUndoBatch();
 
 				currentDelegate = null;
+                var delegates = EditorManager.getOrderedEditors();
 				for(var i=0; i<delegates.length; i++){
 					if(delegates[i].onTouchBegan && delegates[i].onTouchBegan(touch)){
 						currentDelegate = delegates[i];
@@ -122,6 +105,7 @@ define(function (require, exports, module) {
 		cc.eventManager.addListener(cc.EventListener.create({
 	        event: cc.EventListener.MOUSE,
 	        onMouseMove: function(event){
+                var delegates = EditorManager.getOrderedEditors();
 	        	for(var i=0; i<delegates.length; i++){
 					if(delegates[i].onMouseMove){
 						delegates[i].onMouseMove(event);

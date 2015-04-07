@@ -16,7 +16,7 @@ define(function (require, exports, module) {
     var $inspector = $content.find(".inspector");
     var $addComponent = $content.find(".add-component");
 
-    Resizer.makeResizable($content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 300, false);
+    Resizer.makeResizable($content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250, true);
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
@@ -28,7 +28,7 @@ define(function (require, exports, module) {
             speed = 500;
         }
         
-		$content.animate({"right":"30px"}, speed);
+		$content.animate({"right":"0px"}, speed);
 	}
 
 	function hide(speed){
@@ -38,7 +38,7 @@ define(function (require, exports, module) {
             speed = 500;
         }
         
-		$content.animate({"right":-$content.width()-30+"px"}, speed);
+		$content.animate({"right":-$content.width()+"px"}, speed);
 	}
 
 	hide(0);
@@ -156,8 +156,8 @@ define(function (require, exports, module) {
 			if(value.x !== undefined && value.y !== undefined){
 				/*jshint multistr: true */
                 $input = $("<span>\
-							<span class='x-name'>X</span><span style='width:40%;margin:3px'><input class='x-input' style='width:98%'></span>\
-						    <span class='y-name'>Y</span><span style='width:40%;margin:3px'><input class='y-input' style='width:98%'></span>\
+							<span style='width:40%;margin:3px'><input class='x-input' style='width:98%'></span>\
+						    <span style='width:40%;margin:3px'><input class='y-input' style='width:98%'></span>\
 						    </span>");
 				var xInput = $input.find('.x-input')[0];
 				var yInput = $input.find('.y-input')[0];
@@ -322,12 +322,16 @@ define(function (require, exports, module) {
 		tempObject = null;
 	}
 
+	function width() {
+		return $content.width();
+	}
 
 	exports.show = show;
 	exports.hide = hide;
 	exports.clear = clear;
 	exports.temp = temp;
 	exports.recover = recover;
+	exports.width = width;
 	exports.__defineGetter__("showing", function(){
 		return showing;
 	});

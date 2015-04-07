@@ -238,7 +238,7 @@ define(function (require, exports, module) {
 	}
 
 	function inject(scene) {
-		addObject(scene);
+		addObject(scene.canvas);
 	}
 
 	function loadScene(scene) {
@@ -256,8 +256,13 @@ define(function (require, exports, module) {
             json.root.res = this.res;
             var children = json.root.children = [];
 
-            for(var k=0; k<this.children.length; k++){
-                var child = this.children[k];
+            json.root.canvas = {};
+            json.root.canvas.x = this.canvas.x;
+            json.root.canvas.y = this.canvas.y;
+            json.root.canvas.scale = this.canvas.scale;
+
+            for(var k=0; k<this.canvas.children.length; k++){
+                var child = this.canvas.children[k];
                 if(child.constructor === cl.GameObject){
                     var cj = child.toJSON();
                     children.push(cj);

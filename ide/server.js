@@ -26,7 +26,7 @@ define(function (require, exports, module) {
     function handleComponentChanged(e, fullPath) {
         try{
             var component = require(fullPath);
-            if(!component) { return; }
+            if(!component || !component.Constructor || !component.Params) { return; }
 
             var constructor = component.Constructor;
             var prototype   = constructor.prototype;
@@ -103,7 +103,11 @@ define(function (require, exports, module) {
     }
 
     function handleEditorChanged(fullPath) {
-
+        var init = require(fullPath).init;
+        
+        if(init) {
+            init();
+        }
     }
 
     function handleBeforeScriptChanged() {
@@ -115,11 +119,11 @@ define(function (require, exports, module) {
 
         if(scriptErr) { return; }
 
-        // if(fullPath.indexOf("//Editor//") === -1) {
+        if(fullPath.indexOf("/Editor/") === -1) {
             handleComponentChanged(e, fullPath);
-        // } else {
-        //     handleEditorChanged(fullPath);
-        // }
+        } else {
+            handleEditorChanged(fullPath);
+        }
     }
 
 

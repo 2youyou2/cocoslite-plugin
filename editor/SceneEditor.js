@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     var EditorManager   = brackets.getModule("editor/EditorManager"),
         EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
+        StatusBar       = brackets.getModule("widgets/StatusBar"),
         Project         = require("core/Project"),
         Undo            = require("core/Undo"),
         Inspector       = require("core/Inspector"),
@@ -162,7 +163,46 @@ define(function (require, exports, module) {
         exports.trigger("sceneLoaded", s);
     }
 
+    function initBackground(scene) {
+        var node = new cc.DrawNode();
+        scene.addChild(node, -1);
 
+        var g = 30;
+        var w = 80;
+
+        for(var i=0; i<g; i++) {
+            node.drawSegment(cl.p(0,i*w), cl.p(w*g, i*w), 1, cc.color(150, 150, 150, 170));
+            node.drawSegment(cl.p(i*w,0), cl.p(i*w, w*g), 1, cc.color(150, 150, 150, 170));
+        }
+    }
+
+    function createCanvas(scene, data) {
+        var canvas = new cc.Layer();
+        scene.addChild(canvas);
+        scene.canvas = canvas;
+
+        var width = 480;
+        var height = 360;
+
+        if(data && !playing) {
+            canvas.x = data.x;
+            canvas.y = data.y;
+            canvas.scale = data.scale;    
+        } else {
+            var offset = Inspector.width();
+            canvas.x = cc._canvas.width/2 - width/2 - offset/2;
+            canvas.y = cc._canvas.height/2 - height/2;
+        }
+
+        var node = new cc.DrawNode();
+        canvas.addChild(node);
+
+        node.drawRect(cl.p(0,0), cl.p(width,height), cc.color(0, 0, 0, 0), 2, cc.color(100, 100, 100, 200));
+
+        initBackground(scene);
+
+        return canvas;
+    }
 
     function initEditor(){
 
@@ -171,21 +211,25 @@ define(function (require, exports, module) {
         $el = $("<div>");
         Cocos.initScene($el);
 
-        editor.$el.find(".CodeMirror-scroll").css("display", "none");
-        editor.$el.append($el);
+        editor.$el.css("display", "none");
+        $('.pane-content').append($el);
 
 
-        var $gameState    = $('<button id="game-state" style="position:absolute;top:0px;left:10px" >Game </button>');
-        var $sceneState   = $('<button id="scene-state" style="position:absolute;top:0px;left:100px">Scene</button>');
-        var $playBtn      = $('<button id="play-btn" style="position:absolute;top:0px;left:200px">Play</button>');
-        var $pauseBtn     = $('<button id="pause-btn" style="position:absolute;top:0px;left:300px">Pause</button>');
-        var $nextFrameBtn = $('<button id="next-frame-btn" style="position:absolute;top:0px;left:400px">NextFrame</button>');
+        var $gameState    = $('<button id="game-state" >Game </button>');
+        var $sceneState   = $('<button id="scene-state" >Scene</button>');
+        var $playBtn      = $('<button id="play-btn" >Play</button>');
+        var $pauseBtn     = $('<button id="pause-btn" >Pause</button>');
+        var $nextFrameBtn = $('<button id="next-frame-btn" >NextFrame</button>');
 
-        $el.find(".scene").append($gameState);
-        $el.find(".scene").append($sceneState);
-        $el.find(".scene").append($playBtn);
-        $el.find(".scene").append($pauseBtn);
-        $el.find(".scene").append($nextFrameBtn);
+        var $playBar = $('<div id="play-bar" style="position:absolute;top:0px;width:100%;height:5%"/>');
+
+        $playBar.append($gameState);
+        $playBar.append($sceneState);
+        $playBar.append($playBtn);
+        $playBar.append($pauseBtn);
+        $playBar.append($nextFrameBtn);
+
+        $playBar.insertBefore($el.find(".scene"));
 
         $gameState.click(setGameState);
         $sceneState.click(setSceneState);
@@ -208,6 +252,7 @@ define(function (require, exports, module) {
             if(Inspector.showing) {
                 Inspector.hide();
             }
+            StatusBar.show();
 
             return;
         }
@@ -215,6 +260,7 @@ define(function (require, exports, module) {
         if(!Inspector.showing) {
             Inspector.show();
         }
+        StatusBar.hide();
 
         editor = current;
 
@@ -257,6 +303,9 @@ define(function (require, exports, module) {
 
         projectOpened = true;
         hackGameObject();
+        cl.createCanvas = createCanvas;
+
+        $('#main-toolbar').css({display:'none'});
     });
 
     Cocos.on("gameStart", function(){

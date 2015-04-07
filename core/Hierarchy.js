@@ -84,7 +84,7 @@ define(function (require, exports, module) {
 		objMap[data.id] = obj;
 
 		var parent = obj.getParent();
-		if(parent) {
+		if(parent && parent._innerData) {
             parent._innerData.children.push(data);
         }
 		else {
@@ -94,7 +94,7 @@ define(function (require, exports, module) {
 
 	function removeObject(e, obj){
 		var parent = obj.getParent();
-		if(parent){
+		if(parent && parent._innerData){
 			var data = parent._innerData;
 			for(var i=0; i<data.children.length; i++){
 				if(data.children[i] === obj._innerData){
@@ -127,7 +127,7 @@ define(function (require, exports, module) {
 	function expandToPath(data) {
 		var obj = objMap[data.id];
 		var parent = obj.getParent();
-		if(parent) {
+		if(parent && parent._innerData) {
 			parent._innerData.open = true;
 			expandToPath(parent._innerData);
 		}

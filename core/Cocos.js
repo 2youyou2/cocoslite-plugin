@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     var Scene           = require("text!html/Scene.html"),
         Selector        = require("core/Selector"),
+        EditorManager   = require("editor/EditorManager"),
         FileSystem      = brackets.getModule("filesystem/FileSystem"),
         EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
@@ -20,11 +21,6 @@ define(function (require, exports, module) {
         var style = $('<link rel="stylesheet" type="text/css" />');
         $(document.head).prepend(style);
         $(style).attr('href', styleUrl);
-    }
-
-    function hackHtml() {
-        var $statusBar = $("#status-bar");
-        $statusBar.hide();
     }
 
     function initConfig(){
@@ -42,7 +38,7 @@ define(function (require, exports, module) {
             "engineDir": cl.engineDir,
             "project_type": "javascript",
             "debugMode" : 1,
-            "showFPS" : true,
+            "showFPS" : false,
             "frameRate" : 15,
             "id" : "gameCanvas",
             "renderMode" : 2,
@@ -55,20 +51,10 @@ define(function (require, exports, module) {
 
     function initCanvas(){
 
-        // cl.$editor = $('#editor-holder');
-        // cl.$editor.append($scene);
-
         cl.$canvas = $scene.find('#gameCanvas');
 
         cl.$fgCanvas = $scene.find("#fgCanvas");
         cl.fgCanvas = cl.$fgCanvas[0];
-        // cl.$fgCanvas[0].style.display = 'none';
-
-        cl.$fgCanvas._renderList = [];
-        cl.$fgCanvas.addRender = function(func){
-            this._renderList.push(func);
-        };
-
 
         cl.$fgCanvas.ctx = cl.fgCanvas.getContext('2d');
         var render = function(){
@@ -77,6 +63,7 @@ define(function (require, exports, module) {
             }
 
             var selectedObjects = Selector.getSelectObjects();
+            var editors = EditorManager.getEditors();
 
             var fg = cl.$fgCanvas;
             var maxW = cc._canvas.width ;
@@ -88,11 +75,16 @@ define(function (require, exports, module) {
             ctx.save();
             ctx.scale(1, -1);
             ctx.translate(0, -maxH);
-            for(var i=0; i<fg._renderList.length; i++){
+            
+            for(var i in editors){
+                var editor = editors[i];
+                if(!editor.renderScene) { continue; }
+
                 ctx.save();
-                fg._renderList[i](ctx, selectedObjects);
+                editor.renderScene(ctx, selectedObjects);
                 ctx.restore();
             }
+            
             ctx.restore();
         };
         
@@ -115,9 +107,6 @@ define(function (require, exports, module) {
                 cc.inputManager._isRegisterEvent = false;
                 cc.inputManager.registerSystemEvent(cl.fgCanvas);
             }
-
-            var $container = $scene.find('#Cocos2dGameContainer');
-            $container.css({margin:'0'});
 
             // hack cc.view._resizeEvent
             cc.view._resizeEvent = function () {
@@ -194,7 +183,6 @@ define(function (require, exports, module) {
         cc.game.run("gameCanvas");
     }
 
-    hackHtml();
     appendDefaultStyle();
     initConfig();
     initCanvas();

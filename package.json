@@ -1,0 +1,10 @@
+{
+    "title": "CocosLite",
+    "name": "CocosLite",
+    "description": "A game editor for cocos2d",
+    "version": "0.1.0",
+    "author": "Kaile Yin <jyinkailej@gmail.com>",
+    "engines": {
+        "brackets": ">=1.1.0"
+    }
+}

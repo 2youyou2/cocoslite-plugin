@@ -199,7 +199,7 @@ define(function (require, exports, module) {
 
         node.drawRect(cl.p(0,0), cl.p(width,height), cc.color(0, 0, 0, 0), 2, cc.color(100, 100, 100, 200));
 
-        initBackground(scene);
+        // initBackground(scene);
 
         return canvas;
     }
@@ -306,6 +306,10 @@ define(function (require, exports, module) {
         cl.createCanvas = createCanvas;
 
         $('#main-toolbar').css({display:'none'});
+        $('.working-set-splitview-btn').css({display:'none'});
+        $('.working-set-option-btn').css({display:'none'});
+        $('.working-set-option-btn').css({display:'none'});
+        $('.avril-tabs-work').css({left:28});
     });
 
     Cocos.on("gameStart", function(){

@@ -4,11 +4,13 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var ObjectManager = require("core/ObjectManager"),
+	var Resizer 	   = brackets.getModule("utils/Resizer");
+
+    var ObjectManager  = require("core/ObjectManager"),
     	Selector       = require("core/Selector"),
     	Undo 		   = require("core/Undo"),
-    	html    	   = require("text!html/Inspector.html"),
-	    Resizer 	   = brackets.getModule("utils/Resizer");
+    	html    	   = require("text!html/Inspector.html");
+
 
     var $content = $(html);
     $content.insertAfter(".content");
@@ -80,13 +82,9 @@ define(function (require, exports, module) {
 	function createInputForArray(array, $input){
 		for(var i=0; i<array.length; i++){
 			var $item = $("<div class='array-item'>");
-			$item.append($("<span style='width:20%'>#"+i+"</span>"));
+			$item.append($("<span class='number'>#"+i+"</span>"));
 			
 			var $innerInput = createInput(array, i, $item, true);
-			
-            if($innerInput) {
-                $innerInput.css("width","70%");
-            }
             
 			$input.append($item);
 		}
@@ -97,10 +95,10 @@ define(function (require, exports, module) {
 		var value = obj[key];
 
 		if(typeof value !== 'object') {
-			$input = $("<input>");
-			$input.css({"border-radius": "0px", "padding": "2px 2px", "border": "2px", "margin-bottom": "0px"});
+			$input = $("<span><input></span>");
+			// $input.css({"border-radius": "0px", "padding": "2px 2px", "border": "2px", "margin-bottom": "0px"});
 
-			var input = $input[0];
+			var input = $input.find('input')[0];
 	  		
 			if(typeof value === 'boolean'){
 	  			input.setAttribute('type', 'checkbox');
@@ -125,7 +123,6 @@ define(function (require, exports, module) {
 	  					this.realValue = parseFloat(this.value);
 	  				};
 	  			}
-	  			$input.css({"width": "55%"});
 	  		}
 
 	  		input.onkeypress = function(event){
@@ -156,8 +153,8 @@ define(function (require, exports, module) {
 			if(value.x !== undefined && value.y !== undefined){
 				/*jshint multistr: true */
                 $input = $("<span>\
-							<span style='width:40%;margin:3px'><input class='x-input' style='width:98%'></span>\
-						    <span style='width:40%;margin:3px'><input class='y-input' style='width:98%'></span>\
+							<span style='width:50%;margin-right:2px;float:left;display:block;overflow:hidden;'><input class='x-input' style='width:100%'></span>\
+						    <span style='display:block;overflow:hidden;'><input class='y-input' style='width:100%'></span>\
 						    </span>");
 				var xInput = $input.find('.x-input')[0];
 				var yInput = $input.find('.y-input')[0];
@@ -191,13 +188,11 @@ define(function (require, exports, module) {
 			  			}
 			  		};
 				});
-
-	  			$input.css({"width": "60%"});
 			} 
 			else if(value.constructor  === Array){
 				value._inspectorInputMap = {};
 
-				$input = $("<div class='array' style='margin-left:30px'>");
+				$input = $("<div class='array'>");
 				
 				createInputForArray(value, $input);
 
@@ -207,7 +202,12 @@ define(function (require, exports, module) {
 		
 		if($input){
 			if(!discardKey){
-				var $key = $('<span class="key">'+key+'</span>');
+
+				// Change first letter to upper case
+				var temp = key.substring(0,1).toUpperCase();
+				temp += key.substring(1,key.length);
+
+				var $key = $('<span class="key">'+temp+'</span>');
 				el.append($key);
 			}
 
@@ -226,7 +226,7 @@ define(function (require, exports, module) {
 		el.attr('id', component.classname);
 		el.addClass('component');
 
-		var name = $('<div>'+component.classname+'</div>');
+		var name = $('<div class="component-title">'+component.classname+'</div>');
 		el.append(name);
 
 		var content = $('<div>');
@@ -268,7 +268,7 @@ define(function (require, exports, module) {
 
 		currentObject = obj;
 
-		$addComponent.show();
+		// $addComponent.show();
 		initObjectUI(obj);
 	}
 

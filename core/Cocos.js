@@ -15,13 +15,6 @@ define(function (require, exports, module) {
 
     EventDispatcher.makeEventDispatcher(exports);
 
-    function appendDefaultStyle(){
-        // Insert default overlay style at the beginning of head, so any custom style can overwrite it.
-        var styleUrl = ExtensionUtils.getModulePath(module, "../css/main.css");
-        var style = $('<link rel="stylesheet" type="text/css" />');
-        $(document.head).prepend(style);
-        $(style).attr('href', styleUrl);
-    }
 
     function initConfig(){
         window.cl = {};
@@ -183,7 +176,6 @@ define(function (require, exports, module) {
         cc.game.run("gameCanvas");
     }
 
-    appendDefaultStyle();
     initConfig();
     initCanvas();
     initCocos();

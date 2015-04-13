@@ -12,9 +12,6 @@ define(function (require, exports, module) {
         ProjectModel   = brackets.getModule("project/ProjectModel");
 
     function _shouldShowName(name) {
-        if(name.endWith(".ini")){
-            var a = 1;
-        }
         return name.indexOf(".") == -1 || name.endWith(".js");
     }
 

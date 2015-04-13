@@ -4,17 +4,22 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var Scene           = require("text!html/Scene.html"),
-        Selector        = require("core/Selector"),
-        EditorManager   = require("editor/EditorManager"),
-        FileSystem      = brackets.getModule("filesystem/FileSystem"),
+    var FileSystem      = brackets.getModule("filesystem/FileSystem"),
         EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
-    var $scene = $(Scene);
+    var Scene           = require("text!html/Scene.html"),
+        Selector        = require("core/Selector"),
+        EditorManager   = require("editor/EditorManager");
 
     EventDispatcher.makeEventDispatcher(exports);
 
+    var $scene = $(Scene);
+
+    function initTopBar() {
+        var $topBar = $('<div id="top-bar">');
+        $topBar.insertBefore($('.main-view'));
+    }
 
     function initConfig(){
         window.cl = {};
@@ -179,6 +184,7 @@ define(function (require, exports, module) {
     initConfig();
     initCanvas();
     initCocos();
-
+    initTopBar();
+    
     exports.initScene = initScene;
 });

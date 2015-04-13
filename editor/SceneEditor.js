@@ -7,8 +7,9 @@ define(function (require, exports, module) {
     var EditorManager   = brackets.getModule("editor/EditorManager"),
         EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
-        StatusBar       = brackets.getModule("widgets/StatusBar"),
-        Project         = require("core/Project"),
+        StatusBar       = brackets.getModule("widgets/StatusBar");
+
+    var Project         = require("core/Project"),
         Undo            = require("core/Undo"),
         Inspector       = require("core/Inspector"),
         Selector        = require("core/Selector"),
@@ -17,129 +18,153 @@ define(function (require, exports, module) {
         Cocos           = require("core/Cocos");
 
 
-    var editor = null;
-    var scene = null;
-    var $el = null;
-
-    var projectOpened = false;
-    var lazyInitEditor = false;
-
     EventDispatcher.makeEventDispatcher(exports);
+
+    var _editor = null;
+    var _scene = null;
+
+    var _projectOpened = false;
+    var _lazyInitEditor = false;
+
 
     Undo.registerUndoType(".js.scene");
 
 
-    function setSceneState() {
-        cl.fgCanvas.style.display = "";
-        Selector.setEnable(true);
-    }
+    var _playing = false;
+    var _paused = false;
 
-    function setGameState() {
-        cl.fgCanvas.style.display = "none";
-        Selector.setEnable(false);
-    }
+    function initPlayBar() {
 
-    var playing = false;
-    var paused = false;
+        // game state html
+        var $state        = $('<span id="state-container" ></span>');
+        var $sceneState   = $('<span id="scene-state"class="state" title="Switch to Scene Editor Mode">Scene</span>');
+        var $gameState    = $('<span id="game-state" class="state disactive" title="Switch to Game Mode">Game</span>');
 
-    var tempJson = null;
+        $state.append($sceneState);
+        $state.append($gameState);
 
-    function beginPlaying() {
-        tempJson = scene.toJSON();
+        // game controller html
+        var $controller   = $('<span id="controller-container" ></span>');
+        var $playBtn      = $('<span id="play-btn" class="fa-play game-control-btn" title="Play game"></span>');
+        var $pauseBtn     = $('<span id="pause-btn" class="fa-pause game-control-btn" title="Pause game"></span>');
+        var $nextFrameBtn = $('<span id="next-frame-btn" class="fa-step-forward game-control-btn" title="Go to next frame"></span>');
 
-        setGameState();
-        cl.SceneManager.parseData(tempJson, function(tempScene) {
-            cc.director.runScene(tempScene);
+        $controller.append($playBtn);
+        $controller.append($pauseBtn);
+        $controller.append($nextFrameBtn);
 
-            Undo.temp();
-            Hierarchy.temp();
-            ObjectManager.loadScene(tempScene);
-            Selector.temp(tempScene);
-            Inspector.temp();
+        // play bar html
+        var $playBar = $('<div id="play-bar"/>');
 
-            exports.trigger("beginPlaying", tempScene);
-        });
-    }
+        $playBar.append($state);
+        $playBar.append($controller);
 
-    function endPlaying() {
-        setSceneState();
-        cc.director.runScene(scene);
+        $('#top-bar').append($playBar);
 
-        Undo.recover();
-        Hierarchy.recover();
-        Selector.recover();
-        Inspector.recover();
+        function switchToGameState() {
+            cl.fgCanvas.style.display = "none";
+            Selector.setEnable(false);
 
-        exports.trigger("endPlaying");
-    }
-
-    function play() {
-        playing = !playing;
-        
-        if(playing) {
-            beginPlaying();
+            $gameState.removeClass('disactive');
+            $sceneState.addClass('disactive');
         }
-        else {
-            endPlaying();
+
+        function switchToSceneState() {
+            cl.fgCanvas.style.display = "";
+            Selector.setEnable(true);
+
+            $gameState.addClass('disactive');
+            $sceneState.removeClass('disactive');
         }
-    }
 
-    function clickPauseBtn() {
-        if(this.checked) {
-            pause();
+        function beginPlaying() {
+            var tempJson = _scene.toJSON();
+
+            switchToGameState();
+            cl.SceneManager.parseData(tempJson, function(tempScene) {
+                cc.director.runScene(tempScene);
+
+                Undo.temp();
+                Hierarchy.temp();
+                ObjectManager.loadScene(tempScene);
+                Selector.temp(tempScene);
+                Inspector.temp();
+
+                exports.trigger("beginPlaying", tempScene);
+            });
+
+            $playBtn.addClass('checked');
         }
-        else {
-            resume();
+
+        function endPlaying() {
+            switchToSceneState();
+            cc.director.runScene(_scene);
+
+            Undo.recover();
+            Hierarchy.recover();
+            Selector.recover();
+            Inspector.recover();
+
+            exports.trigger("endPlaying");
+
+            $playBtn.removeClass('checked');
         }
-    }
-    function pause() {
-        paused = false;
 
-    }
+        function switchPlayState() {
+            _playing = !_playing;
+            
+            if(_playing) {
+                beginPlaying();
+            }
+            else {
+                endPlaying();
+            }
+        }
 
-    function resume() {
+        function clickPauseBtn() {
+            _paused = !_paused;
 
-    }
+            if(_paused) {
+                $pauseBtn.addClass('checked');
+            } else {
+                $pauseBtn.removeClass('checked');
+            }
+        }
 
-    function nextFrame() {
-        paused = false;
-        cc.director.getScheduler().update(cc.director.getAnimationInterval());
-        paused = true;
-    }
+        function nextFrame() {
+            _paused = false;
+            cc.director.getScheduler().update(cc.director.getAnimationInterval());
+            _paused = true;
+        }
 
-    function test(scene){
-        // var o = new cl.GameObject();
-        // o.setPosition(200,200)
-        // o.setScale(40)
-        // scene.addChild(o);
-
-        // var c = o.addComponent("TerrainComponent");
-        // c.terrainMaterial = "cave.tm";
-        // c.pixelsPerUnit = 48;
-        // c.smoothPath = true;
-        // // c.splitCorners = false;
-
-        // var path = o.getComponent("TerrainPathComponent");
-        // path.pathVerts = [cl.p(9,2.1), cl.p(5,0), cl.p(0,0), cl.p(0,5), cl.p(7,7)];
-        // // path.pathVerts = [cl.p(0,0), cl.p(5,0)];
-        // // path.pathVerts = [cl.p(200,200), cl.p(200,0), cl.p(0,0), cl.p(0,200)];
-        // path.closed = true;
-        
-
-        // var mesh = o.getComponent("MeshComponent");
-        // mesh.materials.push("Rocky.png");
-        // mesh.materials.push("RockyFill.png");
+        // button click event
+        $gameState.click(switchToGameState);
+        $sceneState.click(switchToSceneState);
+        $playBtn.click(switchPlayState);
+        $pauseBtn.click(clickPauseBtn);
+        $nextFrameBtn.click(nextFrame);
     }
 
+    
+    function initEditor() {
 
-    function sceneToString() {
-        var s = JSON.stringify(scene, null, '\t');
-        return s;
+        function sceneToString() {
+            var str = JSON.stringify(_scene, null, '\t');
+            return str;
+        }
+
+        _editor.document.getText = sceneToString;
+
+        var $el = $("<div class='scene-editor'>");
+        Cocos.initScene($el);
+
+        _editor.$el.css("display", "none");
+        $('.pane-content').append($el);
     }
 
     function closeScene() {
-        editor = scene = $el = null;
-        playing = paused = false;
+        _editor = _scene = null;
+        _playing = _paused = false;
         cc.director.runScene(new cc.Scene());
 
         Undo.clear();
@@ -150,102 +175,25 @@ define(function (require, exports, module) {
         exports.trigger("sceneClosed");
     }
 
-    function loadScene(s) {
-        scene = s;
+    function handleSceneLoaded(s) {
+        _scene = s;
 
-        cc.director.runScene(s);
+        cc.director.runScene(_scene);
 
-        test(s);
+        ObjectManager.loadScene(_scene);
+        Selector.loadScene(_scene);
 
-        ObjectManager.loadScene(s);
-        Selector.loadScene(s);
-
-        exports.trigger("sceneLoaded", s);
-    }
-
-    function initBackground(scene) {
-        var node = new cc.DrawNode();
-        scene.addChild(node, -1);
-
-        var g = 30;
-        var w = 80;
-
-        for(var i=0; i<g; i++) {
-            node.drawSegment(cl.p(0,i*w), cl.p(w*g, i*w), 1, cc.color(150, 150, 150, 170));
-            node.drawSegment(cl.p(i*w,0), cl.p(i*w, w*g), 1, cc.color(150, 150, 150, 170));
-        }
-    }
-
-    function createCanvas(scene, data) {
-        var canvas = new cc.Layer();
-        scene.addChild(canvas);
-        scene.canvas = canvas;
-
-        var width = 480;
-        var height = 360;
-
-        if(data && !playing) {
-            canvas.x = data.x;
-            canvas.y = data.y;
-            canvas.scale = data.scale;    
-        } else {
-            var offset = Inspector.width();
-            canvas.x = cc._canvas.width/2 - width/2 - offset/2;
-            canvas.y = cc._canvas.height/2 - height/2;
-        }
-
-        var node = new cc.DrawNode();
-        canvas.addChild(node);
-
-        node.drawRect(cl.p(0,0), cl.p(width,height), cc.color(0, 0, 0, 0), 2, cc.color(100, 100, 100, 200));
-
-        // initBackground(scene);
-
-        return canvas;
-    }
-
-    function initEditor(){
-
-        editor.document.getText = sceneToString;
-
-        $el = $("<div>");
-        Cocos.initScene($el);
-
-        editor.$el.css("display", "none");
-        $('.pane-content').append($el);
-
-
-        var $gameState    = $('<button id="game-state" >Game </button>');
-        var $sceneState   = $('<button id="scene-state" >Scene</button>');
-        var $playBtn      = $('<button id="play-btn" >Play</button>');
-        var $pauseBtn     = $('<button id="pause-btn" >Pause</button>');
-        var $nextFrameBtn = $('<button id="next-frame-btn" >NextFrame</button>');
-
-        var $playBar = $('<div id="play-bar" style="position:absolute;top:0px;width:100%;height:5%"/>');
-
-        $playBar.append($gameState);
-        $playBar.append($sceneState);
-        $playBar.append($playBtn);
-        $playBar.append($pauseBtn);
-        $playBar.append($nextFrameBtn);
-
-        $playBar.insertBefore($el.find(".scene"));
-
-        $gameState.click(setGameState);
-        $sceneState.click(setSceneState);
-        $playBtn.click(play);
-        $pauseBtn.click(clickPauseBtn);
-        $nextFrameBtn.click(nextFrame);
+        exports.trigger("sceneLoaded", _scene);
     }
 
 
-    function activeEditorChange(event, current, previous) {
+    function handleActiveEditorChange(event, current, previous) {
 
-        if(previous && previous === editor){
+        if(previous && previous === _editor){
             closeScene();
         }   
         
-        editor = null;
+        _editor = null;
 
         if(!current || !current.document.file.name.endWith(".js.scene")) {
             
@@ -262,60 +210,85 @@ define(function (require, exports, module) {
         }
         StatusBar.hide();
 
-        editor = current;
+        _editor = current;
 
-        if(projectOpened) {
+        if(_projectOpened) {
             initEditor();
         } else {
-            lazyInitEditor = true;
+            _lazyInitEditor = true;
         }
     }
 
+    function handleProjectOpen() {
 
+        function createCanvas(scene, data) {
+            var canvas = new cc.Layer();
+            scene.addChild(canvas);
+            scene.canvas = canvas;
 
-    function hackGameObject() {
+            var width = 480;
+            var height = 360;
 
-        var originGameObjectEnter = cl.GameObject.prototype.onEnter;
-        cl.GameObject.prototype.onEnter = function() {
-            if(!playing) {
-                return;
+            if(data && !_playing) {
+                canvas.x = data.x;
+                canvas.y = data.y;
+                canvas.scale = data.scale;    
+            } else {
+                canvas.x = cc._canvas.width/2 - width/2;
+                canvas.y = cc._canvas.height/2 - height/2;
             }
-            originGameObjectEnter.call(this);
+
+            // draw a black background canvas
+            var node = new cc.DrawNode();
+            canvas.addChild(node);
+
+            node.drawRect(cl.p(0,0), cl.p(width,height), cc.color(0, 0, 0, 255), 0, cc.color(100, 100, 100, 200));
+
+            return canvas;
         }
 
-        var originGameObjectUpdate = cl.GameObject.prototype.update;
-        cl.GameObject.prototype.update = function(dt) {
-            if(paused) {
-                return;
-            }
-            originGameObjectUpdate.call(this, dt);
+        function hackGameObject() {
+
+            var originGameObjectEnter = cl.GameObject.prototype.onEnter;
+            cl.GameObject.prototype.onEnter = function() {
+                if(!_playing) {
+                    return;
+                }
+                originGameObjectEnter.call(this);
+            };
+
+            var originGameObjectUpdate = cl.GameObject.prototype.update;
+            cl.GameObject.prototype.update = function(dt) {
+                if(_paused) {
+                    return;
+                }
+                originGameObjectUpdate.call(this, dt);
+            };
         }
-    }
 
-
-    EditorManager.on("activeEditorChange", activeEditorChange);
-    Project.on("projectOpen", function() {
-
-        if(lazyInitEditor) {
+        if(_lazyInitEditor) {
             initEditor();
-            lazyInitEditor = false;
+            _lazyInitEditor = false;
         }
 
-        projectOpened = true;
-        hackGameObject();
+        _projectOpened = true;
         cl.createCanvas = createCanvas;
 
-        $('#main-toolbar').css({display:'none'});
-        $('.working-set-splitview-btn').css({display:'none'});
-        $('.working-set-option-btn').css({display:'none'});
-        $('.working-set-option-btn').css({display:'none'});
-        $('.avril-tabs-work').css({left:28});
-    });
+        hackGameObject();
+        initPlayBar();
+    }
 
-    Cocos.on("gameStart", function(){
+    function handleGameStart() {
+        // hack cocos loader path
+        // this will make cocos load res from current project path
         cc.loader.resPath = ProjectManager.getProjectRoot().fullPath;
 
-        var file = editor.document.file;
-        cl.SceneManager.loadScene(file.fullPath, loadScene, true);
-    });
+        var fullPath = _editor.document.file.fullPath;
+        cl.SceneManager.loadScene(fullPath, handleSceneLoaded, true);
+    }
+
+
+    EditorManager.on("activeEditorChange", handleActiveEditorChange);
+    Project.on("projectOpen", handleProjectOpen);
+    Cocos.on("gameStart", handleGameStart);
 });

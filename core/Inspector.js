@@ -18,10 +18,16 @@ define(function (require, exports, module) {
     var $inspector = $content.find(".inspector");
     var $addComponent = $content.find(".add-component");
 
-    Resizer.makeResizable($content[0], Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250, true);
+    Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
+
+    $content.on("panelResizeUpdate", onResize);
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
+
+	function onResize() {
+        $(".content").css("right", width() + "px");
+	}
 
 	function show(speed){
 		showing = true;
@@ -31,6 +37,7 @@ define(function (require, exports, module) {
         }
         
 		$content.animate({"right":"0px"}, speed);
+		$(".main-view .content").animate({"right": width() + "px"}, speed);
 	}
 
 	function hide(speed){
@@ -39,8 +46,9 @@ define(function (require, exports, module) {
 		if(speed === undefined) {
             speed = 500;
         }
-        
+
 		$content.animate({"right":-$content.width()+"px"}, speed);
+		$(".main-view .content").animate({"right": "0px"}, speed);
 	}
 
 	hide(0);
@@ -229,7 +237,7 @@ define(function (require, exports, module) {
 		var name = $('<div class="component-title">'+component.classname+'</div>');
 		el.append(name);
 
-		var content = $('<div>');
+		var content = $('<div class="component-content">');
 		el.append(content);
 
 		name.click(function(){

@@ -20,14 +20,14 @@ define(function (require, exports, module) {
 
     Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
 
-    $content.on("panelResizeUpdate", onResize);
+    // $content.on("panelResizeUpdate", onResize);
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
 
-	function onResize() {
-        $(".content").css("right", width() + "px");
-	}
+	// function onResize() {
+ //        $(".content").css("right", width() + "px");
+	// }
 
 	function show(speed){
 		showing = true;
@@ -36,8 +36,8 @@ define(function (require, exports, module) {
             speed = 500;
         }
         
-		$content.animate({"right":"0px"}, speed);
-		$(".main-view .content").animate({"right": width() + "px"}, speed);
+		$content.css({"right":"0px"});
+		$(".main-view .content").css({"right": width() + "px"});
 	}
 
 	function hide(speed){
@@ -47,10 +47,10 @@ define(function (require, exports, module) {
             speed = 500;
         }
 
-		$content.animate({"right":-$content.width()+"px"}, speed);
-		$(".main-view .content").animate({"right": "0px"}, speed);
+		$content.css({"right":-$content.width()+"px"});
+		$(".main-view .content").css({"right": "0px"});
 	}
-
+	
 	hide(0);
 
 	function bindInput(input, obj, key){
@@ -234,13 +234,25 @@ define(function (require, exports, module) {
 		el.attr('id', component.classname);
 		el.addClass('component');
 
-		var name = $('<div class="component-title">'+component.classname+'</div>');
-		el.append(name);
+		var title = $('<div class="component-title">'+component.classname+'</div>');
+		el.append(title);
+
+		var icon = $('<span class="fa-caret-down indicate">');
+		title.append(icon);
 
 		var content = $('<div class="component-content">');
 		el.append(content);
 
-		name.click(function(){
+		title.click(function() {
+
+			if(content.is(':visible')) {
+				icon.removeClass('fa-caret-down');
+				icon.addClass('fa-caret-right');
+			} else {
+				icon.addClass('fa-caret-down');
+				icon.removeClass('fa-caret-right');
+			}
+
 			content.toggle();
 		});
 

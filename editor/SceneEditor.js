@@ -212,11 +212,11 @@ define(function (require, exports, module) {
 
         _editor = current;
 
-        if(_projectOpened) {
+        // if(_projectOpened) {
             initEditor();
-        } else {
-            _lazyInitEditor = true;
-        }
+        // } else {
+        //     _lazyInitEditor = true;
+        // }
     }
 
     function handleProjectOpen() {

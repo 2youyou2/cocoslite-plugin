@@ -1,16 +1,18 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var ProjectManager = brackets.getModule("project/ProjectManager"),
-        Menus          = brackets.getModule("command/Menus"),
-        Commands       = brackets.getModule("command/Commands"),
-        CommandManager = brackets.getModule("command/CommandManager"),
-        FileSystem     = brackets.getModule("filesystem/FileSystem"),
-        Strings        = brackets.getModule("strings"),
-        Dialogs        = brackets.getModule("widgets/Dialogs"),
+    var ProjectManager     = brackets.getModule("project/ProjectManager"),
+        Menus              = brackets.getModule("command/Menus"),
+        Commands           = brackets.getModule("command/Commands"),
+        CommandManager     = brackets.getModule("command/CommandManager"),
+        FileSystem         = brackets.getModule("filesystem/FileSystem"),
+        Strings            = brackets.getModule("strings"),
+        Dialogs            = brackets.getModule("widgets/Dialogs"),
+        AsyncUtils         = brackets.getModule("utils/Async"),
         PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
-        CreateProjectTemp  = require("text!html/CreateProject.html"),
     	EventDispatcher    = brackets.getModule("utils/EventDispatcher");
+
+    var CreateProjectTemp  = require("text!html/CreateProject.html");
 
     var isCocosProject;
     var resFolder, srcFolder;
@@ -41,11 +43,15 @@ define(function (require, exports, module) {
     }
 
     function readSources() {
+        var deferred = new $.Deferred();
+
     	readSource(srcFolder, function() {
 	    	require(sources, function() {
-            	exports.trigger("projectOpen");
+                deferred.resolve();
 	    	});
     	});
+
+        return deferred.promise();
     }
 
 	function reset() {
@@ -73,10 +79,12 @@ define(function (require, exports, module) {
 
 	    	if(!isCocosProject) {
 	    		reset();
-	    		return;
-	    	}
-
-	    	readSources();
+	    		console.err(root.fullPath + " is not a cocos project path.");
+	    	} else {
+                readSources().then(function(){
+                    exports.trigger("projectOpen");
+                });
+            }
     	});
     });
 

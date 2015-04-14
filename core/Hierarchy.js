@@ -22,19 +22,13 @@ define(function (require, exports, module) {
 
     	Vue.component('hierarchy-folder', {
 		    template: '#hierarchy-folder-template',
-		    data: {
-		        open: false,
-		        selected: false
-		    }
-		});
-
-		var tree = new Vue({
-			el: '#hierarchy',
-			data: {
-				children: root.children,
-				currentObjects: []
-			},
-			methods:{
+		    data: function() {
+		    	return {
+			        open: false,
+			        selected: false
+			    };
+		    },
+		    methods:{
 				select: function(obj, e){
 
 					// if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
@@ -67,6 +61,14 @@ define(function (require, exports, module) {
                         e.stopPropagation();
                     }
 				}
+			}
+		});
+
+		var tree = new Vue({
+			el: '#hierarchy',
+			data: {
+				children: root.children,
+				currentObjects: []
 			}
 		});
 

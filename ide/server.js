@@ -146,7 +146,9 @@ define(function (require, exports, module) {
     }
 
     function handleWindowClose() {
-        ide.close();
+        if(ide) {
+            ide.close();
+        }
         ide = null;
     }
 

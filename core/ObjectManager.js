@@ -1,114 +1,125 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventDispatcher = brackets.getModule("utils/EventDispatcher"),
-    	Project         = require("core/Project"),
+    var Project         = require("core/Project"),
+        EventManager    = require("core/EventManager"),
     	Undo 		    = require("core/Undo");
 
 
 	!function(Object, getPropertyDescriptor, getPropertyNames){
-	  if (!(getPropertyDescriptor in Object)) {
-	    var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-	    Object[getPropertyDescriptor] = function getPropertyDescriptor(o, name) {
-	      var proto = o, descriptor;
-	      while (proto && !(
-	        descriptor = getOwnPropertyDescriptor(proto, name))
-	      ) proto = proto.__proto__;
-	      return descriptor;
-	    };
-	  }
-	  if (!(getPropertyNames in Object)) {
-	    var getOwnPropertyNames = Object.getOwnPropertyNames, ObjectProto = Object.prototype, keys = Object.keys;
-	    Object[getPropertyNames] = function getPropertyNames(o) {
-	      var proto = o, unique = {}, names, i;
-	      while (proto != ObjectProto) {
-	        for (names = getOwnPropertyNames(proto), i = 0; i < names.length; i++) {
-	          unique[names[i]] = true;
-	        }
-	        proto = proto.__proto__;
-	      }
-	      return keys(unique);
-	    };
-	  }
+	    if (!(getPropertyDescriptor in Object)) {
+		    var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+		    Object[getPropertyDescriptor] = function getPropertyDescriptor(o, name) {
+		        var proto = o, descriptor;
+		        while (proto && !(
+		            descriptor = getOwnPropertyDescriptor(proto, name))
+		        ) proto = proto.__proto__;
+		        return descriptor;
+		    };
+	    }
+	    if (!(getPropertyNames in Object)) {
+		    var getOwnPropertyNames = Object.getOwnPropertyNames, ObjectProto = Object.prototype, keys = Object.keys;
+		    Object[getPropertyNames] = function getPropertyNames(o) {
+		        var proto = o, unique = {}, names, i;
+		        while (proto != ObjectProto) {
+		            for (names = getOwnPropertyNames(proto), i = 0; i < names.length; i++) {
+		                unique[names[i]] = true;
+		            }
+		            proto = proto.__proto__;
+		        }
+		        return keys(unique);
+		    };
+	    }
 	}(Object, "getPropertyDescriptor", "getPropertyNames");
 	
 
-    function addObject(obj){
-    	if(obj.constructor !== cl.GameObject && obj.constructor !== cc.Scene && obj.constructor !== cc.Layer) {
-    		return;
-    	}
+	function injectArray(obj, p) {
+		var array = obj[p];
 
-		exports.trigger("addObject",obj);
+		var originPush   = array.push;
+		var originSplice = array.splice;
 
-		if(obj._injected) return;
-		obj._injected = true;
+		array.push = function(item){
+			var self = this;
 
-		obj._originAddChildFunc = obj.addChild;
-		obj.addChild = function(child){
-			obj._originAddChildFunc.apply(obj, arguments);
-			addObject(child);
+			if(!Undo.undoing()){
+				(function(){
+					var index = self.length-1;
 
+					var undo = function(){
+						self.splice(index, 1);
+					}
+					var redo = function(){
+						self.push(item);
+					}
+					Undo.objectPropertyChanged(undo, redo);
+				})();
+			}
+
+			originPush.call(self, item);
+			EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, self, "");
+		}
+
+		array.splice = function(){
 			var args = arguments;
-			function undo(){
-				obj.removeChild(child);
+			var self = this;
+
+			if(!Undo.undoing()){
+				(function(){
+					var index  = args[0];
+					var number = args[1];
+
+					var oldItems = [];
+					for(var i=index; i<index+number; i++){
+						oldItems.push(self[i]);
+					}
+					var newItems = [];
+					for(var i=2; i<args.length; i++){
+						newItems.push(args[i]);
+					}
+
+					var undo = function(){
+						self.splice(index, newItems.length);
+						for(var i=0; i<oldItems.length; i++){
+							self.splice(index, 0, oldItems[i]);
+						}
+					}
+					var redo = function(){
+						originSplice.apply(self, args);
+						
+						EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, self, "");
+					}
+					Undo.objectPropertyChanged(undo, redo);
+				})();
 			}
-			function redo(){
-				obj.addChild.apply(obj, args);
-			}
-			Undo.objectPropertyChanged(undo, redo);
+
+			originSplice.apply(self, arguments);
+			EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, self, "");
 		}
 
-		obj._originRemoveChildFunc = obj.removeChild;
-		obj.removeChild = function(child){
-			removeObject(child);
-			obj._originRemoveChildFunc.apply(obj, arguments);
+		array.set = function(index, value){
+			var self = this;
 
-			function undo(){
-				obj.addChild(child);
+			if(!Undo.undoing()){
+				(function(){
+					var oldValue = self[index];
+					var newValue = value;
+
+					var undo = function(){
+						self.set(index, oldValue);
+					}
+					var redo = function(){
+						self.set(index, newValue);
+					}
+
+					Undo.objectPropertyChanged(undo, redo);
+				})();
 			}
-			function redo(){
-				obj.removeChild(child);
-			}
-			Undo.objectPropertyChanged(undo, redo);
+
+			self[index] = value;
+			EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, self, index);
 		}
-
-
-    	var children = obj.children;
-		for(var i=0; i<children.length; i++){
-			var c = children[i];
-			addObject(c);
-		}
-
-		if(obj.components){
-			for(var k in obj.components){
-				var c = obj.components[k];
-
-				injectObject(c);
-				exports.trigger("addComponent", c);
-			}
-
-			obj._originAddComponentFunc = obj.addComponent;
-			obj.addComponent = function(){
-				var c = obj._originAddComponentFunc.apply(obj, arguments);
-				injectObject(c);
-				exports.trigger("addComponent", c);
-
-				return c;
-			}
-
-			obj._originRemoveComponentFunc = obj.removeComponent;
-			obj.removeComponent = function(){
-				var c = obj._originRemoveComponentFunc.apply(obj, arguments);
-				exports.trigger("removeComponent", c);
-
-				return c;
-			}
-		}
-	};
-
-	function removeObject(obj){
-		exports.trigger("removeObject", obj);
-	};
+	}
 
 	function injectObject(obj){
 		obj._originProperties = {};
@@ -117,89 +128,9 @@ define(function (require, exports, module) {
 			
 			(function(p){
 				// if property is array
-				if(obj[p] && obj[p].constructor == Array){
-					var array = obj[p];
-
-					array._originPush = array.push;
-					array.push = function(item){
-
-						if(!Undo.undoing()){
-							(function(){
-								var index = array.length-1;
-
-								var undo = function(){
-									array.splice(index, 1);
-								}
-								var redo = function(){
-									array.push(item);
-								}
-								Undo.objectPropertyChanged(undo, redo);
-							})();
-						}
-
-						array._originPush.apply(array, item);
-						exports.trigger("objectPropertyChanged", array, "");
-					}
-
-					array._originSplice = array.splice;
-					array.splice = function(){
-						// var item = array[index];
-						var args = arguments;
-
-						if(!Undo.undoing()){
-							(function(){
-								var index  = args[0];
-								var number = args[1];
-
-								var oldItems = [];
-								for(var i=index; i<index+number; i++){
-									oldItems.push(array[i]);
-								}
-								var newItems = [];
-								for(var i=2; i<args.length; i++){
-									newItems.push(args[i]);
-								}
-
-								var undo = function(){
-									array.splice(index, newItems.length);
-									for(var i=0; i<oldItems.length; i++){
-										array.splice(index, 0, oldItems[i]);
-									}
-								}
-								var redo = function(){
-									array._originSplice.apply(array, args);
-									
-									exports.trigger("objectPropertyChanged", array, "");
-								}
-								Undo.objectPropertyChanged(undo, redo);
-							})();
-						}
-
-						array._originSplice.apply(array, arguments);
-						exports.trigger("objectPropertyChanged", array, "");
-					}
-
-					array.set = function(index, value){
-
-						if(!Undo.undoing()){
-							(function(){
-								var oldValue = array[index];
-								var newValue = value;
-
-								var undo = function(){
-									array.set(index, oldValue);
-								}
-								var redo = function(){
-									array.set(index, newValue);
-								}
-
-								Undo.objectPropertyChanged(undo, redo);
-							})();
-						}
-
-						array[index] = value;
-						exports.trigger("objectPropertyChanged", array, index);
-					}
+				if(obj[p] && obj[p].constructor == Array) {
+					injectArray(obj, p);
+					return;
 				}
 
 				var dsc = Object.getPropertyDescriptor(obj, p);
@@ -213,7 +144,7 @@ define(function (require, exports, module) {
 
 						var func = this._originProperties[p].set;
 						func.apply(this, arguments);
-						exports.trigger("objectPropertyChanged", this, p);
+						EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
 						var newValue = this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
@@ -226,7 +157,7 @@ define(function (require, exports, module) {
 						var oldValue = this[p];
 
 						this._originProperties[p] = val;
-						exports.trigger("objectPropertyChanged", this, p);
+						EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
 						var newValue = this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
@@ -237,18 +168,7 @@ define(function (require, exports, module) {
 		}
 	}
 
-	function inject(scene) {
-		addObject(scene.canvas);
-	}
-
-	function loadScene(scene) {
-		inject(scene);
-		exports.trigger("sceneInjected")
-	}
-
-
-
-    function hackObjectToJson() {
+    function hackObjectJsonControl() {
 
         cc.Scene.prototype.toJSON = function(){
             var json = {};
@@ -296,6 +216,11 @@ define(function (require, exports, module) {
                 }
             }
 
+            var self = this;
+            this.properties.forEach(function(p) {
+				json[p] = self[p];
+			});
+
             return json;
         };
 
@@ -315,12 +240,119 @@ define(function (require, exports, module) {
             }
             return json;
         };
+
+
+
+        // hack parse json to GameObject.
+        // crate inner data for GameObject.
+        // inner data is used for editor data storage
+		var originParseGameObject = cl.SceneManager.parseGameObject;
+		cl.SceneManager.parseGameObject = function(parent, data) {
+			var o = originParseGameObject.apply(this, arguments);
+			
+			o.properties.forEach(function(p) {
+				o[p] = data[p];
+			});
+
+			return 0;
+		}
     }
 
-    EventDispatcher.makeEventDispatcher(exports);
+    function hackGameObject () {
 
-    Project.on("projectOpen", hackObjectToJson);
+    	var originAddChild    = cc.Node.prototype.addChild;
+    	var originRemoveChild = cc.Node.prototype.removeChild;
 
-	exports.loadScene = loadScene;
-	exports.inject = inject;
+    	var gp = cl.GameObject.prototype;
+    	var lp = cc.Layer.prototype;
+
+    	// hack addChild method
+		gp.addChild = lp.addChild = function(child){
+			var self = this;
+
+			originAddChild.apply(self, arguments);
+
+			if(child.constructor === cl.GameObject) {
+				EventManager.trigger(EventManager.OBJECT_ADDED, child);
+			}
+
+			var args = arguments;
+			function undo(){
+				self.removeChild(child);
+			}
+			function redo(){
+				self.addChild.apply(self, args);
+			}
+			Undo.objectPropertyChanged(undo, redo);
+		}
+
+		// hack removeChild method
+		gp.removeChild = lp.removeChild = function(child){
+			var self = this;
+
+			if(child.constructor === cl.GameObject) {
+				EventManager.trigger(EventManager.OBJECT_REMOVED, child);
+			}
+
+			originRemoveChild.apply(self, arguments);
+
+			function undo(){
+				self.addChild(child);
+			}
+			function redo(){
+				self.removeChild(child);
+			}
+			Undo.objectPropertyChanged(undo, redo);
+		}
+
+
+		var originAddComponent = gp.addComponent;
+		var originRemoveComponent = gp.removeComponent;
+
+		gp.addComponent = function() {
+			var c = originAddComponent.apply(this, arguments);
+			EventManager.trigger(EventManager.COMPONENT_ADDED, c);
+
+			return c;
+		}
+
+		gp.removeComponent = function() {
+			var c = originRemoveComponent.apply(this, arguments);
+			EventManager.trigger(EventManager.COMPONENT_REMOVED, c);
+
+			return c;
+		}
+
+		var originCtor = gp.ctor;
+		gp.ctor = function() {
+			originCtor.apply(this, arguments);
+
+			this.lock = false;
+			this.open = false;
+
+			this.properties = ["visible", "lock", "open", "name"];
+			injectObject(this);
+		}
+    }
+
+    function hackComponent() {
+
+		var cp = cl.Component.prototype;
+		var originCtor = cp.ctor;
+
+		cp.ctor = function() {
+			originCtor.apply(this, arguments);
+
+			injectObject(this);
+		}
+
+    }
+
+    function handleProjectOpen() {
+    	hackObjectJsonControl();
+    	hackGameObject();
+    	hackComponent();
+    }
+
+    EventManager.on(EventManager.PROJECT_OPEN, handleProjectOpen);
 });

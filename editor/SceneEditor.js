@@ -5,20 +5,16 @@ define(function (require, exports, module) {
     "use strict";
 
     var EditorManager   = brackets.getModule("editor/EditorManager"),
-        EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
         StatusBar       = brackets.getModule("widgets/StatusBar");
 
     var Project         = require("core/Project"),
+        EventManager    = require("core/EventManager"),
         Undo            = require("core/Undo"),
         Inspector       = require("core/Inspector"),
-        Selector        = require("core/Selector"),
-        Hierarchy       = require("core/Hierarchy"),
         ObjectManager   = require("core/ObjectManager"),
         Cocos           = require("core/Cocos");
 
-
-    EventDispatcher.makeEventDispatcher(exports);
 
     var _editor = null;
     var _scene = null;
@@ -63,7 +59,7 @@ define(function (require, exports, module) {
 
         function switchToGameState() {
             cl.fgCanvas.style.display = "none";
-            Selector.setEnable(false);
+            EventManager.trigger(EventManager.SCENE_SWITCH_STATE, "game");
 
             $gameState.removeClass('disactive');
             $sceneState.addClass('disactive');
@@ -71,7 +67,7 @@ define(function (require, exports, module) {
 
         function switchToSceneState() {
             cl.fgCanvas.style.display = "";
-            Selector.setEnable(true);
+            EventManager.trigger(EventManager.SCENE_SWITCH_STATE, "scene");
 
             $gameState.addClass('disactive');
             $sceneState.removeClass('disactive');
@@ -81,16 +77,12 @@ define(function (require, exports, module) {
             var tempJson = _scene.toJSON();
 
             switchToGameState();
+            EventManager.trigger(EventManager.SCENE_BEFORE_PLAYING);
+
             cl.SceneManager.parseData(tempJson, function(tempScene) {
                 cc.director.runScene(tempScene);
 
-                Undo.temp();
-                Hierarchy.temp();
-                ObjectManager.loadScene(tempScene);
-                Selector.temp(tempScene);
-                Inspector.temp();
-
-                exports.trigger("beginPlaying", tempScene);
+                EventManager.trigger(EventManager.SCENE_BEGIN_PLAYING, tempScene);
             });
 
             $playBtn.addClass('checked');
@@ -100,12 +92,7 @@ define(function (require, exports, module) {
             switchToSceneState();
             cc.director.runScene(_scene);
 
-            Undo.recover();
-            Hierarchy.recover();
-            Selector.recover();
-            Inspector.recover();
-
-            exports.trigger("endPlaying");
+            EventManager.trigger(EventManager.SCENE_END_PLAYING);
 
             $playBtn.removeClass('checked');
         }
@@ -156,10 +143,13 @@ define(function (require, exports, module) {
         _editor.document.getText = sceneToString;
 
         var $el = $("<div class='scene-editor'>");
-        Cocos.initScene($el);
+        var $scene = Cocos.getSceneHtml();
+        $el.append($scene);
 
         _editor.$el.css("display", "none");
         $('.pane-content').append($el);
+
+        cc.game.run("gameCanvas");
     }
 
     function closeScene() {
@@ -167,23 +157,15 @@ define(function (require, exports, module) {
         _playing = _paused = false;
         cc.director.runScene(new cc.Scene());
 
-        Undo.clear();
-        Hierarchy.clear();
-        Inspector.clear();
-        Selector.clear();
-
-        exports.trigger("sceneClosed");
+        EventManager.trigger(EventManager.SCENE_CLOSED);
     }
 
-    function handleSceneLoaded(s) {
-        _scene = s;
+    function handleSceneLoaded(scene) {
+        _scene = scene;
 
         cc.director.runScene(_scene);
 
-        ObjectManager.loadScene(_scene);
-        Selector.loadScene(_scene);
-
-        exports.trigger("sceneLoaded", _scene);
+        EventManager.trigger(EventManager.SCENE_LOADED, _scene);
     }
 
 
@@ -278,7 +260,7 @@ define(function (require, exports, module) {
         initPlayBar();
     }
 
-    function handleGameStart() {
+    function loadScene() {
         // hack cocos loader path
         // this will make cocos load res from current project path
         cc.loader.resPath = ProjectManager.getProjectRoot().fullPath;
@@ -289,6 +271,7 @@ define(function (require, exports, module) {
 
 
     EditorManager.on("activeEditorChange", handleActiveEditorChange);
-    Project.on("projectOpen", handleProjectOpen);
-    Cocos.on("gameStart", handleGameStart);
+
+    EventManager.on(EventManager.PROJECT_OPEN, handleProjectOpen);
+    EventManager.on(EventManager.GAME_START,   loadScene);
 });

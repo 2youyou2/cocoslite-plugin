@@ -7,7 +7,7 @@ define(function (require, exports, module) {
 	var Resizer 	   = brackets.getModule("utils/Resizer");
 
     var ObjectManager  = require("core/ObjectManager"),
-    	Selector       = require("core/Selector"),
+    	EventManager   = require("core/EventManager"),
     	Undo 		   = require("core/Undo"),
     	html    	   = require("text!html/Inspector.html");
 
@@ -298,11 +298,11 @@ define(function (require, exports, module) {
 		$addComponent.hide();
 	}
 
-	Selector.on("selectedObjects", function(event, objs){
+	EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs){
 		selectedObject(objs[0]);
 	});
 
-	ObjectManager.on("addComponent", function(event, component){
+	EventManager.on(EventManager.COMPONENT_ADDED, function(event, component){
 		var target = component.getTarget();
 		if(target !== currentObject) {
             return;
@@ -311,7 +311,7 @@ define(function (require, exports, module) {
 		initComponentUI(component);
 	});
 
-	ObjectManager.on("objectPropertyChanged", function(event, o, p){
+	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(event, o, p){
 		if(!o._inspectorInputMap) {
 			return;
 		}
@@ -332,25 +332,15 @@ define(function (require, exports, module) {
         }
 	});
 
-	function temp() {
-		tempObject = currentObject;
-		selectedObject(null);
-	}
-
-	function recover() {
-		selectedObject(tempObject);
-		tempObject = null;
-	}
-
 	function width() {
 		return $content.width();
 	}
 
+	EventManager.on(EventManager.SCENE_CLOSED,        clear);
+
 	exports.show = show;
 	exports.hide = hide;
 	exports.clear = clear;
-	exports.temp = temp;
-	exports.recover = recover;
 	exports.width = width;
 	exports.__defineGetter__("showing", function(){
 		return showing;

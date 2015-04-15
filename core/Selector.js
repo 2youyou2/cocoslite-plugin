@@ -4,8 +4,8 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EventDispatcher = brackets.getModule("utils/EventDispatcher"),
-        EditorManager   = require("editor/EditorManager"),
+    var EditorManager   = require("editor/EditorManager"),
+        EventManager    = require("core/EventManager"),
     	Undo 			= require("core/Undo");
 
 
@@ -56,7 +56,7 @@ define(function (require, exports, module) {
 
 	        	var hitTest = function(object){
 	        		if(object.constructor === cl.GameObject){
-	        			if(!object.lock && object.hitTest(worldPoint)) {
+	        			if(!object.lock && object.visible && object.hitTest(worldPoint)) {
 	        				return object;
                         }
 	        		}
@@ -115,10 +115,6 @@ define(function (require, exports, module) {
 	    }), 10000);
     }
 
-    function loadScene(s) {
-    	scene = s;
-        initListener();
-    }
 
     function selectObjects(objs) {
 
@@ -156,7 +152,7 @@ define(function (require, exports, module) {
     	})();
 
         selectedObjects = objs;
-        exports.trigger("selectedObjects", selectedObjects);
+        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
 
         Undo.endUndoBatch();
 
@@ -167,7 +163,7 @@ define(function (require, exports, module) {
     	tempScene = scene = null;
     }
 
-    function temp(s) {
+    function temp(e, s) {
     	tempSelectedObjects = selectedObjects;
     	selectedObjects = [];
 
@@ -182,14 +178,29 @@ define(function (require, exports, module) {
     	scene = tempScene;
     	tempScene = null;
     }
+    
+    function handleSceneLoaded(e, s) {
+        scene = s;
+        initListener();
+    }
 
-    EventDispatcher.makeEventDispatcher(exports);
+    function handleSceneSwitchState(e, state) {
+        if(state === 'game') {
+            enable = false;
+        } 
+        else if(state === 'scene') {
+            enable = true;
+        }
+    }
+
+    EventManager.on(EventManager.SCENE_LOADED, handleSceneLoaded);
+    EventManager.on(EventManager.SCENE_SWITCH_STATE, handleSceneSwitchState);
+    EventManager.on(EventManager.SCENE_BEGIN_PLAYING, temp);
+    EventManager.on(EventManager.SCENE_END_PLAYING,   recover);
+    EventManager.on(EventManager.SCENE_CLOSED,        clear);
 
     exports.selectObjects = selectObjects;
     exports.setEnable = setEnable;
-    exports.loadScene = loadScene;
     exports.getSelectObjects = function() { return selectedObjects; }
     exports.clear = clear;
-    exports.temp = temp;
-    exports.recover = recover;
 });

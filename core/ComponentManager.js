@@ -4,27 +4,21 @@
 define(function (require, exports, module) {
     "use strict";
 
+    var CommandManager = brackets.getModule("command/CommandManager"),
+        Menus          = brackets.getModule("command/Menus");
+
     var Selector       = require("core/Selector"),
     	Undo           = require("core/Undo"),
         Project        = require("core/Project"),
-        ObjectManager  = require("core/ObjectManager"),
-    	CommandManager = brackets.getModule("command/CommandManager"),
-    	Menus          = brackets.getModule("command/Menus");
+        EventManager   = require("core/EventManager"),
+        ObjectManager  = require("core/ObjectManager");
 
-    // var $view = $(".main-view");
-    // var _$content = $('<div class="component-manager">');
-    // $view.append(_$content);
-
-    // _$content.css({"left":400, "top":100});
 
     var currentObjects = null;
 
     var cmds = [];
     var objectMenu = null;
     var componentMenu = null;
-
-    // 
-    var componentMap = {};
 
     function createEmptyObject() {
     	Undo.beginUndoBatch();
@@ -39,7 +33,7 @@ define(function (require, exports, module) {
     	} else {
     		var scene = cc.director.getRunningScene();
 	    	var obj = new cl.GameObject();
-            scene.addChild(obj);
+            scene.canvas.addChild(obj);
             objs.push(obj);
         }
 
@@ -82,24 +76,13 @@ define(function (require, exports, module) {
 		}
     }
 
-    Project.on("projectOpen", function() {
+    EventManager.on(EventManager.PROJECT_OPEN, function() {
 	    registerCommand();
 	    registerMenus();
     });
 
-    Selector.on("selectedObjects", function(event, objs) {
+    EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs) {
     	currentObjects = objs;
 	});
-
-    ObjectManager.on("addComponent", function(event, component){
-        var components = componentMap[component.constructor.className];
-
-        if(!components) {
-            components = [];
-            componentMap[component.constructor.className] = components;
-        }
-
-        components.push(component);        
-    });
 
 });

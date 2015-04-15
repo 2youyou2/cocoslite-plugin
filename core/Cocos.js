@@ -5,14 +5,12 @@ define(function (require, exports, module) {
     "use strict";
 
     var FileSystem      = brackets.getModule("filesystem/FileSystem"),
-        EventDispatcher = brackets.getModule("utils/EventDispatcher"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
     var Scene           = require("text!html/Scene.html"),
         Selector        = require("core/Selector"),
+        EventManager    = require("core/EventManager"),
         EditorManager   = require("editor/EditorManager");
-
-    EventDispatcher.makeEventDispatcher(exports);
 
     var $scene = $(Scene);
 
@@ -98,7 +96,8 @@ define(function (require, exports, module) {
         var isRegisterEvent = false;
         cc.game.onStart = function(){
 
-            exports.trigger("gameStart");
+            EventManager.trigger(EventManager.GAME_START);
+
 
             if(!isRegisterEvent) {
                 isRegisterEvent = true;
@@ -175,10 +174,8 @@ define(function (require, exports, module) {
         });
     }
 
-
-    function initScene($container, cb) {
-        $container.append($scene);
-        cc.game.run("gameCanvas");
+    function getSceneHtml() {
+        return $scene;
     }
 
     initConfig();
@@ -186,5 +183,5 @@ define(function (require, exports, module) {
     initCocos();
     initTopBar();
     
-    exports.initScene = initScene;
+    exports.getSceneHtml = getSceneHtml;
 });

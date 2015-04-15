@@ -9,16 +9,14 @@ define(function (require, exports, module) {
         Strings            = brackets.getModule("strings"),
         Dialogs            = brackets.getModule("widgets/Dialogs"),
         AsyncUtils         = brackets.getModule("utils/Async"),
-        PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
-    	EventDispatcher    = brackets.getModule("utils/EventDispatcher");
+        PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
-    var CreateProjectTemp  = require("text!html/CreateProject.html");
+    var CreateProjectTemp  = require("text!html/CreateProject.html"),
+        EventManager       = require("core/EventManager");
 
     var isCocosProject;
     var resFolder, srcFolder;
     var sources;
-
-    EventDispatcher.makeEventDispatcher(exports);
 
     function readSource(item, cb) {
     	if(item.name.endWith(".js")) {
@@ -46,9 +44,15 @@ define(function (require, exports, module) {
         var deferred = new $.Deferred();
 
     	readSource(srcFolder, function() {
-	    	require(sources, function() {
-                deferred.resolve();
-	    	});
+            try{
+                require(sources, function() {
+                    deferred.resolve();
+                });
+            }
+            catch(e) {
+                console.err("compile source failed : ", e);
+            }
+	    	
     	});
 
         return deferred.promise();
@@ -82,7 +86,7 @@ define(function (require, exports, module) {
 	    		console.err(root.fullPath + " is not a cocos project path.");
 	    	} else {
                 readSources().then(function(){
-                    exports.trigger("projectOpen");
+                    EventManager.trigger(EventManager.PROJECT_OPEN);
                 });
             }
     	});

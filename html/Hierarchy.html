@@ -12,7 +12,7 @@
 
 <script type="text/x-template" id="hierarchy-folder-template">
     <span class="ui-tree-handle {{selected?'selected':''}}" v-on="click: select(this, $event)">
-        <span v-show="children.length>0" class="ui-tree-icon-collapse {{open?'uncollapsed':''}}" v-on="click: open = !open"></span>
+        <span v-show="children.length>0" class="ui-tree-icon-collapse {{open?'uncollapsed':''}}" v-on="click: onCollipseChanged"></span>
         <span class="ui-tree-icon-eye {{visible?'fa-eye':'fa-eye-slash'}}" v-on="click: onVisibleChanged"></span>
         <span class="ui-tree-icon-lock {{lock?'fa-lock':'fa-unlock'}}" v-on="click: onLockChanged"></span>
         <span >{{name}}</span>

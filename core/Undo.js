@@ -5,6 +5,8 @@ define(function (require, exports, module) {
     	EditorManager         = brackets.getModule("editor/EditorManager"),
     	EditorCommandHandlers = brackets.getModule("editor/EditorCommandHandlers");
 
+    var EventManager          = require("core/EventManager");
+
     // based on Backbone.js' inherits	
 	var ctor = function(){};
 	var inherits = function(parent, protoProps) {
@@ -111,6 +113,10 @@ define(function (require, exports, module) {
 			}
 			return false;
 		};
+
+		EventManager.on(EventManager.SCENE_BEGIN_PLAYING, this.temp);
+		EventManager.on(EventManager.SCENE_END_PLAYING,   this.recover);
+		EventManager.on(EventManager.SCENE_CLOSED,        this.clear);
 	};
 
 

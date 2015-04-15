@@ -5,8 +5,8 @@ define(function (require, exports, module) {
 
     var html  		   = require("text!html/Hierarchy.html"),
 	    Selector       = require("core/Selector"),
-	    ObjectManager  = require("core/ObjectManager"),
 	    Undo           = require("core/Undo"),
+	    EventManager   = require("core/EventManager"),
 	    Vue   		   = require("thirdparty/vue");
 
     var $sidebar = $("#sidebar");
@@ -14,7 +14,7 @@ define(function (require, exports, module) {
     $content.insertAfter($sidebar.find(".horz-resizer"));
 
 
-    var root     = null;
+    var root     = {children:[]};
     var tempRoot = null;
     var	objMap   = {};
 
@@ -71,15 +71,22 @@ define(function (require, exports, module) {
 		    },
 		    methods:{
 				select: select,
-				onVisibleChanged: function() {
-					this.visible = !this.visible;
+				changeValue: function(key) {
+					Undo.beginUndoBatch();
+					
 					var obj = getObject(this.$data);
-					obj.visible = this.visible;
+					obj[key] = !this[key];
+
+					Undo.endUndoBatch();
+				},
+				onVisibleChanged: function() {
+					this.changeValue('visible');
 				},
 				onLockChanged: function() {
-					this.lock = !this.lock;
-					var obj = getObject(this.$data);
-					obj.lock = this.lock;
+					this.changeValue('lock');
+				},
+				onCollipseChanged: function() {
+					this.changeValue('open');
 				}
 			}
 		});
@@ -99,38 +106,48 @@ define(function (require, exports, module) {
 		});
     }
 
+    function createData (obj) {
+    	var data = {
+    		children:[],
+			selected: false
+		};
+
+		if(obj) {
+			data.id = obj.__instanceId;
+
+			obj.properties.forEach(function(p){
+				data[p] = obj[p];
+			});
+		}
+
+		return data;
+    }
+
 	function addObject(e, obj){
 
-		var data = {name: obj.name, 
-					id: obj.__instanceId, 
-					children:[],
-					visible:true,
-					lock:false,
-			        open: false,
-			        selected: false};
+		var data = createData(obj);
 
 		obj._innerData = data;
 		objMap[data.id] = obj;
 
 		var parent = obj.getParent();
-		if(parent && parent._innerData) {
-            parent._innerData.children.push(data);
+		var parentData = parent._innerData;
+
+		if(!parentData) {
+            parent._innerData = root;
+            parentData = root;
         }
-		else {
-            root = data;
-        }
+
+        parentData.children.push(data);
 	}
 
 	function removeObject(e, obj){
 		var parent = obj.getParent();
-		if(parent && parent._innerData){
-			var data = parent._innerData;
-			for(var i=0; i<data.children.length; i++){
-				if(data.children[i] === obj._innerData){
-					data.children.splice(i,1);
-					return;
-				}
-			}
+		var parentData = parent._innerData;
+
+		var index = parentData.children.indexOf(obj._innerData);
+		if(index !== -1) {
+			parentData.children.splice(index,1);
 		}
 	}
 
@@ -155,22 +172,26 @@ define(function (require, exports, module) {
 
 	function expandToPath(data) {
 		var obj = objMap[data.id];
-		var parent = obj.getParent();
-		if(parent && parent._innerData) {
-			parent._innerData.open = true;
+
+		if(obj) {
+			var parent = obj.getParent();
+
+			parent.open = true;
+
 			expandToPath(parent._innerData);
 		}
 	}
 
 	function clear() {
 		$content.find("#hierarchy").empty();
-		tempRoot = root = null;
+		root = {children:[]};
+		tempRoot = null;
 		objMap = {};
 	}
 
-	function temp() {
+	function temp(e, tempScene) {
 		tempRoot = root;
-		root = null;
+		root = {children:[]};
 	}
 
 	function recover() {
@@ -179,12 +200,28 @@ define(function (require, exports, module) {
 		createContent();
 	}
 
-	ObjectManager.on("addObject", addObject);
-	ObjectManager.on("removeObject", removeObject);
-	ObjectManager.on("sceneInjected", createContent);
-	Selector.on("selectedObjects", selectedObjects);
+
+
+	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(e, object, property) {
+		if(object.properties.indexOf(property) === -1) {
+			return;
+		}
+
+		var data = object._innerData;
+		if(data) {
+			data[property] = object[property];
+		}
+	})
+
+	EventManager.on(EventManager.OBJECT_ADDED,   addObject);
+	EventManager.on(EventManager.OBJECT_REMOVED, removeObject);
+	
+	EventManager.on(EventManager.SCENE_LOADED,   createContent);
+	EventManager.on(EventManager.SCENE_CLOSED,   clear);
+	EventManager.on(EventManager.SELECT_OBJECTS, selectedObjects);
+	EventManager.on(EventManager.SCENE_BEFORE_PLAYING, temp);
+	EventManager.on(EventManager.SCENE_BEGIN_PLAYING,  createContent);
+	EventManager.on(EventManager.SCENE_END_PLAYING,    recover);
 
 	exports.clear = clear;
-	exports.temp = temp;
-	exports.recover = recover;
 });

@@ -56,7 +56,7 @@ define(function (require, exports, module) {
 
 	        	var hitTest = function(object){
 	        		if(object.constructor === cl.GameObject){
-	        			if(object.hitTest(worldPoint)) {
+	        			if(!object.lock && object.hitTest(worldPoint)) {
 	        				return object;
                         }
 	        		}

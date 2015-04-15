@@ -2,18 +2,24 @@
     <span class="hierarchy-header-title">Hierarchy</span>
 </div>
 
-<div id="hierarchy" class="tree-view no-icon">
-	<ul>
-		<li v-repeat="children" v-component="hierarchy-folder" />
+<div id="hierarchy">
+	<ul class="ui-tree-nodes">
+		<li  v-repeat="model: children" class="ui-tree-node" >
+            <div v-with="model" v-component="hierarchy-folder"/>
+        </li>
 	</ul>
 </div>
 
 <script type="text/x-template" id="hierarchy-folder-template">
-    <div class="item hierarchy-folder {{selected ? 'selected' : ''}}" v-on="click: select(this, $event)">
-    	<span class="toggle {{ open ? 'open' : 'closed'}}" v-on="click: open = !open" style="display:{{children.length > 0 ? '' : 'none'}}"></span>
-        {{name}}
-    </div>
-    <ul v-show="open">
-        <li v-repeat="children" v-component="hierarchy-folder"></li>
+    <span class="ui-tree-handle {{selected?'selected':''}}" v-on="click: select(this, $event)">
+        <span v-show="children.length>0" class="ui-tree-icon-collapse {{open?'uncollapsed':''}}" v-on="click: open = !open"></span>
+        <span class="ui-tree-icon-eye {{visible?'fa-eye':'fa-eye-slash'}}" v-on="click: onVisibleChanged"></span>
+        <span class="ui-tree-icon-lock {{lock?'fa-lock':'fa-unlock'}}" v-on="click: onLockChanged"></span>
+        <span >{{name}}</span>
+    </span>
+    <ul v-show="open" class="ui-tree-nodes">
+        <li  v-repeat="model: children" class="ui-tree-node" >
+            <div v-with="model" v-component="hierarchy-folder"/>
+        </li>
     </ul>
 </script>

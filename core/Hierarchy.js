@@ -1,10 +1,12 @@
 define(function (require, exports, module) {
     "use strict";
 
+	var Resizer 	   = brackets.getModule("utils/Resizer");
+
     var html  		   = require("text!html/Hierarchy.html"),
 	    Selector       = require("core/Selector"),
-	    ObjectManager = require("core/ObjectManager"),
-	    Resizer 	   = brackets.getModule("utils/Resizer"),
+	    ObjectManager  = require("core/ObjectManager"),
+	    Undo           = require("core/Undo"),
 	    Vue   		   = require("thirdparty/vue");
 
     var $sidebar = $("#sidebar");
@@ -20,46 +22,64 @@ define(function (require, exports, module) {
     	$content.empty();
     	$content.append($(html));
 
+    	function select(obj, e){
+
+			// if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
+
+			// } 
+			// else {
+                if(root.currentObjects) {
+                	root.currentObjects.forEach(function(item){
+                        item.selected = false;
+                    });
+                }
+				
+				root.currentObjects = [];
+			// }
+
+			if(obj) {
+				obj.selected = true;
+				root.currentObjects.push(obj);
+			}
+
+			var selectedObjs = [];
+            
+            root.currentObjects.forEach(function(item){
+                selectedObjs.push(objMap[item.id]);
+            });
+			
+			Selector.selectObjects(selectedObjs);
+
+			if(e) {
+                e.stopPropagation();
+            }
+		}
+
+		function getObject(data) {
+			var id = data.id;
+			var obj = objMap[id];
+			if(!obj) {
+				console.error("object with id [%s] can't find.", id);
+			}
+			return obj;
+		}
+
     	Vue.component('hierarchy-folder', {
 		    template: '#hierarchy-folder-template',
 		    data: function() {
-		    	return {
-			        open: false,
-			        selected: false
-			    };
+		    	return {};
 		    },
 		    methods:{
-				select: function(obj, e){
-
-					// if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
-
-					// } 
-					// else {
-                        if(root.currentObjects) {
-                        	root.currentObjects.forEach(function(item){
-	                            item.selected = false;
-	                        });
-                        }
-						
-						root.currentObjects = [];
-					// }
-
-					if(obj) {
-						// obj.selected = true;
-						root.currentObjects.push(obj);
-					}
-
-					var selectedObjs = [];
-                    
-                    root.currentObjects.forEach(function(item){
-                        selectedObjs.push(objMap[item.id]);
-                    });
-					
-					Selector.selectObjects(selectedObjs);
-
-					if(e) {
-                        e.stopPropagation();
-                    }
+				select: select,
+				onVisibleChanged: function() {
+					this.visible = !this.visible;
+					var obj = getObject(this.$data);
+					obj.visible = this.visible;
+				},
+				onLockChanged: function() {
+					this.lock = !this.lock;
+					var obj = getObject(this.$data);
+					obj.lock = this.lock;
 				}
 			}
 		});
@@ -75,13 +95,20 @@ define(function (require, exports, module) {
     	Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined);
 
 		$content.click(function(){
-			tree.select(null);
+			select(null);
 		});
     }
 
 	function addObject(e, obj){
 
-		var data = {name: obj.name, id: obj.__instanceId, children:[]};
+		var data = {name: obj.name, 
+					id: obj.__instanceId, 
+					children:[],
+					visible:true,
+					lock:false,
+			        open: false,
+			        selected: false};
+
 		obj._innerData = data;
 		objMap[data.id] = obj;
 

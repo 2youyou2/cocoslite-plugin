@@ -203,7 +203,8 @@ define(function (require, exports, module) {
 
 
 	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(e, object, property) {
-		if(object.properties.indexOf(property) === -1) {
+		var properties = object.properties;
+		if(properties && properties.indexOf(property) === -1) {
 			return;
 		}
 

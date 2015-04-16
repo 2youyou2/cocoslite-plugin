@@ -167,7 +167,28 @@ define(function (require, exports, module) {
         }
         
         cc.loader.loadJsWithImg = cc.loader.loadJs;
+
         cc.game.prepare(function(){
+
+            // hack cocos load flow
+
+            var originSetGLDefaultValues = cc.Director.prototype.setGLDefaultValues;
+            cc.Director.prototype.setGLDefaultValues = function () {
+                originSetGLDefaultValues.apply(this, arguments);
+
+                // set background color to transparent
+                cc._renderContext.clearColor(0.0, 0.0, 0.0, 0.0);
+            };
+
+            var originCreate3DContext = cc.create3DContext;
+            cc.create3DContext = function(canvas, opt_attribs) {
+                // support alpha background
+                opt_attribs.alpha = true;
+
+                return originCreate3DContext.apply(this, arguments);
+            }
+
+            // load CocosLote module
             loadCocosLiteModule(function(){
                 cc.game._prepared = true;
             });

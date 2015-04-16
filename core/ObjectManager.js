@@ -251,7 +251,7 @@ define(function (require, exports, module) {
 			var o = originParseGameObject.apply(this, arguments);
 			
 			o.properties.forEach(function(p) {
-				o[p] = data[p];
+				o[p] = data[p] === undefined ? o[p] : data[p];
 			});
 
 			return 0;

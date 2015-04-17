@@ -41,6 +41,8 @@ define(function (require, exports, module) {
     ChromeConnect.on("scriptChanged", handleScriptChanged);
 
     exports.openFile = openFile;
-    exports.close = window.close;
+    exports.close = function() {
+        window.close();
+    }
     // ProjectModel._shouldShowName = _shouldShowName;
 });

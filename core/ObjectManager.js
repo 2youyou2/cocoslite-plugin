@@ -348,11 +348,11 @@ define(function (require, exports, module) {
 
     }
 
-    function handleProjectOpen() {
+    function handleCocosLoaded() {
     	hackObjectJsonControl();
     	hackGameObject();
     	hackComponent();
     }
 
-    EventManager.on(EventManager.PROJECT_OPEN, handleProjectOpen);
+    EventManager.on(EventManager.COCOS_LOADED, handleCocosLoaded);
 });

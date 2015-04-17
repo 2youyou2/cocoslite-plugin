@@ -3,7 +3,6 @@ define(function (require, exports, module) {
 
     var ProjectManager     = brackets.getModule("project/ProjectManager"),
         Menus              = brackets.getModule("command/Menus"),
-        Commands           = brackets.getModule("command/Commands"),
         CommandManager     = brackets.getModule("command/CommandManager"),
         FileSystem         = brackets.getModule("filesystem/FileSystem"),
         Strings            = brackets.getModule("strings"),
@@ -12,6 +11,9 @@ define(function (require, exports, module) {
         PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
     var CreateProjectTemp  = require("text!html/CreateProject.html"),
+        MenusManager       = require("core/MenusManager"),
+        Commands           = require("core/Commands"),
+        Strings            = require("strings"),
         EventManager       = require("core/EventManager");
 
     var isCocosProject;
@@ -120,6 +122,7 @@ define(function (require, exports, module) {
         });
 
         $projectName = dialog.getElement().find(".name");
+        $projectName.value("CocosLiteProject");
         $projectName.focus();
         $projectLocation = dialog.getElement().find(".location");
         $projectLocation.val(PreferencesManager.getViewState("cocoslite.project.location"));
@@ -141,15 +144,23 @@ define(function (require, exports, module) {
         });
     }
 
+    function handleProjectSettings() {
+
+    }
+
     
     function registerMenu() {
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        menu.addMenuDivider();
-        menu.addMenuItem(Commands.CMD_CREATE_COCOS_PROJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_CREATE_COCOS_PROJECT, "", Menus.FIRST);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_CREATE_COCOS_PROJECT);
+
+        menu.addGameEditorMenuDivider(Menus.LAST);
+        menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
     }
 
 
-    CommandManager.register("Create Project", Commands.CMD_CREATE_COCOS_PROJECT, handleCreateProject);
+    CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_CREATE_COCOS_PROJECT, handleCreateProject);
+    CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS, handleProjectSettings);
 
     registerMenu();
 

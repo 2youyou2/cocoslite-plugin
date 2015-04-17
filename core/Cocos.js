@@ -191,6 +191,7 @@ define(function (require, exports, module) {
             // load CocosLote module
             loadCocosLiteModule(function(){
                 cc.game._prepared = true;
+                EventManager.trigger(EventManager.COCOS_LOADED);
             });
         });
     }

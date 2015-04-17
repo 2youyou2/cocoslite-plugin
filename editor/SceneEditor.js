@@ -4,11 +4,16 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var EditorManager   = brackets.getModule("editor/EditorManager"),
+    var AppInit         = brackets.getModule("utils/AppInit"),
+        Menus           = brackets.getModule("command/Menus"),
+        CommandManager  = brackets.getModule("command/CommandManager"),
+        EditorManager   = brackets.getModule("editor/EditorManager"),
         ProjectManager  = brackets.getModule("project/ProjectManager"),
         StatusBar       = brackets.getModule("widgets/StatusBar");
 
     var Project         = require("core/Project"),
+        Commands        = require("core/Commands"),
+        Strings         = require("strings"),
         EventManager    = require("core/EventManager"),
         Undo            = require("core/Undo"),
         Inspector       = require("core/Inspector"),
@@ -108,7 +113,7 @@ define(function (require, exports, module) {
             }
         }
 
-        function clickPauseBtn() {
+        function switchPauseState() {
             _paused = !_paused;
 
             if(_paused) {
@@ -128,8 +133,19 @@ define(function (require, exports, module) {
         $gameState.click(switchToGameState);
         $sceneState.click(switchToSceneState);
         $playBtn.click(switchPlayState);
-        $pauseBtn.click(clickPauseBtn);
+        $pauseBtn.click(switchPauseState);
         $nextFrameBtn.click(nextFrame);
+
+
+        CommandManager.register(Strings.PLAY,  Commands.CMD_PLAY,  switchPlayState);
+        CommandManager.register(Strings.PAUSE, Commands.CMD_PAUSE, switchPauseState);
+        CommandManager.register(Strings.STEP,  Commands.CMD_STEP,  nextFrame);
+
+        var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
+        menu.addGameEditorMenuDivider();
+        menu.addGameEditorMenuItem(Commands.CMD_PLAY);
+        menu.addGameEditorMenuItem(Commands.CMD_PAUSE);
+        menu.addGameEditorMenuItem(Commands.CMD_STEP);
     }
 
     
@@ -201,7 +217,7 @@ define(function (require, exports, module) {
         // }
     }
 
-    function handleProjectOpen() {
+    function handleCocosLoaded() {
 
         function createCanvas(scene, data) {
             var canvas = new cc.Layer();
@@ -272,6 +288,6 @@ define(function (require, exports, module) {
 
     EditorManager.on("activeEditorChange", handleActiveEditorChange);
 
-    EventManager.on(EventManager.PROJECT_OPEN, handleProjectOpen);
+    EventManager.on(EventManager.COCOS_LOADED, handleCocosLoaded);
     EventManager.on(EventManager.GAME_START,   loadScene);
 });

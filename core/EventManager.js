@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     // Cocos
     exports.GAME_START                  = "game_start";
+    exports.COCOS_LOADED                = "cocos_loaded";
+
 
     // SceneEditor
     exports.SCENE_LOADED 				= "scene_loaded";
@@ -27,4 +29,8 @@ define(function (require, exports, module) {
     exports.OBJECT_REMOVED 				= "object_removed";
     exports.COMPONENT_ADDED 			= "component_added";
     exports.COMPONENT_REMOVED 			= "component_removed";
+
+    // GameEditor
+    exports.IDE_FOCUS                   = "ide_focus";
+
 });

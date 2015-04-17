@@ -6,8 +6,10 @@ define(function (require, exports, module) {
 
     var ProjectManager   = brackets.getModule("project/ProjectManager"),
         Menus            = brackets.getModule("command/Menus"),
-        Commands         = brackets.getModule("command/Commands"),
     	CommandManager   = brackets.getModule("command/CommandManager");
+
+    var Commands         = require("core/Commands"),
+        EventManager     = require("core/EventManager");
 
     var ide = null;
     var scriptChanged = false;
@@ -19,6 +21,10 @@ define(function (require, exports, module) {
             ide.onbeforeunload = function() {
                 ide = null;
             }
+
+            ide.addEventListener('focus', function() {
+                EventManager.trigger(EventManager.IDE_FOCUS);
+            });
         }
         ide.focus();
     }
@@ -181,5 +187,5 @@ define(function (require, exports, module) {
 
     registerMenus();
 
-    window.onbeforeunload = handleWindowClose;
+    window.addEventListener('beforeunload', handleWindowClose);
 });

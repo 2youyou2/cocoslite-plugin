@@ -80,11 +80,12 @@ define(function (require, exports, module) {
     }
 
     function setMenuHidden(id, hidden) {
-	    brackets.app.setMenuHidden(id, hidden, function (err) {
+
+        brackets.app.setMenuHidden(id, hidden, function (err) {
             if (err) {
                 // console.error("setMenuHidden() -- id not found: " + id + " (error: " + err + ")");
             }
-        });
+        }); 
     }
 
     function setAllMenuHidden(hidden) {
@@ -162,70 +163,56 @@ define(function (require, exports, module) {
     }
 
     function hackMenus() {
+        var DIVIDER = "---";
+
 		var originRemoveMenu = Menus.removeMenu;
     	Menus.removeMenu = function(id) {
     		originRemoveMenu.apply(this, arguments);
 
     		delete _gameEditorMenus[id];
-    	}
+    	};
 
-        var originAddMenuDivider = Menus.Menu.prototype.addMenuDivider;
-        Menus.Menu.prototype.addMenuDivider = function (position, relativeID) {
-            var item = originAddMenuDivider.apply(this, arguments);
-
-            if(_currentFocusWindow === EditorType.GameEditor) {
-                setMenuHidden(item.dividerId, true);
-            }
-
-            return item;
-        }
 
         Menus.Menu.prototype.addGameEditorMenuDivider = function (position, relativeID) {
-            var item = originAddMenuDivider.apply(this, arguments);
-            var command = item.dividerId;
-
-            var menu = getMenu(EditorType.GameEditor, this.id);
-            menu.push(command);
-
-            if(_currentFocusWindow === EditorType.GameEditor) {
-                setMenuHidden(command, false);
-            }
-
-            return item;
-        }
+            return this.addGameEditorMenuItem(DIVIDER, "", position, relativeID);
+        };
 
     	var originAddMenuItem = Menus.Menu.prototype.addMenuItem;
     	Menus.Menu.prototype.addMenuItem = function(command, keyBindings, position, relativeID) {
-    		var item = originAddMenuItem.apply(this, arguments);
+    		var item;
 
             if(_currentFocusWindow === EditorType.GameEditor) {
-                setMenuHidden(command, true);
+                if(brackets.platform === 'mac') {
+                    setMenuHidden(command, true);
+                } else {
+                    item = new Menus.MenuItem();
+                }
+            } else {
+                item = originAddMenuItem.apply(this, arguments);
             }
 
     		return item;
-    	}
+    	};
 
     	Menus.Menu.prototype.addGameEditorMenuItem = function(command, keyBindings, position, relativeID) {
-    		var item = originAddMenuItem.apply(this, arguments);
-
-    		var menu = getMenu(EditorType.GameEditor, this.id);
-	    	menu.push(command);
+    		var item;
 
             if(_currentFocusWindow === EditorType.GameEditor) {
-                setMenuHidden(command, false);
+                item = originAddMenuItem.apply(this, arguments);
+
+                var menu = getMenu(EditorType.GameEditor, this.id);
+                menu.push(command);
+
+                if(brackets.platform === 'mac') {
+                    setMenuHidden(command, false);
+                }
+
+            } else {
+                item = new Menus.MenuItem();
             }
 
     		return item;
-    	}
-
-    	Menus.Menu.prototype.addAllEditorMenuItem = function(command, keyBindings, position, relativeID) {
-    		var item = originAddMenuItem.apply(this, arguments);
-
-    		var menu = getMenu(EditorType.All, this.id);
-	    	menu.push(command);
-
-    		return item;
-    	}
+    	};
 
     	var originRemoveMenuItem = Menus.Menu.prototype.removeMenuItem;
     	Menus.Menu.prototype.removeMenuItem = function(command) {
@@ -236,7 +223,55 @@ define(function (require, exports, module) {
     		if(index !== -1) {
     			menu.slice(index, 1);
     		}
-    	}
+    	};
+    }
+
+    function isMenusContains(menuId, command) {
+        var menu = _gameEditorMenus[menuId];
+        if(menu && menu[command]) {
+            return true;
+        }
+
+        menu = _persistentMenus[menuId];
+        if(menu && menu[command]) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function removeUnnecessaryMenus() {
+        // hide all menu
+        var menuMap = Menus.getAllMenus();
+        for(var id in menuMap) {
+
+            var menu = menuMap[id];
+            var menuItems = menu.menuItems;
+
+            for(var menuItemID in menuItems) {
+                var item = menuItems[menuItemID];
+                var commandId;
+
+                if(item.isDivider) {
+                    commandId = item.dividerId;
+                }
+                else {
+                    var command = item.getCommand();
+                    if(!command) { 
+                        continue; 
+                    }
+                    commandId = command.getID();
+                }
+
+                if(!isMenusContains(id, commandId)) {
+                    menu.removeMenuItem(commandId);
+                }
+            }
+
+            if(Object.keys(menuItems).length === 0) {
+                Menus.removeMenu(id);
+            }
+        }
     }
 
     function initMenus() {
@@ -260,7 +295,8 @@ define(function (require, exports, module) {
             ["debug-menu", [
                 "debug.switchLanguage"
             ]]
-        ]
+        ];
+
         registerEditorMenus(EditorType.All, menus);
 
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
@@ -269,6 +305,7 @@ define(function (require, exports, module) {
         menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
         menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
         menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
+
     }
 
 	function init() {
@@ -279,13 +316,20 @@ define(function (require, exports, module) {
         // init menus
         initMenus();
 
-        // refresh menus
-		handleGameEditorFocus();
-    };
+        // mac apps only have one menu bar, so mac platform need change menu's hidden when focus changes.
+        // other platforms only need remove unnecessary menus when init app.
+        if(brackets.platform === 'mac') {
+
+            // refresh menus
+            handleGameEditorFocus();
+
+            window.addEventListener('focus', handleGameEditorFocus);
+            EventManager.on(EventManager.IDE_FOCUS,    handleIDEFocus);
+        } else {
+            removeUnnecessaryMenus();
+        }
+    }
 
     init();
-    
-    window.addEventListener('focus', handleGameEditorFocus);
-    EventManager.on(EventManager.IDE_FOCUS,    handleIDEFocus);
 
 });

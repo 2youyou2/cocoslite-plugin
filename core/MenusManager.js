@@ -72,7 +72,7 @@ define(function (require, exports, module) {
     	if(!menus[id]) {
     		menus[id] = [];
 
-    		if(type === _currentFocusWindow) {
+    		if(type === _currentFocusWindow && brackets.platform ==='mac') {
     			setMenuHidden(id, false);
     		}
     	}
@@ -102,7 +102,7 @@ define(function (require, exports, module) {
 	    		var id;
 
 	    		if(item.isDivider) {
-	    			id = item.dividerId;
+	    			id = item.id;
 	    		}
 	    		else {
 	    			var command = item.getCommand();
@@ -165,6 +165,15 @@ define(function (require, exports, module) {
     function hackMenus() {
         var DIVIDER = "---";
 
+        var originGetMenu = Menus.getMenu;
+        Menus.getMenu = function(id) {
+            var menu = originGetMenu(id);
+            if(!menu) {
+                menu = new Menus.Menu();
+            }
+            return menu;
+        }
+
 		var originRemoveMenu = Menus.removeMenu;
     	Menus.removeMenu = function(id) {
     		originRemoveMenu.apply(this, arguments);
@@ -184,8 +193,6 @@ define(function (require, exports, module) {
             if(_currentFocusWindow === EditorType.GameEditor) {
                 if(brackets.platform === 'mac') {
                     setMenuHidden(command, true);
-                } else {
-                    item = new Menus.MenuItem();
                 }
             } else {
                 item = originAddMenuItem.apply(this, arguments);
@@ -201,14 +208,14 @@ define(function (require, exports, module) {
                 item = originAddMenuItem.apply(this, arguments);
 
                 var menu = getMenu(EditorType.GameEditor, this.id);
-                menu.push(command);
-
+                if(item.isDivider){
+                    menu.push(item.id);
+                }else {
+                    menu.push(command);
+                }
                 if(brackets.platform === 'mac') {
                     setMenuHidden(command, false);
                 }
-
-            } else {
-                item = new Menus.MenuItem();
             }
 
     		return item;
@@ -228,12 +235,12 @@ define(function (require, exports, module) {
 
     function isMenusContains(menuId, command) {
         var menu = _gameEditorMenus[menuId];
-        if(menu && menu[command]) {
+        if(menu && menu.indexOf(command) !== -1) {
             return true;
         }
 
         menu = _persistentMenus[menuId];
-        if(menu && menu[command]) {
+        if(menu && menu.indexOf(command) !== -1) {
             return true;
         }
 
@@ -253,7 +260,7 @@ define(function (require, exports, module) {
                 var commandId;
 
                 if(item.isDivider) {
-                    commandId = item.dividerId;
+                    commandId = item.id;
                 }
                 else {
                     var command = item.getCommand();
@@ -264,7 +271,11 @@ define(function (require, exports, module) {
                 }
 
                 if(!isMenusContains(id, commandId)) {
-                    menu.removeMenuItem(commandId);
+                    if(item.isDivider) {
+                        menu.removeMenuDivider(commandId);
+                    } else {
+                        menu.removeMenuItem(commandId);
+                    }
                 }
             }
 
@@ -292,24 +303,28 @@ define(function (require, exports, module) {
                 Commands.EDIT_PASTE,
                 Commands.EDIT_SELECT_ALL
             ]],
+            [Menus.AppMenuBar.VIEW_MENU, [
+                Commands.CMD_THEMES_OPEN_SETTINGS
+            ]],
             ["debug-menu", [
-                "debug.switchLanguage"
+                "debug.switchLanguage",
+                "debug.showDeveloperTools"
             ]]
         ];
 
         registerEditorMenus(EditorType.All, menus);
 
-        var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.FILE_CLOSE_ALL);
+        // var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
+        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.FILE_CLOSE_ALL);
 
-        menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
+        // menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
+        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
+        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
 
     }
 
 	function init() {
-
+        
         // hack Menu functions
         hackMenus();
 

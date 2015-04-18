@@ -15,32 +15,14 @@ define(function (require, exports, module) {
 
     var ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
         UrlParams      = brackets.getModule("utils/UrlParams").UrlParams,
+        PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
         NodeDomain     = brackets.getModule("utils/NodeDomain");
-
-    brackets.EditorType = {
-        GameEditor : "GameEditor",
-        IDE : "IDE",
-        All : "all"
-    }
 
     function initNodeDomain() {
         window.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
     }
 
     function initEditor() {
-        var params = new UrlParams();
-    
-        // read URL params
-        params.parse();
-
-        var type = params.get("editorType");
-        brackets.editorType = type ? type : "GameEditor";
-        brackets.config.app_title += (brackets.platform === "mac" ? " \u2014 " : " - ") + brackets.editorType;
-
-        if(appshell.app.focus) {
-            window.focus = appshell.app.focus;
-        }
-
 
         var modules;
 
@@ -73,5 +55,54 @@ define(function (require, exports, module) {
         require(modules);
     }
 
+    function hackBrackets() {
+
+        function initEditorType() {
+            brackets.EditorType = {
+                GameEditor : "GameEditor",
+                IDE : "IDE",
+                All : "all"
+            }
+
+            var params = new UrlParams();
+        
+            // read URL params
+            params.parse();
+
+            var type = params.get("editorType");
+            brackets.editorType = type ? type : "GameEditor";
+            brackets.config.app_title += (brackets.platform === "mac" ? " \u2014 " : " - ") + brackets.editorType;
+
+            if(appshell.app.focus) {
+                window.focus = appshell.app.focus;
+            }
+        }
+
+            
+        function hackPreferencesManager() {
+            var PREFS_NAME          = "mainView.state";
+
+            var originSetViewState = PreferencesManager.setViewState;
+            PreferencesManager.setViewState = function() {
+                if(arguments[0] === PREFS_NAME) {
+                    arguments[0] = PREFS_NAME + "." + brackets.editorType;
+                }
+                originSetViewState.apply(this, arguments);
+            }
+
+            var originGetViewState = PreferencesManager.getViewState;
+            PreferencesManager.getViewState = function() {
+                if(arguments[0] === PREFS_NAME) {
+                    arguments[0] = PREFS_NAME + "." + brackets.editorType;
+                }
+                return originGetViewState.apply(this, arguments);
+            }
+        }
+
+        initEditorType();
+        hackPreferencesManager();
+    }
+
+    hackBrackets();
     initEditor();
 });

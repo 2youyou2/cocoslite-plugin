@@ -70,10 +70,12 @@ define(function (require, exports, module) {
  		var menus = getMenus(type);
 
     	if(!menus[id]) {
-    		menus[id] = [];
 
-    		if(type === _currentFocusWindow && brackets.platform ==='mac') {
-    			setMenuHidden(id, false);
+    		if(brackets.platform ==='mac') {
+                if(type === EditorType.All || type === brackets.editorType) {
+                    menus[id] = [];
+                } 
+                setMenuHidden(id, type !== _currentFocusWindow);
     		}
     	}
     	return menus[id];
@@ -83,7 +85,7 @@ define(function (require, exports, module) {
 
         brackets.app.setMenuHidden(id, hidden, function (err) {
             if (err) {
-                // console.error("setMenuHidden() -- id not found: " + id + " (error: " + err + ")");
+                console.error("setMenuHidden() -- id not found: " + id + " (error: " + err + ")");
             }
         }); 
     }
@@ -93,27 +95,29 @@ define(function (require, exports, module) {
 		// hide all menu
 		var menuMap = Menus.getAllMenus();
 		for(var id in menuMap) {
-            setMenuHidden(id, hidden);
 
             var menu = menuMap[id];
             var menuItems = menu.menuItems;
+
             for(var menuItemID in menuItems) {
             	var item = menuItems[menuItemID];
-	    		var id;
+	    		var commandId;
 
 	    		if(item.isDivider) {
-	    			id = item.id;
+	    			commandId = item.dividerId;
 	    		}
 	    		else {
 	    			var command = item.getCommand();
 		    		if(!command) { 
 		    			continue; 
 		    		}
-		    		id = command.getID();
+		    		commandId = command.getID();
 	    		}
 
-	            setMenuHidden(id, hidden);
+	            setMenuHidden(commandId, hidden);
             }
+
+            setMenuHidden(id, hidden);
 		}
     }
 
@@ -136,13 +140,13 @@ define(function (require, exports, module) {
 			var realMenuItemIDs = menu.menuItems;
     		var menuItemIDs = menus[menuID];
 
-    		if(Object.keys(realMenuItemIDs).length === Object.keys(menuItemIDs).length || hidden === false) {
-    			setMenuHidden(menuID, hidden);
-    		}
-
     		menuItemIDs.forEach(function(item) {
     			setMenuHidden(item, hidden);
-    		})
+    		});
+
+            if(Object.keys(realMenuItemIDs).length === Object.keys(menuItemIDs).length || hidden === false) {
+                setMenuHidden(menuID, hidden);
+            }
     	}
     }
 
@@ -163,7 +167,6 @@ define(function (require, exports, module) {
     }
 
     function hackMenus() {
-        var DIVIDER = "---";
 
         var originGetMenu = Menus.getMenu;
         Menus.getMenu = function(id) {
@@ -183,15 +186,22 @@ define(function (require, exports, module) {
 
 
         Menus.Menu.prototype.addGameEditorMenuDivider = function (position, relativeID) {
-            return this.addGameEditorMenuItem(DIVIDER, "", position, relativeID);
+            return this.addGameEditorMenuItem(Menus.DIVIDER, "", position, relativeID);
         };
 
     	var originAddMenuItem = Menus.Menu.prototype.addMenuItem;
     	Menus.Menu.prototype.addMenuItem = function(command, keyBindings, position, relativeID) {
-    		var item;
+    		var item = null;
 
             if(_currentFocusWindow === EditorType.GameEditor) {
                 if(brackets.platform === 'mac') {
+                    item = originAddMenuItem.apply(this, arguments);
+                    if(item.isDivider) {
+                        command = item.dividerId;
+                    }
+                    else if(typeof command === 'object') {
+                        command = command.getID();
+                    }
                     setMenuHidden(command, true);
                 }
             } else {
@@ -202,19 +212,19 @@ define(function (require, exports, module) {
     	};
 
     	Menus.Menu.prototype.addGameEditorMenuItem = function(command, keyBindings, position, relativeID) {
-    		var item;
+    		var item = null;
 
-            if(_currentFocusWindow === EditorType.GameEditor) {
+            if(brackets.editorType === EditorType.GameEditor) {
                 item = originAddMenuItem.apply(this, arguments);
 
                 var menu = getMenu(EditorType.GameEditor, this.id);
-                if(item.isDivider){
-                    menu.push(item.id);
-                }else {
-                    menu.push(command);
+                if(item.isDivider) {
+                    command = item.dividerId;
                 }
+                menu.push(command);
+
                 if(brackets.platform === 'mac') {
-                    setMenuHidden(command, false);
+                    setMenuHidden(command, _currentFocusWindow !== EditorType.GameEditor);
                 }
             }
 
@@ -260,7 +270,7 @@ define(function (require, exports, module) {
                 var commandId;
 
                 if(item.isDivider) {
-                    commandId = item.id;
+                    commandId = item.dividerId;
                 }
                 else {
                     var command = item.getCommand();
@@ -314,12 +324,12 @@ define(function (require, exports, module) {
 
         registerEditorMenus(EditorType.All, menus);
 
-        // var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.FILE_CLOSE_ALL);
+        var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.FILE_CLOSE_ALL);
 
-        // menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
-        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
-        // menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
+        menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
 
     }
 

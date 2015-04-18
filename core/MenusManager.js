@@ -70,11 +70,11 @@ define(function (require, exports, module) {
  		var menus = getMenus(type);
 
     	if(!menus[id]) {
+            if(type === EditorType.All || type === brackets.editorType) {
+                menus[id] = [];
+            } 
 
     		if(brackets.platform ==='mac') {
-                if(type === EditorType.All || type === brackets.editorType) {
-                    menus[id] = [];
-                } 
                 setMenuHidden(id, type !== _currentFocusWindow);
     		}
     	}
@@ -235,11 +235,15 @@ define(function (require, exports, module) {
     	Menus.Menu.prototype.removeMenuItem = function(command) {
     		originRemoveMenuItem.apply(this, arguments);
 
-    		var menu = getMenu(this.id);
-    		var index = menu.indexOf(command);
-    		if(index !== -1) {
-    			menu.slice(index, 1);
-    		}
+            for(var type in EditorType) {
+                var menu = getMenu(type, this.id);
+                if(menu) {
+                    var index = menu.indexOf(command);
+                    if(index !== -1) {
+                        menu.slice(index, 1);
+                    }
+                }
+            }
     	};
     }
 
@@ -270,7 +274,7 @@ define(function (require, exports, module) {
                 var commandId;
 
                 if(item.isDivider) {
-                    commandId = item.dividerId;
+                    commandId = item.id;
                 }
                 else {
                     var command = item.getCommand();

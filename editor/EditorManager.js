@@ -17,6 +17,7 @@ define(function (require, exports, module) {
 
     function register(name, editor) {
     	editors[name] = editor;
+        editor.name = name;
 
     	editor._order = editor._order ? editor._order : 0;
     	orderedEditors.push(editor);

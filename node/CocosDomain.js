@@ -33,9 +33,10 @@
      * @param {DomainManager} domainManager The DomainManager for the server
      */
     function init(domainManager) {
-        // if (!domainManager.hasDomain("simple")) {
-        //     domainManager.registerDomain("simple", {major: 0, minor: 1});
-        // }
+        if (!domainManager.hasDomain("cocos")) {
+            domainManager.registerDomain("cocos", {major: 0, minor: 1});
+        }
+        
         domainManager.registerCommand(
             "cocos",         // domain name
             "newProject",    // command name

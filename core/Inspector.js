@@ -15,19 +15,24 @@ define(function (require, exports, module) {
     var $content = $(html);
     $content.insertAfter(".content");
 
-    var $inspector = $content.find(".inspector");
+    var $inspector    = $content.find(".inspector");
     var $addComponent = $content.find(".add-component");
 
     Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
 
-    // $content.on("panelResizeUpdate", onResize);
+    $content.on("panelResizeUpdate", onResize);
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
 
-	// function onResize() {
- //        $(".content").css("right", width() + "px");
-	// }
+	function width() {
+		return $content.width();
+	}
+
+	function onResize() {
+        $(".main-view .content").css({"right": width() + "px"});
+        cc.view._resizeEvent();
+	}
 
 	function show(speed){
 		showing = true;
@@ -51,8 +56,6 @@ define(function (require, exports, module) {
 		$(".main-view .content").css({"right": "0px"});
 	}
 	
-	hide(0);
-
 	function bindInput(input, obj, key){
 		obj._inspectorInputMap[key] = input;
 
@@ -240,6 +243,9 @@ define(function (require, exports, module) {
 		var icon = $('<span class="fa-caret-down indicate">');
 		title.append(icon);
 
+		var settings = $('<span class="fa-cog settings">');
+		title.append(settings);
+
 		var content = $('<div class="component-content">');
 		el.append(content);
 
@@ -279,9 +285,10 @@ define(function (require, exports, module) {
 		}
 	}
 
-	function selectedObject(obj){
+	function handleSelectedObject(event, objs){
 		clear();
 
+		var obj = objs[0];
 		if(!obj) {
             return;
         }
@@ -292,26 +299,16 @@ define(function (require, exports, module) {
 		initObjectUI(obj);
 	}
 
-	function clear() {
-		currentObject = null;
-		$inspector.empty();
-		$addComponent.hide();
-	}
-
-	EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs){
-		selectedObject(objs[0]);
-	});
-
-	EventManager.on(EventManager.COMPONENT_ADDED, function(event, component){
+	function handleComponentAdded(event, component) {
 		var target = component.getTarget();
 		if(target !== currentObject) {
             return;
         }
 
 		initComponentUI(component);
-	});
+	}
 
-	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(event, o, p){
+	function handleObjectPropertyChanged(event, o, p) {
 		if(!o._inspectorInputMap) {
 			return;
 		}
@@ -330,18 +327,23 @@ define(function (require, exports, module) {
 		if(input && !input.innerChanged) {
             input.value = o[p];
         }
-	});
-
-	function width() {
-		return $content.width();
 	}
 
-	EventManager.on(EventManager.SCENE_CLOSED,        clear);
 
-	exports.show = show;
-	exports.hide = hide;
+	function clear() {
+		currentObject = null;
+		$inspector.empty();
+		$addComponent.hide();
+	}
+
+	EventManager.on(EventManager.SELECT_OBJECTS,          handleSelectedObject);
+	EventManager.on(EventManager.COMPONENT_ADDED,         handleComponentAdded);
+	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, handleObjectPropertyChanged);
+	EventManager.on(EventManager.SCENE_CLOSED,            clear);
+
+	exports.show  = show;
+	exports.hide  = hide;
 	exports.clear = clear;
-	exports.width = width;
 	exports.__defineGetter__("showing", function(){
 		return showing;
 	});

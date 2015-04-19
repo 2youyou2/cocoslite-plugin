@@ -318,7 +318,8 @@ define(function (require, exports, module) {
                 Commands.EDIT_SELECT_ALL
             ]],
             [Menus.AppMenuBar.VIEW_MENU, [
-                Commands.CMD_THEMES_OPEN_SETTINGS
+                Commands.CMD_THEMES_OPEN_SETTINGS,
+                Commands.VIEW_HIDE_SIDEBAR
             ]],
             ["debug-menu", [
                 "debug.switchLanguage",
@@ -335,6 +336,8 @@ define(function (require, exports, module) {
         menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
         menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
 
+        menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
+        menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.VIEW_HIDE_SIDEBAR);
     }
 
 	function init() {

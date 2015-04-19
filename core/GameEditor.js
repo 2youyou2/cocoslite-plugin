@@ -176,8 +176,8 @@ define(function (require, exports, module) {
 
     function registerMenus() {
         var menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
-        menu.addMenuItem(Commands.CMD_OPEN_IDE);
-        menu.addMenuDivider();
+        menu.addGameEditorMenuDivider();
+        menu.addGameEditorMenuItem(Commands.CMD_OPEN_IDE);
     }
 
     CommandManager.register("OpenScript", Commands.CMD_OPEN_SCRIPT, handleOpenScript);

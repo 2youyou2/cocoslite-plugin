@@ -54,7 +54,7 @@ define(function (require, exports, module) {
 
         cl.$fgCanvas.ctx = cl.fgCanvas.getContext('2d');
         var render = function(){
-            if(!cc._canvas) {
+            if(!cc._canvas || (cc.director && cc.director.isPaused())) {
                 return;
             }
 
@@ -105,6 +105,7 @@ define(function (require, exports, module) {
                 cc.inputManager.registerSystemEvent(cl.fgCanvas);
             }
 
+
             // hack cc.view._resizeEvent
             cc.view._resizeEvent = function () {
                 var view;
@@ -113,8 +114,9 @@ define(function (require, exports, module) {
                 }else{
                     view = cc.view;
                 }
+
+                view._initFrameSize();
                 if (view._resizeCallback) {
-                    view._initFrameSize();
                     view._resizeCallback.call();
                 }
                 var width = view._frameSize.width;
@@ -131,6 +133,14 @@ define(function (require, exports, module) {
             cc.view._resizeEvent();
             cc.view.resizeWithBrowserSize(true);
 
+
+            window.addEventListener("focus", function() {
+                cc.director.resume();
+            });
+
+            window.addEventListener("blur", function() {
+                cc.director.pause();
+            })
         };
 
         function loadCocosLiteModule(cb) {

@@ -14,6 +14,8 @@ define(function (require, exports, module) {
     "use strict";
 
     var ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
+        ProjectModel   = brackets.getModule("project/ProjectModel"),
+        ProjectManager = brackets.getModule("project/ProjectManager"),
         UrlParams      = brackets.getModule("utils/UrlParams").UrlParams,
         PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
         NodeDomain     = brackets.getModule("utils/NodeDomain");
@@ -99,8 +101,32 @@ define(function (require, exports, module) {
             }
         }
 
+        function hackProjectModel() {
+            ProjectModel._shouldShowName = function(name, path) {
+
+                var rootPath = ProjectManager.getProjectRoot().fullPath;
+                var relativePath = path.replace(rootPath, "");
+
+                var show = true;
+                // if(brackets.editorType === brackets.EditorType.GameEditor) {
+                //     show = !name.match(ProjectModel._exclusionListRegEx) &&
+                //            (relativePath.indexOf('res/') === 0 ||
+                //            name === '.cocos-project.json');
+                // } else if(brackets.editorType === brackets.EditorType.IDE) {
+                    show = !name.match(ProjectModel._exclusionListRegEx) &&
+                           relativePath.indexOf('res/') === 0 ||
+                           relativePath.indexOf('src/') === 0 ||
+                           relativePath === 'main.js' ||
+                           name === '.cocos-project.json';
+                // }
+
+                return show;
+            }
+        }
+
         initEditorType();
         hackPreferencesManager();
+        hackProjectModel();
     }
 
     hackBrackets();

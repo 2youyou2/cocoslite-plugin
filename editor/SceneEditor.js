@@ -210,14 +210,14 @@ define(function (require, exports, module) {
 
         _editor = current;
 
-        // if(_projectOpened) {
+        if(_projectOpened) {
             initEditor();
-        // } else {
-        //     _lazyInitEditor = true;
-        // }
+        } else {
+            _lazyInitEditor = true;
+        }
     }
 
-    function handleCocosLoaded() {
+    function handlePojectOpen() {
 
         function createCanvas(scene, data) {
             var canvas = new cc.Layer();
@@ -288,6 +288,6 @@ define(function (require, exports, module) {
 
     EditorManager.on("activeEditorChange", handleActiveEditorChange);
 
-    EventManager.on(EventManager.COCOS_LOADED, handleCocosLoaded);
+    EventManager.on(EventManager.PROJECT_OPEN, handlePojectOpen);
     EventManager.on(EventManager.GAME_START,   loadScene);
 });

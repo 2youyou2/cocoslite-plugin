@@ -4,19 +4,13 @@
 (function(){
     "use strict";
     
-    cl.TerrainDirection = 
-    {
-        Top    : "Top",
-        Left   : "Left",
-        Right  : "Right",
-        Bottom : "Bottom"
-    };
+    var TerrainDirection = cl.Enum('TerrainDirection', 'Top', 'Left', 'Right', 'Bottom');
 
     cl.TerrainSegmentDescription = function(applyTo) {
         this.zOffset = 0;
         this.yOffset = 0;
         this.capOffset = 0;
-        this.applyTo = applyTo ? applyTo : cl.TerrainDirection.Top;
+        this.applyTo = applyTo ? applyTo : TerrainDirection.Top;
     };
 
 
@@ -29,9 +23,10 @@
 
         this.descriptors = [];
 
-        for(var k=0; k<cl.TerrainDirection.length; k++){
-            this.descriptors.push(new cl.TerrainSegmentDescription(cl.TerrainDirection[k]));
-        }
+        var self = this;
+        TerrainDirection.forEach(function(key, value) {
+            self.descriptors.push(new cl.TerrainSegmentDescription(value));
+        });
     };
 
     var _p = cl.TerrainMaterial.prototype;
@@ -134,7 +129,7 @@
                 if(cb) {
                     cb();
                 }
-            });
+            }, cl.SceneManager.tryReviver.bind(cl.SceneManager));
         }
     };
 

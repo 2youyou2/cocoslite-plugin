@@ -4,7 +4,7 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var ObjectManager    = require("core/ObjectManager"),
+    var EventManager     = require("core/EventManager"),
         Undo             = require("core/Undo"),
         EditorManager    = require("editor/EditorManager");
 
@@ -12,11 +12,13 @@ define(function (require, exports, module) {
     var control = false;
     var shift = false;
 
+    var preAddPoint;
+
     function handleKeyDown(e) {
         control = (brackets.platform !== "mac") ? (e.ctrlKey) : (e.metaKey);
         shift = e.shiftKey;
 
-        if(shift) {
+        if(shift && preAddPoint) {
             preAddPoint();
         }
     }
@@ -43,18 +45,19 @@ define(function (require, exports, module) {
         var closestID;
         var secondID;
 
-        ObjectManager.on("objectPropertyChanged", function(event, o, p){
+        EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(event, o, p){
             if((o !== obj && o !== path && o !== terrain && o !== points) || !path) {
                 return;
             }
             terrain.recreatePath();
         });
 
-        this.renderScene = function(ctx, selectedObjects){
-            if(selectedObjects && selectedObjects.length === 1){
-                obj = selectedObjects[0];
-                path = obj.getComponent("TerrainPathComponent");
+        this.renderScene = function(ctx, selectedObjects) {
+            if(selectedObjects && selectedObjects.length === 1) {
+                obj     = selectedObjects[0];
+                path    = obj.getComponent("TerrainPathComponent");
                 terrain = obj.getComponent("TerrainComponent");
+
                 if(path){
                     points = path.pathVerts;
                     render(ctx, obj);
@@ -152,7 +155,7 @@ define(function (require, exports, module) {
             // terrain.recreatePath();
         }
 
-        function preAddPoint(){
+        preAddPoint = function() {
             if(!path) {
                 return;
             }
@@ -236,7 +239,5 @@ define(function (require, exports, module) {
     }
 
     init();
-
-    exports.Params = Params;
     exports.init = init;
 });

@@ -14,12 +14,13 @@
     
     var TerrainPathComponent = Component.extendComponent("TerrainPathComponent", {
         ctor: function () {
-            this._super(this);
 
             this.closed = false;
             this._pathVerts = [];
-
+            
             this.addProperties(["closed", "pathVerts"]);
+
+            this._super(this);
         },
 
         _getPathVerts: function(){
@@ -231,19 +232,19 @@
             if (Math.abs(dir.x) > Math.abs(dir.y))
             {
                 if (dir.x < 0) {
-                    return cl.TerrainDirection.Left;
+                    return cl.Enum.TerrainDirection.Left;
                 }
                 else {
-                    return cl.TerrainDirection.Right;
+                    return cl.Enum.TerrainDirection.Right;
                 }
             }
             else
             {
                 if (dir.y < 0) {
-                    return cl.TerrainDirection.Bottom;
+                    return cl.Enum.TerrainDirection.Bottom;
                 }
                 else {
-                    return cl.TerrainDirection.Top;
+                    return cl.Enum.TerrainDirection.Top;
                 }
             }
         },
@@ -265,19 +266,19 @@
             if (Math.abs(dir.x) > Math.abs(dir.y))
             {
                 if (dir.x < 0) {
-                    return aInvert ? cl.TerrainDirection.Right : cl.TerrainDirection.Left;
+                    return aInvert ? cl.Enum.TerrainDirection.Right : cl.Enum.TerrainDirection.Left;
                 }
                 else {
-                    return aInvert ? cl.TerrainDirection.Left  : cl.TerrainDirection.Right;
+                    return aInvert ? cl.Enum.TerrainDirection.Left  : cl.Enum.TerrainDirection.Right;
                 }
             }
             else
             {
                 if (dir.y < 0) {
-                    return aInvert ? cl.TerrainDirection.Top    : cl.TerrainDirection.Bottom;
+                    return aInvert ? cl.Enum.TerrainDirection.Top    : cl.Enum.TerrainDirection.Bottom;
                 }
                 else {
-                    return aInvert ? cl.TerrainDirection.Bottom : cl.TerrainDirection.Top;
+                    return aInvert ? cl.Enum.TerrainDirection.Bottom : cl.Enum.TerrainDirection.Top;
                 }
             }
         },

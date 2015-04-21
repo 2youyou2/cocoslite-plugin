@@ -12,17 +12,18 @@
 
     var Component = cl.getModule("component/Component");
 
-    cl.TerrainFillMode = 
-    {
+    var TerrainFillMode = cl.Enum(
+        "TerrainFillMode",
+
         // The interior of the path will be filled, and edges will be treated like a polygon.
-        Closed         : "Closed",
+        "Closed",
         // Drops some extra vertices down, and fill the interior. Edges only around the path itself.
-        Skirt          : "Skirt",
+        "Skirt",
         // Doesn't fill the interior at all. Just edges.
-        None           : "None",
+        "None",
         // Fills the outside of the path rather than the interior, also inverts the edges, upside-down.
-        InvertedClosed : "InvertedClosed"
-    };
+        "InvertedClosed"
+    );
 
     var Params = function() {
 
@@ -34,7 +35,7 @@
             unitsPerUV = cl.p(1,1);
 
         Component.init(this, {
-            fill: cl.TerrainFillMode.Closed,
+            fill: TerrainFillMode.Closed,
             fillY: 0,
             fillZ: -0.5,
             splitCorners: true,
@@ -47,12 +48,12 @@
             sufaceOffset: [0,0,0,0],
 
             ctor: function () {
-                this._super(this, ["MeshComponent", "TerrainPathComponent"]);
-
-                this.addProperties(["fill", "fillY", "fillZ", "splitCorners", "smoothPath", "splistDist", "pixelsPerUnit", "vertexColor",
-                                    "createCollider", "terrainMaterial"]);
+                this.properties = ["fill", "fillY", "fillZ", "splitCorners", "smoothPath", "splistDist", "pixelsPerUnit", "vertexColor",
+                                    "createCollider", "terrainMaterial"];
 
                 terrainMaterial = new cl.TerrainMaterial();
+
+                this._super(this, ["MeshComponent", "TerrainPathComponent"]);
             },
 
             onEnter: function() {
@@ -86,8 +87,8 @@
                     mesh.materials.set(0, terrainMaterial.fillMaterial);
                     mesh.materials.set(1, terrainMaterial.edgeMaterial);
 
-                    if (!terrainMaterial.has(cl.TerrainDirection.Left) &&
-                        !terrainMaterial.has(cl.TerrainDirection.Right))
+                    if (!terrainMaterial.has(cl.Enum.TerrainDirection.Left) &&
+                        !terrainMaterial.has(cl.Enum.TerrainDirection.Right))
                     {
                         this.splitCorners = false;
                     }
@@ -120,15 +121,15 @@
                 var submesh1 = dMesh.getCurrentTriangleList();
 
                 // add a fill if the user desires
-                if (fill === cl.TerrainFillMode.Skirt && terrainMaterial.fillMaterial !== null)
+                if (fill === TerrainFillMode.Skirt && terrainMaterial.fillMaterial !== null)
                 {
                     this._addFill(true);
                 }
-                else if ((fill === cl.TerrainFillMode.Closed || fill === cl.TerrainFillMode.InvertedClosed) && terrainMaterial.fillMaterial !== null)
+                else if ((fill === TerrainFillMode.Closed || fill === TerrainFillMode.InvertedClosed) && terrainMaterial.fillMaterial !== null)
                 {
                     this._addFill(false);
                 }
-    //            else if (fill === cl.TerrainFillMode.None) { }
+    //            else if (fill === TerrainFillMode.None) { }
                 var submesh2 = dMesh.getCurrentTriangleList(submesh1.length);
 
                 mesh.setSubMesh(1, submesh1);
@@ -139,7 +140,7 @@
             // private function
 
             _getDescription: function (aSegment) {
-                var dir = path.getDirectionWithSegment(aSegment, 0, this.fill === cl.TerrainFillMode.InvertedClosed);
+                var dir = path.getDirectionWithSegment(aSegment, 0, this.fill === TerrainFillMode.InvertedClosed);
                 return terrainMaterial.getDescriptor(dir);
             },
 
@@ -200,11 +201,11 @@
                         n2   = cl.Point.lerp(norm1, norm2, t / repeats);
 
                         var d    = (body.height / 2) * unitsPerUV.y;
-                        var yOff = fill === cl.TerrainFillMode.InvertedClosed ? -desc.yOffset : desc.yOffset;
-                        var   v1 = dMesh.addVertex(pos1.x + n1.x * (d + yOff), pos1.y + n1.y * (d + yOff), desc.zOffset, body.x,    fill === cl.TerrainFillMode.InvertedClosed ? body.yMax : body.y);
-                        var   v2 = dMesh.addVertex(pos1.x - n1.x * (d - yOff), pos1.y - n1.y * (d - yOff), desc.zOffset, body.x,    fill === cl.TerrainFillMode.InvertedClosed ? body.y    : body.yMax);
-                        var   v3 = dMesh.addVertex(pos2.x + n2.x * (d + yOff), pos2.y + n2.y * (d + yOff), desc.zOffset, body.xMax, fill === cl.TerrainFillMode.InvertedClosed ? body.yMax : body.y);
-                        var   v4 = dMesh.addVertex(pos2.x - n2.x * (d - yOff), pos2.y - n2.y * (d - yOff), desc.zOffset, body.xMax, fill === cl.TerrainFillMode.InvertedClosed ? body.y    : body.yMax);
+                        var yOff = fill === TerrainFillMode.InvertedClosed ? -desc.yOffset : desc.yOffset;
+                        var   v1 = dMesh.addVertex(pos1.x + n1.x * (d + yOff), pos1.y + n1.y * (d + yOff), desc.zOffset, body.x,    fill === TerrainFillMode.InvertedClosed ? body.yMax : body.y);
+                        var   v2 = dMesh.addVertex(pos1.x - n1.x * (d - yOff), pos1.y - n1.y * (d - yOff), desc.zOffset, body.x,    fill === TerrainFillMode.InvertedClosed ? body.y    : body.yMax);
+                        var   v3 = dMesh.addVertex(pos2.x + n2.x * (d + yOff), pos2.y + n2.y * (d + yOff), desc.zOffset, body.xMax, fill === TerrainFillMode.InvertedClosed ? body.yMax : body.y);
+                        var   v4 = dMesh.addVertex(pos2.x - n2.x * (d - yOff), pos2.y - n2.y * (d - yOff), desc.zOffset, body.xMax, fill === TerrainFillMode.InvertedClosed ? body.y    : body.yMax);
                         dMesh.addFace(v1, v3, v4, v2);
                     }
                 }
@@ -232,29 +233,29 @@
                 dir.normalize();
                 var norm = path.getNormal(aSegment, index, false);
                 var pos  = aSegment[index];
-                var    lCap = fill === cl.TerrainFillMode.InvertedClosed ? terrainMaterial.toUV(aDesc.rightCap) : terrainMaterial.toUV(aDesc.leftCap);
-                var    rCap = fill === cl.TerrainFillMode.InvertedClosed ? terrainMaterial.toUV(aDesc.leftCap ) : terrainMaterial.toUV(aDesc.rightCap);
-                var    yOff = fill === cl.TerrainFillMode.InvertedClosed ? -aDesc.yOffset : aDesc.yOffset;
+                var    lCap = fill === TerrainFillMode.InvertedClosed ? terrainMaterial.toUV(aDesc.rightCap) : terrainMaterial.toUV(aDesc.leftCap);
+                var    rCap = fill === TerrainFillMode.InvertedClosed ? terrainMaterial.toUV(aDesc.leftCap ) : terrainMaterial.toUV(aDesc.rightCap);
+                var    yOff = fill === TerrainFillMode.InvertedClosed ? -aDesc.yOffset : aDesc.yOffset;
 
                 if (aDir < 0) {
                     var width =  lCap.width     * unitsPerUV.x;
                     var scale = (lCap.height/2) * unitsPerUV.y;
 
-                    var v1 = dMesh.addVertex(pos.add(dir.mult(width)).add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed? lCap.xMax : lCap.x, fill === cl.TerrainFillMode.InvertedClosed ? lCap.yMax : lCap.y));
-                    var v2 = dMesh.addVertex(pos.add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? lCap.x : lCap.xMax, fill === cl.TerrainFillMode.InvertedClosed ? lCap.yMax : lCap.y));
+                    var v1 = dMesh.addVertex(pos.add(dir.mult(width)).add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed? lCap.xMax : lCap.x, fill === TerrainFillMode.InvertedClosed ? lCap.yMax : lCap.y));
+                    var v2 = dMesh.addVertex(pos.add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? lCap.x : lCap.xMax, fill === TerrainFillMode.InvertedClosed ? lCap.yMax : lCap.y));
 
-                    var v3 = dMesh.addVertex(pos.sub(norm.mult(scale - yOff)), aDesc.zOffset, cc.p(fill === cl.TerrainFillMode.InvertedClosed ? lCap.x : lCap.xMax, fill === cl.TerrainFillMode.InvertedClosed ? lCap.y : lCap.yMax));
-                    var v4 = dMesh.addVertex(pos.add(dir.mult(width)).sub(norm.mult(scale - yOff)), aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? lCap.xMax : lCap.x, fill === cl.TerrainFillMode.InvertedClosed ? lCap.y : lCap.yMax));
+                    var v3 = dMesh.addVertex(pos.sub(norm.mult(scale - yOff)), aDesc.zOffset, cc.p(fill === TerrainFillMode.InvertedClosed ? lCap.x : lCap.xMax, fill === TerrainFillMode.InvertedClosed ? lCap.y : lCap.yMax));
+                    var v4 = dMesh.addVertex(pos.add(dir.mult(width)).sub(norm.mult(scale - yOff)), aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? lCap.xMax : lCap.x, fill === TerrainFillMode.InvertedClosed ? lCap.y : lCap.yMax));
                     dMesh.addFace(v1, v2, v3, v4);
                 } else {
                     var width =  rCap.width     * unitsPerUV.x;
                     var scale = (rCap.height/2) * unitsPerUV.y;
 
-                    var v1 = dMesh.addVertex(pos.add(dir.mult(width)).add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? rCap.x : rCap.xMax, fill === cl.TerrainFillMode.InvertedClosed ? rCap.yMax : rCap.y));
-                    var v2 = dMesh.addVertex(pos.add(norm.mult(scale + yOff)),               aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? rCap.xMax : rCap.x, fill === cl.TerrainFillMode.InvertedClosed ? rCap.yMax : rCap.y));
+                    var v1 = dMesh.addVertex(pos.add(dir.mult(width)).add(norm.mult(scale + yOff)), aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? rCap.x : rCap.xMax, fill === TerrainFillMode.InvertedClosed ? rCap.yMax : rCap.y));
+                    var v2 = dMesh.addVertex(pos.add(norm.mult(scale + yOff)),               aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? rCap.xMax : rCap.x, fill === TerrainFillMode.InvertedClosed ? rCap.yMax : rCap.y));
 
-                    var v3 = dMesh.addVertex(pos.sub(norm.mult(scale - yOff)),               aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? rCap.xMax : rCap.x, fill === cl.TerrainFillMode.InvertedClosed ? rCap.y : rCap.yMax));
-                    var v4 = dMesh.addVertex(pos.add(dir.mult(width)).sub(norm.mult(scale - yOff)), aDesc.zOffset, cl.p(fill === cl.TerrainFillMode.InvertedClosed ? rCap.x : rCap.xMax, fill === cl.TerrainFillMode.InvertedClosed ? rCap.y : rCap.yMax));
+                    var v3 = dMesh.addVertex(pos.sub(norm.mult(scale - yOff)),               aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? rCap.xMax : rCap.x, fill === TerrainFillMode.InvertedClosed ? rCap.y : rCap.yMax));
+                    var v4 = dMesh.addVertex(pos.add(dir.mult(width)).sub(norm.mult(scale - yOff)), aDesc.zOffset, cl.p(fill === TerrainFillMode.InvertedClosed ? rCap.x : rCap.xMax, fill === TerrainFillMode.InvertedClosed ? rCap.y : rCap.yMax));
                     dMesh.addFace(v4, v3, v2, v1);
                 }
             },
@@ -284,7 +285,7 @@
                 }
 
                 var offset  = dMesh.vertCount;
-                var indices = cl.Triangulator.getIndices(fillVerts, true, this.fill === cl.TerrainFillMode.InvertedClosed);
+                var indices = cl.Triangulator.getIndices(fillVerts, true, this.fill === TerrainFillMode.InvertedClosed);
                 for (var i = 0; i < fillVerts.length; i++) {
                     dMesh.addVertex(fillVerts[i].x, fillVerts[i].y, this.fillZ, fillVerts[i].x / scale.x, fillVerts[i].y / scale.y);
                 }

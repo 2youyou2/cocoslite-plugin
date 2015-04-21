@@ -282,8 +282,9 @@ define(function (require, exports, module) {
 			});
 		}
 		else if(value.constructor === cl.EnumValue) {
-			$input = $('<span style="overflow:initial"><select  class="dk_shown"></span>');
+			$input = $('<span style="overflow:initial"><select></span>');
 			var $select = $input.find('select');
+			$select.attr('id', obj.classname + '_' + key);
 
 			value.Enum.forEach(function(key, value) {
 				var $option = $("<option>")
@@ -293,7 +294,12 @@ define(function (require, exports, module) {
 				$select.append($option);
 			});
 
-			$select.dropkick();
+			$select.dropkick({
+				change: function(v, label) {
+					$input.value = value.Enum[v];
+					$input.finishEdit();
+				}
+			});
 			$input.find(".select-icon").addClass("fa-play");
 		}
 		else if(value.constructor === cc.Sprite) {

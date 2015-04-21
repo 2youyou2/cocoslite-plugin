@@ -5,6 +5,7 @@
 
 define({
     "NEW_PROJECT"          : "New Project",
+    "NEW_SCENE"            : "New Scene",
     "PROJECT_SETTINGS"     : "Project Settings",
     "GAME_OBJECT"          : "GameObject",
     "COMPONENT"            : "Component",

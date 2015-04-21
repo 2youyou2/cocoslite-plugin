@@ -1,0 +1,19 @@
+<div class="project-create-dialog modal" style="max-width: 530px!important;">
+    <div class="modal-header">
+        <h1 class="dialog-title">Select Assets</h1>
+    </div>
+    <div class="modal-body">
+        <div class="field-container">
+            <div v-repeat="data: grid" class="asset-row">
+                <!-- <span v-repeat="data: row" class="asset-block"> -->
+                    <span class="asset-viewer" style="background-image:url({{data.fullPath}})" v-on="click: chooseAsset(data)"></span>
+                    <span class="asset-name">{{data.name}}</span>
+                <!-- </span> -->
+            </div>
+         </div>
+    </div>
+    <div class="modal-footer">
+        <button class="dialog-button btn" data-button-id="cancel">Cancel</button>
+        <button class="dialog-button btn primary" data-button-id="ok">Ok</button>
+    </div>
+</div>

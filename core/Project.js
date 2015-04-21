@@ -20,16 +20,17 @@ define(function (require, exports, module) {
     var resFolder, srcFolder;
     var sources;
 
-    function readSource(item, cb) {
-    	if(item.name.endWith(".js")) {
-            sources.push(item.fullPath);
+    function loadFolder(item, container, useFile, filter, cb) {
+    	if(filter(item)) {
+            var file = useFile ? item : item.fullPath;
+            container.push(file);
         }
 
     	if(item.isDirectory) {
 	    	item.getContents(function(err, subItems) {
 	    		var i = 0;
 	    		subItems.forEach(function(subItem) {
-	    			readSource(subItem, function() {
+	    			loadFolder(subItem, container, useFile, filter, function() {
 	    				if(++i === subItems.length) {
                             cb();
                         }
@@ -42,20 +43,35 @@ define(function (require, exports, module) {
     	}
     }
 
-    function readSources() {
+    function loadSources() {
         var deferred = new $.Deferred();
 
-    	readSource(srcFolder, function() {
-            try{
-                require(sources, function() {
-                    deferred.resolve();
-                });
+    	loadFolder(srcFolder, sources, false,
+            function(item) {
+                return item.name.endWith(".js");
+            }, 
+            function() {
+                try{
+                    require(sources, function() {
+                        deferred.resolve();
+                    });
+                }
+                catch(e) {
+                    console.err("load source failed : ", e);
+                }
             }
-            catch(e) {
-                console.err("compile source failed : ", e);
-            }
-	    	
-    	});
+        );
+
+        return deferred.promise();
+    }
+
+    function getResources(filter) {
+        var deferred = new $.Deferred();
+        var resources = [];
+
+        loadFolder(resFolder, resources, true, filter, function() {
+            deferred.resolve(resources);
+        });
 
         return deferred.promise();
     }
@@ -87,15 +103,15 @@ define(function (require, exports, module) {
 	    		reset();
 	    		console.err(root.fullPath + " is not a cocos project path.");
 	    	} else {
-                readSources().then(function(){
+                loadSources().then(function(){
                     EventManager.trigger(EventManager.PROJECT_OPEN);
                 });
             }
+
     	});
     });
 
-
-    function handleCreateProject() {
+    function handleNewProject() {
         var dialog, $projectName, $projectLocation, $browseBtn;
 
         var errorMessage = "";
@@ -144,6 +160,10 @@ define(function (require, exports, module) {
         });
     }
 
+    function handleNewScene() {
+
+    }
+
     function handleProjectSettings() {
 
     }
@@ -151,15 +171,17 @@ define(function (require, exports, module) {
     
     function registerMenu() {
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        menu.addGameEditorMenuItem(Commands.CMD_CREATE_COCOS_PROJECT, "", Menus.FIRST);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_CREATE_COCOS_PROJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_PROJECT, "", Menus.FIRST);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
 
         menu.addGameEditorMenuDivider(Menus.LAST);
         menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
     }
 
 
-    CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_CREATE_COCOS_PROJECT, handleCreateProject);
+    CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_NEW_PROJECT, handleNewProject);
+    CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE,   handleNewScene);
     CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS, handleProjectSettings);
 
     registerMenu();
@@ -167,4 +189,5 @@ define(function (require, exports, module) {
     exports.getSources = function() {
         return sources;
     }
+    exports.getResources = getResources;
 });

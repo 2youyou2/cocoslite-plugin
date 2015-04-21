@@ -110,12 +110,12 @@ define(function (require, exports, module) {
                 var show = true;
                 // if(brackets.editorType === brackets.EditorType.GameEditor) {
                 //     show = !name.match(ProjectModel._exclusionListRegEx) &&
-                //            (relativePath.indexOf('res/') === 0 ||
+                //            (relativePath.indexOf('res') === 0 ||
                 //            name === '.cocos-project.json');
                 // } else if(brackets.editorType === brackets.EditorType.IDE) {
                     show = !name.match(ProjectModel._exclusionListRegEx) &&
-                           relativePath.indexOf('res/') === 0 ||
-                           relativePath.indexOf('src/') === 0 ||
+                           relativePath.indexOf('res') === 0 ||
+                           relativePath.indexOf('src') === 0 ||
                            relativePath === 'main.js' ||
                            name === '.cocos-project.json';
                 // }

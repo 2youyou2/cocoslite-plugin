@@ -4,17 +4,21 @@
 define(function (require, exports, module) {
     "use strict";
 
-	var Resizer 	   = brackets.getModule("utils/Resizer");
+	var Resizer 	   = brackets.getModule("utils/Resizer"),
+		Dialogs        = brackets.getModule("widgets/Dialogs");
 
     var ObjectManager  = require("core/ObjectManager"),
+    	Project        = require("core/Project"),
     	EventManager   = require("core/EventManager"),
     	Undo 		   = require("core/Undo"),
     	EditorManager  = require("editor/EditorManager"),
     	Vue            = require("thirdparty/Vue"),
-    	html    	   = require("text!html/Inspector.html");
+    	Dropkick       = require("thirdparty/dropkick"),
+    	InspectorHtml  = require("text!html/Inspector.html"),
+    	ShowAssetsHtml = require("text!html/ShowAssets.html");
 
 
-    var $content = $(html);
+    var $content = $(InspectorHtml);
     $content.insertAfter(".content");
 
     var $inspector    = $content.find(".inspector");
@@ -179,6 +183,64 @@ define(function (require, exports, module) {
 		return $input;
 	}
 
+	function showSelectAssets(filter, onChooseAsset) {
+
+		onChooseAsset = onChooseAsset ? onChooseAsset : function() {};
+
+		Project.getResources(filter).then(function(resources) {
+
+			var grid = [];
+			var row;
+
+			resources.splice(0,0, {
+				fullPath: "",
+				name: "None"
+			})
+
+			for(var i=0; i<resources.length; i++) {
+				// if(i % 4 === 0) {
+				// 	row = [];
+				// 	grid.push(row);
+				// }
+
+				var file = resources[i];
+
+				var data = {
+					fullPath: file.fullPath,
+					name: file.name
+				};
+
+				grid.push(data);
+			}
+
+			var $dialog = $(ShowAssetsHtml);
+
+			new Vue({
+				el: $dialog[0],
+				data: {
+					grid: grid
+				},
+				methods: {
+					chooseAsset: onChooseAsset
+				}
+			})
+
+			var dialog = Dialogs.showModalDialogUsingTemplate($dialog);
+
+			dialog.done(function (id) {
+	            if (id === Dialogs.DIALOG_BTN_OK) {
+	                
+	            }
+	        });
+
+		});
+	}
+
+	function imgFilter(file) {
+		var name = file.name;
+		return name.endWith('.png') || name.endWith('.jpg');
+	}
+
 	function createInputForObject(obj, key, value) {
 		var $input = null;
 
@@ -218,8 +280,55 @@ define(function (require, exports, module) {
 		  			}
 		  		};
 			});
-		} 
-		else if(value.constructor  === Array){
+		}
+		else if(value.constructor === cl.EnumValue) {
+			$input = $('<span style="overflow:initial"><select  class="dk_shown"></span>');
+			var $select = $input.find('select');
+
+			value.Enum.forEach(function(key, value) {
+				var $option = $("<option>")
+					.attr('value', key)
+					.text(key);
+
+				$select.append($option);
+			});
+
+			$select.dropkick();
+			$input.find(".select-icon").addClass("fa-play");
+		}
+		else if(value.constructor === cc.Sprite) {
+			$input = $("<span class='sprite'>");
+			
+			var $search = $("<span class='search fa-search'>");
+			var $imgWrap = $("<span><img></span>");
+			var $img = $imgWrap.find('img');
+
+			$input.append($search);
+			$input.append($imgWrap);
+
+			$search.click(function() {
+				showSelectAssets(imgFilter, function(data) {
+					$img.attr("src", data.fullPath);
+					$input.finishEdit();
+				});
+			});
+
+			cl.defineGetterSetter($input, "value", function(){
+                return $img.attr("src").replace(cc.loader.resPath, "");
+            }, function(file){
+            	if(typeof file === "object" && file.constructor === cc.Sprite) {
+            		if(file.getTexture()) {
+            			file = file.getTexture().url;
+            			file = cc.loader.getUrl(file);
+            		} else {
+            			file = null;
+            		}
+            	}
+
+                $img.attr("src", file)
+            });
+		}
+		else if(value.constructor === Array) {
 			value._inspectorInputMap = {};
 
 			$input = $("<div class='array'>");

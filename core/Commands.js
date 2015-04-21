@@ -3,7 +3,8 @@ define(function (require, exports, module) {
 
     exports.CMD_OPEN_SCRIPT                 = "cl.openScript";              
     exports.CMD_OPEN_IDE                    = "cl.openIDE";
-    exports.CMD_CREATE_COCOS_PROJECT        = "cl.createProject";
+    exports.CMD_NEW_PROJECT                 = "cl.createProject";
+    exports.CMD_NEW_SCENE                   = "cl.createScene";
     exports.CMD_PROJECT_SETTINGS            = "cl.projectSettings";
 
     exports.CMD_GAME_OBJECT                 = "cl.gameObject";
@@ -14,4 +15,6 @@ define(function (require, exports, module) {
     exports.CMD_PLAY                        = "cl.play";
     exports.CMD_PAUSE                       = "cl.pause";
     exports.CMD_STEP                        = "cl.step";
+
+    exports.CMD_HIDE_INSPECTOR              = "cl.hide.inspector";
 });

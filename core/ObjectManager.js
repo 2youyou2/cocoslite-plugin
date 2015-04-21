@@ -137,16 +137,18 @@ define(function (require, exports, module) {
 				if(!dsc) 
 					return;
 
+				var isObject = typeof obj[p] === 'object';
+
 				if(dsc.set || dsc.get){
 					obj._originProperties[p] = {get: dsc.get, set: dsc.set};
 					cl.defineGetterSetter(obj, p, dsc.get, function(){
-						var oldValue = this[p];
+						var oldValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
 
 						var func = this._originProperties[p].set;
 						func.apply(this, arguments);
 						EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
-						var newValue = this[p];
+						var newValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
 					});
 				}else{
@@ -154,12 +156,12 @@ define(function (require, exports, module) {
 					cl.defineGetterSetter(obj, p, function(){
 						return this._originProperties[p];
 					}, function(val){
-						var oldValue = this[p];
+						var oldValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
 
 						this._originProperties[p] = val;
 						EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
-						var newValue = this[p];
+						var newValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
 						Undo.objectPropertyChanged(oldValue, newValue, this, p);
 					});
 
@@ -345,13 +347,20 @@ define(function (require, exports, module) {
 
 			injectObject(this);
 		}
+    }
 
+    function hackCocos() {
+    	cc.Sprite.prototype.toJSON = cc.Sprite.prototype._pGet = function() {
+    		var texture = this.getTexture();
+    		return texture ? texture.url : "";
+    	}
     }
 
     function handleCocosLoaded() {
     	hackObjectJsonControl();
     	hackGameObject();
     	hackComponent();
+    	hackCocos();
     }
 
     EventManager.on(EventManager.COCOS_LOADED, handleCocosLoaded);

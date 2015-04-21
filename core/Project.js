@@ -4,6 +4,7 @@ define(function (require, exports, module) {
     var ProjectManager     = brackets.getModule("project/ProjectManager"),
         Menus              = brackets.getModule("command/Menus"),
         CommandManager     = brackets.getModule("command/CommandManager"),
+        bracketsCommands   = brackets.getModule("command/Commands"),
         FileSystem         = brackets.getModule("filesystem/FileSystem"),
         Strings            = brackets.getModule("strings"),
         Dialogs            = brackets.getModule("widgets/Dialogs"),
@@ -11,6 +12,7 @@ define(function (require, exports, module) {
         PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
     var CreateProjectTemp  = require("text!html/CreateProject.html"),
+        NewSceneContent    = require("text!template/template.scene"),
         MenusManager       = require("core/MenusManager"),
         Commands           = require("core/Commands"),
         Strings            = require("strings"),
@@ -161,7 +163,9 @@ define(function (require, exports, module) {
     }
 
     function handleNewScene() {
-
+        CommandManager.execute(bracketsCommands.FILE_NEW, 'Level', '.scene', function(file) {
+            file.write(NewSceneContent);
+        });
     }
 
     function handleProjectSettings() {

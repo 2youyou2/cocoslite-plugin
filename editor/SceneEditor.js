@@ -28,7 +28,7 @@ define(function (require, exports, module) {
     var _lazyInitEditor = false;
 
 
-    Undo.registerUndoType(".js.scene");
+    Undo.registerUndoType(".scene");
 
 
     var _playing = false;
@@ -193,7 +193,7 @@ define(function (require, exports, module) {
         
         _editor = null;
 
-        if(!current || !current.document.file.name.endWith(".js.scene")) {
+        if(!current || !current.document.file.name.endWith(".scene")) {
             
             if(Inspector.showing) {
                 Inspector.hide();

@@ -236,8 +236,10 @@ define(function (require, exports, module) {
                 if(this["toJSON"+k]) {
                     json[k] = this["toJSON"+k]();
                 }
-                else {
-                    json[k] = this[k];
+                else{
+                	var value = this[k];
+
+                    json[k] = value.toJSON ? value.toJSON() : value;
                 }
             }
             return json;

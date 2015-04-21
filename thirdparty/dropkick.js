@@ -120,7 +120,7 @@
       $select.before($dk);
 
       // Update the reference to $dk
-      $dk = $('#dk_container_' + id).addClass('dk_shown');
+      $dk = $select.parent().find('#dk_container_' + id).addClass('dk_shown');
 
       // Save the current theme
       theme = settings.theme ? settings.theme : 'default';

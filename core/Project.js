@@ -162,8 +162,12 @@ define(function (require, exports, module) {
         });
     }
 
+    function handleNewSceneUntitled() {
+        CommandManager.execute(bracketsCommands.FILE_NEW_UNTITLED, 'Untitiled', '.scene', NewSceneContent);
+    }
+
     function handleNewScene() {
-        CommandManager.execute(bracketsCommands.FILE_NEW, 'Level', '.scene', function(file) {
+        CommandManager.execute(bracketsCommands.FILE_NEW, 'Untitiled', '.scene', function(file) {
             file.write(NewSceneContent);
         });
     }
@@ -176,16 +180,20 @@ define(function (require, exports, module) {
     function registerMenu() {
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
         menu.addGameEditorMenuItem(Commands.CMD_NEW_PROJECT, "", Menus.FIRST);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE_UNTITLED,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
         menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
 
         menu.addGameEditorMenuDivider(Menus.LAST);
         menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
+
+        menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
+        menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.FIRST);
     }
 
 
     CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_NEW_PROJECT, handleNewProject);
     CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE,   handleNewScene);
+    CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE_UNTITLED,   handleNewSceneUntitled);
     CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS, handleProjectSettings);
 
     registerMenu();
@@ -194,4 +202,12 @@ define(function (require, exports, module) {
         return sources;
     }
     exports.getResources = getResources;
+
+    exports.getResourceFolder = function() {
+        return resFolder;
+    }
+
+    exports.getSourceFolder = function() {
+        return srcFolder;
+    }
 });

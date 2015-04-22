@@ -151,12 +151,21 @@ define(function (require, exports, module) {
     
     function initEditor() {
 
-        function sceneToString() {
-            var str = JSON.stringify(_scene, null, '\t');
-            return str;
-        }
+        var originGetText = _editor.document.getText;
+        _editor.document.getText = function() {
+            var text = "";
+            
+            if(_scene) {
+                text = JSON.stringify(_scene, null, '\t');
+            } else {
+                text = originGetText.apply(this, arguments);
+            }
 
-        _editor.document.getText = sceneToString;
+            return text;
+        };
+
+        var resFolder = Project.getResourceFolder();
+        _editor.document.saveAsDefaultPath = resFolder ? resFolder.fullPath : null;
 
         var $el = $("<div class='scene-editor'>");
         var $scene = Cocos.getSceneHtml();
@@ -281,8 +290,8 @@ define(function (require, exports, module) {
         // this will make cocos load res from current project path
         cc.loader.resPath = ProjectManager.getProjectRoot().fullPath;
 
-        var fullPath = _editor.document.file.fullPath;
-        cl.SceneManager.loadScene(fullPath, handleSceneLoaded, true);
+        var content = _editor.document.getText();
+        cl.SceneManager.loadSceneWithContent(content, handleSceneLoaded, true);
     }
 
 

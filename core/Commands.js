@@ -4,6 +4,7 @@ define(function (require, exports, module) {
     exports.CMD_OPEN_SCRIPT                 = "cl.openScript";              
     exports.CMD_OPEN_IDE                    = "cl.openIDE";
     exports.CMD_NEW_PROJECT                 = "cl.createProject";
+    exports.CMD_NEW_SCENE_UNTITLED          = "cl.createScene.untitled";
     exports.CMD_NEW_SCENE                   = "cl.createScene";
     exports.CMD_PROJECT_SETTINGS            = "cl.projectSettings";
 

@@ -469,12 +469,19 @@ define(function (require, exports, module) {
 	}
 
 	function handleComponentAdded(event, component) {
-		var target = component.getTarget();
-		if(target !== currentObject) {
+		if(component.target !== currentObject) {
             return;
         }
 
 		initComponentUI(component);
+	}
+
+	function handleComponentRemoved(event, component) {
+		if(component.target != currentObject) {
+			return;
+		}
+
+		$inspector.find('#'+component.classname).remove();
 	}
 
 	function handleObjectPropertyChanged(event, o, p) {
@@ -507,6 +514,7 @@ define(function (require, exports, module) {
 
 	EventManager.on(EventManager.SELECT_OBJECTS,          handleSelectedObject);
 	EventManager.on(EventManager.COMPONENT_ADDED,         handleComponentAdded);
+	EventManager.on(EventManager.COMPONENT_REMOVED,       handleComponentRemoved);
 	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, handleObjectPropertyChanged);
 	EventManager.on(EventManager.SCENE_CLOSED,            clear);
 

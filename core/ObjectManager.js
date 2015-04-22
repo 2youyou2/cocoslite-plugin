@@ -139,6 +139,7 @@ define(function (require, exports, module) {
 
 				var isObject = typeof obj[p] === 'object';
 
+
 				if(dsc.set || dsc.get){
 					obj._originProperties[p] = {get: dsc.get, set: dsc.set};
 					cl.defineGetterSetter(obj, p, dsc.get, function(){
@@ -233,12 +234,12 @@ define(function (require, exports, module) {
             for(var i=0; i<this.properties.length; i++){
                 var k = this.properties[i];
 
+                var value = this[k];
+
                 if(this["toJSON"+k]) {
                     json[k] = this["toJSON"+k]();
                 }
-                else{
-                	var value = this[k];
-
+                else if(value){
                     json[k] = value.toJSON ? value.toJSON() : value;
                 }
             }
@@ -317,12 +318,30 @@ define(function (require, exports, module) {
 			var c = originAddComponent.apply(this, arguments);
 			EventManager.trigger(EventManager.COMPONENT_ADDED, c);
 
+			var self = this;
+			function undo(){
+				self.removeComponent(c);
+			}
+			function redo(){
+				self.addComponent(c);
+			}
+			Undo.objectPropertyChanged(undo, redo);
+
 			return c;
 		}
 
 		gp.removeComponent = function() {
 			var c = originRemoveComponent.apply(this, arguments);
 			EventManager.trigger(EventManager.COMPONENT_REMOVED, c);
+
+			var self = this;
+			function undo(){
+				self.addComponent(c);
+			}
+			function redo(){
+				self.removeComponent(c);
+			}
+			Undo.objectPropertyChanged(undo, redo);
 
 			return c;
 		}
@@ -355,7 +374,7 @@ define(function (require, exports, module) {
     	cc.Sprite.prototype.toJSON = cc.Sprite.prototype._pGet = function() {
     		var texture = this.getTexture();
     		return texture ? texture.url : "";
-    	}
+    	};
     }
 
     function handleCocosLoaded() {

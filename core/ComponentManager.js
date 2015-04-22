@@ -57,11 +57,15 @@ define(function (require, exports, module) {
 
     		(function(k){
     			CommandManager.register(k, id, function(){
+                    Undo.beginUndoBatch();
+
                     var currentObjects = Selector.getSelectObjects();
 
 					for(var i in currentObjects){
 						currentObjects[i].addComponent(k);
 					}
+
+                    Undo.endUndoBatch();
 	    		});
     		})(k);
     	}

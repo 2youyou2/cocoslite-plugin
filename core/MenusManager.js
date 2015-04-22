@@ -193,7 +193,7 @@ define(function (require, exports, module) {
     	Menus.Menu.prototype.addMenuItem = function(command, keyBindings, position, relativeID) {
     		var item = null;
 
-            if(_currentFocusWindow === EditorType.GameEditor) {
+            if(this.constructor === Menus.Menu && _currentFocusWindow === EditorType.GameEditor) {
                 if(brackets.platform === 'mac') {
                     item = originAddMenuItem.apply(this, arguments);
                     if(item.isDivider) {
@@ -235,6 +235,10 @@ define(function (require, exports, module) {
     	Menus.Menu.prototype.removeMenuItem = function(command) {
     		originRemoveMenuItem.apply(this, arguments);
 
+            if(this.constructor === Menus.ContextMenu) {
+                return;
+            }
+            
             for(var type in EditorType) {
                 var menu = getMenu(type, this.id);
                 if(menu) {
@@ -338,6 +342,10 @@ define(function (require, exports, module) {
 
         menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
         menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.VIEW_HIDE_SIDEBAR);
+
+
+        menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
+        menu.removeMenuItem(Commands.FILE_NEW);
     }
 
 	function init() {

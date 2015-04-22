@@ -181,13 +181,14 @@ define(function (require, exports, module) {
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
         menu.addGameEditorMenuItem(Commands.CMD_NEW_PROJECT, "", Menus.FIRST);
         menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE_UNTITLED,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE_UNTITLED);
 
         menu.addGameEditorMenuDivider(Menus.LAST);
         menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
 
         menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-        menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.FIRST);
+        menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.AFTER, bracketsCommands.FILE_NEW_FOLDER);
+        menu.addMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
     }
 
 

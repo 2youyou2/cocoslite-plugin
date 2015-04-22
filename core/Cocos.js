@@ -96,9 +96,6 @@ define(function (require, exports, module) {
         var isRegisterEvent = false;
         cc.game.onStart = function(){
 
-            EventManager.trigger(EventManager.GAME_START);
-
-
             if(!isRegisterEvent) {
                 isRegisterEvent = true;
                 cc.inputManager._isRegisterEvent = false;
@@ -140,7 +137,10 @@ define(function (require, exports, module) {
 
             window.addEventListener("blur", function() {
                 cc.director.pause();
-            })
+            });
+
+            // need trigger this event after cocos state ready, like resize .etc
+            EventManager.trigger(EventManager.GAME_START);
         };
 
         function loadCocosLiteModule(cb) {

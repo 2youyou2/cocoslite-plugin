@@ -5,6 +5,8 @@ define(function (require, exports, module) {
     "use strict";
 
 	var Resizer 	   = brackets.getModule("utils/Resizer"),
+		ThemeManager   = brackets.getModule("view/ThemeManager"),
+		ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
 		Dialogs        = brackets.getModule("widgets/Dialogs");
 
     var ObjectManager  = require("core/ObjectManager"),
@@ -14,6 +16,7 @@ define(function (require, exports, module) {
     	EditorManager  = require("editor/EditorManager"),
     	Vue            = require("thirdparty/Vue"),
     	Dropkick       = require("thirdparty/dropkick"),
+    	ColorPicker    = require("thirdparty/colorpicker/js/bootstrap-colorpicker"),
     	InspectorHtml  = require("text!html/Inspector.html"),
     	ShowAssetsHtml = require("text!html/ShowAssets.html");
 
@@ -27,6 +30,25 @@ define(function (require, exports, module) {
     Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
 
     $content.on("panelResizeUpdate", onResize);
+
+    $.extend({
+	    includePath: '',
+	    include: function(file) {
+	        var files = typeof file == "string" ? [file]:file;
+	        for (var i = 0; i < files.length; i++) {
+	            var name = files[i];
+	            var att = name.split('.');
+	            var ext = att[att.length - 1].toLowerCase();
+	            var isCSS = ext == "css";
+	            var tag = isCSS ? "link" : "script";
+	            var attr = isCSS ? " type='text/css' rel='stylesheet' " : " language='javascript' type='text/javascript' ";
+	            var link = (isCSS ? "href" : "src") + "='" + $.includePath + name + "'";
+	            if ($(tag + "[" + link + "]").length == 0) $('head').append($("<" + tag + attr + link + "></" + tag + ">"));
+	        }
+	   }
+	});
+    var cssPath = ExtensionUtils.getModulePath(module, "../thirdparty/colorpicker/css/bootstrap-colorpicker.css");
+	$.include([cssPath]);
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
@@ -71,13 +93,11 @@ define(function (require, exports, module) {
 	}
 	
 	function bindInput(input, obj, key){
-		obj._inspectorInputMap[key] = input;
 
-		input.value = obj[key];
-		input.innerChanged = false;
-
-		input.finishEdit = function(){
-			Undo.beginUndoBatch();
+		input.finishEdit = function(stopUndoBatch){
+			if(!stopUndoBatch) {
+				Undo.beginUndoBatch();
+			}
 
 			if(input.updateValue) {
                 input.updateValue();
@@ -100,8 +120,15 @@ define(function (require, exports, module) {
 
 			input.innerChanged = false;
 
-			Undo.endUndoBatch();
+			if(!stopUndoBatch) {
+				Undo.endUndoBatch();
+			}
 		};
+
+		obj._inspectorInputMap[key] = input;
+
+		input.value = obj[key];
+		input.innerChanged = false;
 	}
 
 	function createInputForArray(array, $input){
@@ -241,6 +268,10 @@ define(function (require, exports, module) {
 		return name.endWith('.png') || name.endWith('.jpg');
 	}
 
+	function ccColorToString(color) {
+		return "rgb(" + color.r + ',' + color.g + ',' + color.b + ')';
+	}
+
 	function createInputForObject(obj, key, value) {
 		var $input = null;
 
@@ -332,6 +363,24 @@ define(function (require, exports, module) {
             	}
 
                 $img.attr("src", file)
+            });
+		}
+		else if(value.constructor === cc.Color) {
+			$input = $("<span class='input-group'><input type='text'class='form-control' value='#fff'><span class='input-group-addon'><i></i></span>");
+
+  			$input.colorpicker({color:'#fff'}).on('changeColor.colorpicker', function(event){
+				$input.color = event.color.toRGB();
+				$input.finishEdit(true);
+			}).on('endChangeColor.colorpicker', function() {
+				Undo.endUndoBatch();
+			}).on('beginChangeColor.colorpicker', function() {
+				Undo.beginUndoBatch();
+			});
+
+  			cl.defineGetterSetter($input, "value", function() {
+                return $input.color;
+            }, function(color) {
+            	$input.colorpicker('setValue', ccColorToString(color));
             });
 		}
 		else if(value.constructor === Array) {

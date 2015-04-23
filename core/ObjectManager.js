@@ -239,7 +239,7 @@ define(function (require, exports, module) {
                 if(this["toJSON"+k]) {
                     json[k] = this["toJSON"+k]();
                 }
-                else if(value){
+                else if(value !== null || value !== undefined){
                     json[k] = value.toJSON ? value.toJSON() : value;
                 }
             }
@@ -375,6 +375,10 @@ define(function (require, exports, module) {
     		var texture = this.getTexture();
     		return texture ? texture.url : "";
     	};
+
+    	cc.Color.prototype.toJSON = function() {
+    		return cc.colorToHex(this);
+    	}
     }
 
     function handleCocosLoaded() {

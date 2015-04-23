@@ -268,9 +268,6 @@ define(function (require, exports, module) {
 		return name.endWith('.png') || name.endWith('.jpg');
 	}
 
-	function ccColorToString(color) {
-		return "rgb(" + color.r + ',' + color.g + ',' + color.b + ')';
-	}
 
 	function createInputForObject(obj, key, value) {
 		var $input = null;
@@ -380,7 +377,7 @@ define(function (require, exports, module) {
   			cl.defineGetterSetter($input, "value", function() {
                 return $input.color;
             }, function(color) {
-            	$input.colorpicker('setValue', ccColorToString(color));
+            	$input.colorpicker('setValue', cc.colorToHex(color));
             });
 		}
 		else if(value.constructor === Array) {

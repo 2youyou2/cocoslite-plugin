@@ -5,27 +5,27 @@
 define(function (require, exports, module) {
     "use strict";
 
-	var ExtensionUtils = brackets.getModule("utils/ExtensionUtils");
+    var ExtensionUtils = brackets.getModule("utils/ExtensionUtils");
 
     // extend jquery 
     $.extend({
-	    includePath: '',
-	    include: function(file) {
-	        var files = typeof file == "string" ? [file]:file;
-	        for (var i = 0; i < files.length; i++) {
-	            var name = files[i];
-	            var att = name.split('.');
-	            var ext = att[att.length - 1].toLowerCase();
-	            var isCSS = ext == "css";
-	            var tag = isCSS ? "link" : "script";
-	            var attr = isCSS ? " type='text/css' rel='stylesheet' " : " language='javascript' type='text/javascript' ";
-	            var link = (isCSS ? "href" : "src") + "='" + $.includePath + name + "'";
-	            if ($(tag + "[" + link + "]").length == 0) $('head').append($("<" + tag + attr + link + "></" + tag + ">"));
-	        }
-	   }
-	});
+        includePath: '',
+        include: function(file) {
+            var files = typeof file == "string" ? [file]:file;
+            for (var i = 0; i < files.length; i++) {
+                var name = files[i];
+                var att = name.split('.');
+                var ext = att[att.length - 1].toLowerCase();
+                var isCSS = ext == "css";
+                var tag = isCSS ? "link" : "script";
+                var attr = isCSS ? " type='text/css' rel='stylesheet' " : " language='javascript' type='text/javascript' ";
+                var link = (isCSS ? "href" : "src") + "='" + $.includePath + name + "'";
+                if ($(tag + "[" + link + "]").length == 0) $('head').append($("<" + tag + attr + link + "></" + tag + ">"));
+            }
+       }
+    });
 
-	$.includePath = ExtensionUtils.getModulePath(module, "");
+    $.includePath = ExtensionUtils.getModulePath(module, "");
 
     // extend String
     String.prototype.endWith = function(endStr) {
@@ -34,6 +34,6 @@ define(function (require, exports, module) {
     };
 
     String.prototype.capitalize = function () {
-	  return this.charAt(0).toUpperCase() + this.slice(1);
-	};
+      return this.charAt(0).toUpperCase() + this.slice(1);
+    };
 });

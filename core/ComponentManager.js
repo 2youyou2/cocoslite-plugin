@@ -11,7 +11,7 @@ define(function (require, exports, module) {
     var Strings        = require("strings"),
         Commands       = require("core/Commands"),
         Selector       = require("core/Selector"),
-    	Undo           = require("core/Undo"),
+        Undo           = require("core/Undo"),
         Project        = require("core/Project"),
         EventManager   = require("core/EventManager"),
         ObjectManager  = require("core/ObjectManager"),
@@ -19,7 +19,7 @@ define(function (require, exports, module) {
 
 
     function createEmptyObject() {
-    	Undo.beginUndoBatch();
+        Undo.beginUndoBatch();
         var currentObjects = Selector.getSelectObjects();
 
 
@@ -29,10 +29,10 @@ define(function (require, exports, module) {
                 var obj = new cl.GameObject();
                 currentObjects[i].addChild(obj);
                 objs.push(obj);
-    		}
-    	} else {
-    		var scene = cc.director.getRunningScene();
-	    	var obj = new cl.GameObject();
+            }
+        } else {
+            var scene = cc.director.getRunningScene();
+            var obj = new cl.GameObject();
             scene.canvas.addChild(obj);
             objs.push(obj);
         }
@@ -52,46 +52,46 @@ define(function (require, exports, module) {
     }
 
     function registerCommand() {
-    	CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_GAME_OBJECT, createEmptyObject);
+        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_GAME_OBJECT, createEmptyObject);
         CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_COMPONENT,   createEmptyComponent);
 
         var cs = cl.ComponentManager.getAllClasses();
         var cmds = [];
 
-    	for(var k in cs){
+        for(var k in cs){
 
-    		var id = Commands.CMD_COMPONENT + '.' + k;
-    		cmds.push(id);
+            var id = Commands.CMD_COMPONENT + '.' + k;
+            cmds.push(id);
 
-    		(function(k){
-    			CommandManager.register(k, id, function(){
+            (function(k) {
+                CommandManager.register(k, id, function(){
                     Undo.beginUndoBatch();
 
                     var currentObjects = Selector.getSelectObjects();
 
-					for(var i in currentObjects){
-						currentObjects[i].addComponent(k);
-					}
+                    for(var i in currentObjects){
+                        currentObjects[i].addComponent(k);
+                    }
 
                     Undo.endUndoBatch();
-	    		});
-    		})(k);
-    	}
+                });
+            })(k);
+        }
 
         return cmds;
     }
 
     function registerMenus(cmds) {
 
-    	var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
-    	menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_GAME_OBJECT);
+        var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_GAME_OBJECT);
 
         // menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
         // menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_COMPONENT);
 
-		for(var i in cmds){
-			menu.addGameEditorMenuItem(cmds[i]);
-		}
+        for(var i in cmds){
+            menu.addGameEditorMenuItem(cmds[i]);
+        }
     }
 
     function updateComponentMenus() {
@@ -108,13 +108,13 @@ define(function (require, exports, module) {
     }
 
     EventManager.on(EventManager.PROJECT_OPEN, function() {
-	    var cmds = registerCommand();
-	    registerMenus(cmds);
+        var cmds = registerCommand();
+        registerMenus(cmds);
         updateComponentMenus();
     });
 
     EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs) {
         updateComponentMenus();
-	});
+    });
 
 });

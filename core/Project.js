@@ -23,32 +23,32 @@ define(function (require, exports, module) {
     var sources;
 
     function loadFolder(item, container, useFile, filter, cb) {
-    	if(filter(item)) {
+        if(filter(item)) {
             var file = useFile ? item : item.fullPath;
             container.push(file);
         }
 
-    	if(item.isDirectory) {
-	    	item.getContents(function(err, subItems) {
-	    		var i = 0;
-	    		subItems.forEach(function(subItem) {
-	    			loadFolder(subItem, container, useFile, filter, function() {
-	    				if(++i === subItems.length) {
+        if(item.isDirectory) {
+            item.getContents(function(err, subItems) {
+                var i = 0;
+                subItems.forEach(function(subItem) {
+                    loadFolder(subItem, container, useFile, filter, function() {
+                        if(++i === subItems.length) {
                             cb();
                         }
-	    			});
-	    		});
-	    	});
-    	}
-    	else{
-    		cb();
-    	}
+                    });
+                });
+            });
+        }
+        else{
+            cb();
+        }
     }
 
     function loadSources() {
         var deferred = new $.Deferred();
 
-    	loadFolder(srcFolder, sources, false,
+        loadFolder(srcFolder, sources, false,
             function(item) {
                 return item.name.endWith(".js");
             }, 
@@ -78,39 +78,39 @@ define(function (require, exports, module) {
         return deferred.promise();
     }
 
-	function reset() {
-    	isCocosProject = false;
-    	resFolder = srcFolder = null;
-    	sources = [];
-	}
+    function reset() {
+        isCocosProject = false;
+        resFolder = srcFolder = null;
+        sources = [];
+    }
 
     ProjectManager.on("projectOpen", function(e, root) {
 
-    	reset();
+        reset();
 
-    	root.getContents(function(err, items) {
-    		items.forEach(function(item) {
-    			if(item.name === ".cocos-project.json") {
+        root.getContents(function(err, items) {
+            items.forEach(function(item) {
+                if(item.name === ".cocos-project.json") {
                     isCocosProject = true;
                 }
-	    		else if(item.name === "res") {
+                else if(item.name === "res") {
                     resFolder = item;
                 }
-	    		else if(item.name === "src") {
-	    			srcFolder = item;
+                else if(item.name === "src") {
+                    srcFolder = item;
                 }
-    		});
+            });
 
-	    	if(!isCocosProject) {
-	    		reset();
-	    		console.err(root.fullPath + " is not a cocos project path.");
-	    	} else {
+            if(!isCocosProject) {
+                reset();
+                console.err(root.fullPath + " is not a cocos project path.");
+            } else {
                 loadSources().then(function(){
                     EventManager.trigger(EventManager.PROJECT_OPEN);
                 });
             }
 
-    	});
+        });
     });
 
     function handleNewProject() {

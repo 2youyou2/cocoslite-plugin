@@ -3,11 +3,11 @@
 </div>
 
 <div id="hierarchy">
-	<ul class="ui-tree-nodes">
-		<li  v-repeat="model: children" class="ui-tree-node" >
+    <ul class="ui-tree-nodes">
+        <li  v-repeat="model: children" class="ui-tree-node" >
             <div v-with="model" v-component="hierarchy-folder"/>
         </li>
-	</ul>
+    </ul>
 </div>
 
 <script type="text/x-template" id="hierarchy-folder-template">

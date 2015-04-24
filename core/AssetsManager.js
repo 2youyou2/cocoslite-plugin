@@ -10,5 +10,4 @@ define(function (require, exports, module) {
 
         componentMenu = Menus.addMenu("Component", "cl.Component");
 
-        
 });

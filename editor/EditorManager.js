@@ -8,23 +8,23 @@ define(function (require, exports, module) {
     var orderedEditors = [];
 
     function getEditors() {
-    	return editors;
+        return editors;
     }
 
     function getOrderedEditors() {
-    	return orderedEditors;
+        return orderedEditors;
     }
 
     function register(name, editor) {
-    	editors[name] = editor;
+        editors[name] = editor;
         editor.name = name;
 
-    	editor._order = editor._order ? editor._order : 0;
-    	orderedEditors.push(editor);
-    	orderedEditors.sort(function(a,b){return a._order>b._order?-1:1});
+        editor._order = editor._order ? editor._order : 0;
+        orderedEditors.push(editor);
+        orderedEditors.sort(function(a,b){return a._order>b._order?-1:1});
     }
     function remove(name) {
-    	editors[name] = null;
+        editors[name] = null;
 
         var index = this.indexOf(orderedEditors);
         if (index > -1) {

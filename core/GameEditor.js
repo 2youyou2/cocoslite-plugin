@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     var ProjectManager   = brackets.getModule("project/ProjectManager"),
         Menus            = brackets.getModule("command/Menus"),
-    	CommandManager   = brackets.getModule("command/CommandManager");
+        CommandManager   = brackets.getModule("command/CommandManager");
 
     var Commands         = require("core/Commands"),
         EventManager     = require("core/EventManager");
@@ -134,7 +134,7 @@ define(function (require, exports, module) {
 
 
     function handleOpenScript(fullPath) {
-    	if(!ide) {
+        if(!ide) {
 
             openIDE();
 
@@ -146,7 +146,7 @@ define(function (require, exports, module) {
                 ide.on("scriptChanged", handleScriptChanged);
             };
 
-    	} else {
+        } else {
             ide.openFile(fullPath);
         }
     }

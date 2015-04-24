@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     var EditorManager   = require("editor/EditorManager"),
         EventManager    = require("core/EventManager"),
-    	Undo 			= require("core/Undo");
+        Undo            = require("core/Undo");
 
 
     var inited = false;
@@ -21,135 +21,135 @@ define(function (require, exports, module) {
     var enable = true;
 
     function setEnable(e) {
-    	enable = e;
+        enable = e;
     }
     
 
     function initListener(){
-    	if(inited) {
+        if(inited) {
             return;
         }
-    	inited = true;
+        inited = true;
 
-    	cc.eventManager.addListener(cc.EventListener.create({
-	        event: cc.EventListener.TOUCH_ONE_BY_ONE,
-	        onTouchBegan: function (touch, event) {
-	        	
-	        	if(!enable) {
-	        		return;
-	        	}
+        cc.eventManager.addListener(cc.EventListener.create({
+            event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            onTouchBegan: function (touch, event) {
+                
+                if(!enable) {
+                    return;
+                }
 
-	        	mousedown = true;
+                mousedown = true;
 
-				Undo.beginUndoBatch();
+                Undo.beginUndoBatch();
 
-				currentDelegate = null;
+                currentDelegate = null;
                 var delegates = EditorManager.getOrderedEditors();
-				for(var i=0; i<delegates.length; i++){
-					if(delegates[i].onTouchBegan && delegates[i].onTouchBegan(touch)){
-						currentDelegate = delegates[i];
-						return true;
-					}
-				}
+                for(var i=0; i<delegates.length; i++){
+                    if(delegates[i].onTouchBegan && delegates[i].onTouchBegan(touch)){
+                        currentDelegate = delegates[i];
+                        return true;
+                    }
+                }
 
-	        	var worldPoint = touch.getLocation();
+                var worldPoint = touch.getLocation();
 
-	        	var hitTest = function(object){
-	        		if(object.constructor === cl.GameObject){
-	        			if(!object.lock && object.visible && object.hitTest(worldPoint)) {
-	        				return object;
+                var hitTest = function(object){
+                    if(object.constructor === cl.GameObject){
+                        if(!object.lock && object.visible && object.hitTest(worldPoint)) {
+                            return object;
                         }
-	        		}
+                    }
 
-	        		var children = object.children;
-	        		for(var i=children.length-1; i>=0; i--){
-	        			var o = hitTest(children[i]);
-	        			if(o) {
+                    var children = object.children;
+                    for(var i=children.length-1; i>=0; i--){
+                        var o = hitTest(children[i]);
+                        if(o) {
                             return o;
                         }
-	        		}
+                    }
 
-	        		return null;
-	        	};
-	        	
-	        	var obj = hitTest(scene);
+                    return null;
+                };
+                
+                var obj = hitTest(scene);
                 selectObjects(obj ? [obj] : []);
 
-	        	return true;
-	        },
-	        onTouchMoved: function(touch, event){
+                return true;
+            },
+            onTouchMoved: function(touch, event){
 
-	        	if(currentDelegate && currentDelegate.onTouchMoved){
-	        		currentDelegate.onTouchMoved(touch, selectedObjects);
-	        		return;
-	        	}
+                if(currentDelegate && currentDelegate.onTouchMoved){
+                    currentDelegate.onTouchMoved(touch, selectedObjects);
+                    return;
+                }
 
-	        	// for(var i in selectedObjects){
-	        	// 	var t = selectedObjects[i].getComponent("TransformComponent");
-		        //     var delta = touch.getDelta();
-		        //     t.position = cc.pAdd(t.position, delta);
-	        	// }
-	        },
-	        onTouchEnded: function(touch, event){
-				mousedown = false;
+                // for(var i in selectedObjects){
+                //  var t = selectedObjects[i].getComponent("TransformComponent");
+                //     var delta = touch.getDelta();
+                //     t.position = cc.pAdd(t.position, delta);
+                // }
+            },
+            onTouchEnded: function(touch, event){
+                mousedown = false;
 
-				if(currentDelegate && currentDelegate.onTouchEnded){
-	        		currentDelegate.onTouchEnded(touch);
-	        	}
+                if(currentDelegate && currentDelegate.onTouchEnded){
+                    currentDelegate.onTouchEnded(touch);
+                }
 
-				Undo.endUndoBatch();
-	        }
+                Undo.endUndoBatch();
+            }
         }), 10000);
 
 
-		cc.eventManager.addListener(cc.EventListener.create({
-	        event: cc.EventListener.MOUSE,
-	        onMouseMove: function(event){
+        cc.eventManager.addListener(cc.EventListener.create({
+            event: cc.EventListener.MOUSE,
+            onMouseMove: function(event){
                 var delegates = EditorManager.getOrderedEditors();
-	        	for(var i=0; i<delegates.length; i++){
-					if(delegates[i].onMouseMove){
-						delegates[i].onMouseMove(event);
-					}
-				}
-	        }
-	    }), 10000);
+                for(var i=0; i<delegates.length; i++){
+                    if(delegates[i].onMouseMove){
+                        delegates[i].onMouseMove(event);
+                    }
+                }
+            }
+        }), 10000);
     }
 
 
     function selectObjects(objs) {
 
-    	// whether selectedObjects changed
-    	var selectedObjectsChanged = selectedObjects.length !== objs.length;
+        // whether selectedObjects changed
+        var selectedObjectsChanged = selectedObjects.length !== objs.length;
 
-    	if(!selectedObjectsChanged) {
-			for(var i=0; i<selectedObjects.length; i++){
-	    		if(selectedObjects[i] != objs[i]){
-	    			selectedObjectsChanged = true;
-	    			break;
-	    		}
-	    	}
-    	}
-		
-    	if(!selectedObjectsChanged) {
-    		return;
-    	}
+        if(!selectedObjectsChanged) {
+            for(var i=0; i<selectedObjects.length; i++){
+                if(selectedObjects[i] != objs[i]){
+                    selectedObjectsChanged = true;
+                    break;
+                }
+            }
+        }
+        
+        if(!selectedObjectsChanged) {
+            return;
+        }
 
-    	// pack undo
-    	Undo.beginUndoBatch();
+        // pack undo
+        Undo.beginUndoBatch();
 
-    	(function(){
-	    	var oldObjs = selectedObjects.slice(0);
-	    	var newObjs = objs.slice(0);
+        (function(){
+            var oldObjs = selectedObjects.slice(0);
+            var newObjs = objs.slice(0);
 
-    		function undo(){
+            function undo(){
                 selectObjects(oldObjs);
-	    	}
-	    	function redo(){
+            }
+            function redo(){
                 selectObjects(newObjs);
-	    	}
+            }
 
-	    	Undo.objectPropertyChanged(undo, redo, false);
-    	})();
+            Undo.objectPropertyChanged(undo, redo, false);
+        })();
 
         selectedObjects = objs;
         EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
@@ -159,24 +159,24 @@ define(function (require, exports, module) {
     }
 
     function clear() {
-    	tempSelectedObjects = selectedObjects = [];
-    	tempScene = scene = null;
+        tempSelectedObjects = selectedObjects = [];
+        tempScene = scene = null;
     }
 
     function temp(e, s) {
-    	tempSelectedObjects = selectedObjects;
-    	selectedObjects = [];
+        tempSelectedObjects = selectedObjects;
+        selectedObjects = [];
 
-    	tempScene = scene;
-    	scene = s;
+        tempScene = scene;
+        scene = s;
     }
 
     function recover() {
-    	selectedObjects = tempSelectedObjects;
-    	tempSelectedObjects = [];
+        selectedObjects = tempSelectedObjects;
+        tempSelectedObjects = [];
 
-    	scene = tempScene;
-    	tempScene = null;
+        scene = tempScene;
+        tempScene = null;
     }
     
     function handleSceneLoaded(e, s) {

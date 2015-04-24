@@ -1,13 +1,13 @@
 define(function (require, exports, module) {
     "use strict";
 
-	var Resizer 	   = brackets.getModule("utils/Resizer");
+    var Resizer        = brackets.getModule("utils/Resizer");
 
-    var html  		   = require("text!html/Hierarchy.html"),
-	    Selector       = require("core/Selector"),
-	    Undo           = require("core/Undo"),
-	    EventManager   = require("core/EventManager"),
-	    Vue   		   = require("thirdparty/vue");
+    var html           = require("text!html/Hierarchy.html"),
+        Selector       = require("core/Selector"),
+        Undo           = require("core/Undo"),
+        EventManager   = require("core/EventManager"),
+        Vue            = require("thirdparty/vue");
 
     var $sidebar = $("#sidebar");
     var $content = $("<div id='hierarchy-content' class='hierarchy-content quiet-scrollbars' />");
@@ -16,213 +16,213 @@ define(function (require, exports, module) {
 
     var root     = {children:[]};
     var tempRoot = null;
-    var	objMap   = {};
+    var objMap   = {};
 
     function createContent(){
-    	$content.empty();
-    	$content.append($(html));
+        $content.empty();
+        $content.append($(html));
 
-    	function select(obj, e){
+        function select(obj, e){
 
-			// if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
+            // if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
 
-			// } 
-			// else {
+            // } 
+            // else {
                 if(root.currentObjects) {
-                	root.currentObjects.forEach(function(item){
+                    root.currentObjects.forEach(function(item){
                         item.selected = false;
                     });
                 }
-				
-				root.currentObjects = [];
-			// }
+                
+                root.currentObjects = [];
+            // }
 
-			if(obj) {
-				obj.selected = true;
-				root.currentObjects.push(obj);
-			}
+            if(obj) {
+                obj.selected = true;
+                root.currentObjects.push(obj);
+            }
 
-			var selectedObjs = [];
+            var selectedObjs = [];
             
             root.currentObjects.forEach(function(item){
                 selectedObjs.push(objMap[item.id]);
             });
-			
-			Selector.selectObjects(selectedObjs);
+            
+            Selector.selectObjects(selectedObjs);
 
-			if(e) {
+            if(e) {
                 e.stopPropagation();
             }
-		}
+        }
 
-		function getObject(data) {
-			var id = data.id;
-			var obj = objMap[id];
-			if(!obj) {
-				console.error("object with id [%s] can't find.", id);
-			}
-			return obj;
-		}
+        function getObject(data) {
+            var id = data.id;
+            var obj = objMap[id];
+            if(!obj) {
+                console.error("object with id [%s] can't find.", id);
+            }
+            return obj;
+        }
 
-    	Vue.component('hierarchy-folder', {
-		    template: '#hierarchy-folder-template',
-		    data: function() {
-		    	return {};
-		    },
-		    methods:{
-				select: select,
-				changeValue: function(key) {
-					Undo.beginUndoBatch();
-					
-					var obj = getObject(this.$data);
-					obj[key] = !this[key];
+        Vue.component('hierarchy-folder', {
+            template: '#hierarchy-folder-template',
+            data: function() {
+                return {};
+            },
+            methods:{
+                select: select,
+                changeValue: function(key) {
+                    Undo.beginUndoBatch();
+                    
+                    var obj = getObject(this.$data);
+                    obj[key] = !this[key];
 
-					Undo.endUndoBatch();
-				},
-				onVisibleChanged: function() {
-					this.changeValue('visible');
-				},
-				onLockChanged: function() {
-					this.changeValue('lock');
-				},
-				onCollipseChanged: function() {
-					this.changeValue('open');
-				}
-			}
-		});
+                    Undo.endUndoBatch();
+                },
+                onVisibleChanged: function() {
+                    this.changeValue('visible');
+                },
+                onLockChanged: function() {
+                    this.changeValue('lock');
+                },
+                onCollipseChanged: function() {
+                    this.changeValue('open');
+                }
+            }
+        });
 
-		var tree = new Vue({
-			el: '#hierarchy',
-			data: {
-				children: root.children,
-				currentObjects: []
-			}
-		});
+        var tree = new Vue({
+            el: '#hierarchy',
+            data: {
+                children: root.children,
+                currentObjects: []
+            }
+        });
 
-    	Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined);
+        Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined);
 
-		$content.click(function(){
-			select(null);
-		});
+        $content.click(function(){
+            select(null);
+        });
     }
 
     function createData (obj) {
-    	var data = {
-    		children:[],
-			selected: false
-		};
+        var data = {
+            children:[],
+            selected: false
+        };
 
-		if(obj) {
-			data.id = obj.__instanceId;
+        if(obj) {
+            data.id = obj.__instanceId;
 
-			obj.properties.forEach(function(p){
-				data[p] = obj[p];
-			});
-		}
+            obj.properties.forEach(function(p){
+                data[p] = obj[p];
+            });
+        }
 
-		return data;
+        return data;
     }
 
-	function addObject(e, obj){
+    function addObject(e, obj){
 
-		var data = createData(obj);
+        var data = createData(obj);
 
-		obj._innerData = data;
-		objMap[data.id] = obj;
+        obj._innerData = data;
+        objMap[data.id] = obj;
 
-		var parent = obj.getParent();
-		var parentData = parent._innerData;
+        var parent = obj.getParent();
+        var parentData = parent._innerData;
 
-		if(!parentData) {
+        if(!parentData) {
             parent._innerData = root;
             parentData = root;
         }
 
         parentData.children.push(data);
-	}
+    }
 
-	function removeObject(e, obj){
-		var parent = obj.getParent();
-		var parentData = parent._innerData;
+    function removeObject(e, obj){
+        var parent = obj.getParent();
+        var parentData = parent._innerData;
 
-		var index = parentData.children.indexOf(obj._innerData);
-		if(index !== -1) {
-			parentData.children.splice(index,1);
-		}
-	}
+        var index = parentData.children.indexOf(obj._innerData);
+        if(index !== -1) {
+            parentData.children.splice(index,1);
+        }
+    }
 
-	function selectedObjects(e, objs){
+    function selectedObjects(e, objs){
         if(root.currentObjects) {
-        	root.currentObjects.forEach(function(item){
-	            item.selected = false;
-	        });
+            root.currentObjects.forEach(function(item){
+                item.selected = false;
+            });
         }
 
-		root.currentObjects = [];
+        root.currentObjects = [];
 
         objs.forEach(function(item){
             var data = item._innerData;
-			data.selected = true;
-			
-			expandToPath(data);
+            data.selected = true;
+            
+            expandToPath(data);
 
-			root.currentObjects.push(data);
+            root.currentObjects.push(data);
         });
-	}
+    }
 
-	function expandToPath(data) {
-		var obj = objMap[data.id];
+    function expandToPath(data) {
+        var obj = objMap[data.id];
 
-		if(obj) {
-			var parent = obj.getParent();
+        if(obj) {
+            var parent = obj.getParent();
 
-			parent.open = true;
+            parent.open = true;
 
-			expandToPath(parent._innerData);
-		}
-	}
+            expandToPath(parent._innerData);
+        }
+    }
 
-	function clear() {
-		$content.find("#hierarchy").empty();
-		root = {children:[]};
-		tempRoot = null;
-		objMap = {};
-	}
+    function clear() {
+        $content.find("#hierarchy").empty();
+        root = {children:[]};
+        tempRoot = null;
+        objMap = {};
+    }
 
-	function temp(e, tempScene) {
-		tempRoot = root;
-		root = {children:[]};
-	}
+    function temp(e, tempScene) {
+        tempRoot = root;
+        root = {children:[]};
+    }
 
-	function recover() {
-		root = tempRoot;
-		tempRoot = null;
-		createContent();
-	}
+    function recover() {
+        root = tempRoot;
+        tempRoot = null;
+        createContent();
+    }
 
 
 
-	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(e, object, property) {
-		var properties = object.properties;
-		if(properties && properties.indexOf(property) === -1) {
-			return;
-		}
+    EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(e, object, property) {
+        var properties = object.properties;
+        if(properties && properties.indexOf(property) === -1) {
+            return;
+        }
 
-		var data = object._innerData;
-		if(data) {
-			data[property] = object[property];
-		}
-	})
+        var data = object._innerData;
+        if(data) {
+            data[property] = object[property];
+        }
+    })
 
-	EventManager.on(EventManager.OBJECT_ADDED,   addObject);
-	EventManager.on(EventManager.OBJECT_REMOVED, removeObject);
-	
-	EventManager.on(EventManager.SCENE_LOADED,   createContent);
-	EventManager.on(EventManager.SCENE_CLOSED,   clear);
-	EventManager.on(EventManager.SELECT_OBJECTS, selectedObjects);
-	EventManager.on(EventManager.SCENE_BEFORE_PLAYING, temp);
-	EventManager.on(EventManager.SCENE_BEGIN_PLAYING,  createContent);
-	EventManager.on(EventManager.SCENE_END_PLAYING,    recover);
+    EventManager.on(EventManager.OBJECT_ADDED,   addObject);
+    EventManager.on(EventManager.OBJECT_REMOVED, removeObject);
+    
+    EventManager.on(EventManager.SCENE_LOADED,   createContent);
+    EventManager.on(EventManager.SCENE_CLOSED,   clear);
+    EventManager.on(EventManager.SELECT_OBJECTS, selectedObjects);
+    EventManager.on(EventManager.SCENE_BEFORE_PLAYING, temp);
+    EventManager.on(EventManager.SCENE_BEGIN_PLAYING,  createContent);
+    EventManager.on(EventManager.SCENE_END_PLAYING,    recover);
 
-	exports.clear = clear;
+    exports.clear = clear;
 });

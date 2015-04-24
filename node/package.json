@@ -1,6 +1,6 @@
 {
-  "name": "cocoslite",
-  "dependencies": {
-    "ws": "~0.4.31"
-  }
+    "name": "cocoslite",
+    "dependencies": {
+        "ws": "~0.4.31"
+    }
 }

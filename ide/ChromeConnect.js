@@ -35,19 +35,19 @@ define(function (require, exports, module) {
     }
 
     function setup() {
-    	chrome.on('event', function(e, message){
-    		var params = message.params;
-    		var method = message.method;
+        chrome.on('event', function(e, message){
+            var params = message.params;
+            var method = message.method;
 
-    		if(method === 'Debugger.scriptParsed') {
-    			if (params.url.indexOf('file:///') >= 0) {
-    				var file = FileSystem.getFileForPath(params.url.replace("file:///", "/"));
-    				file.script = params;
-	            }
-    		}
+            if(method === 'Debugger.scriptParsed') {
+                if (params.url.indexOf('file:///') >= 0) {
+                    var file = FileSystem.getFileForPath(params.url.replace("file:///", "/"));
+                    file.script = params;
+                }
+            }
 
-    		// console.log("message", message);
-    	})
+            // console.log("message", message);
+        })
 
         chrome.Debugger.enable(function() {
             chromeDebugger = chrome.Debugger

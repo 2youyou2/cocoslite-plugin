@@ -5,6 +5,7 @@ define(function (require, exports, module) {
     "use strict";
 
     var CommandManager = brackets.getModule("command/CommandManager"),
+        FileSystem     = brackets.getModule("filesystem/FileSystem"),
         Menus          = brackets.getModule("command/Menus");
 
     var Strings        = require("strings"),
@@ -13,7 +14,8 @@ define(function (require, exports, module) {
     	Undo           = require("core/Undo"),
         Project        = require("core/Project"),
         EventManager   = require("core/EventManager"),
-        ObjectManager  = require("core/ObjectManager");
+        ObjectManager  = require("core/ObjectManager"),
+        ScriptTemplate = require("text!template/NewScript.js");
 
 
     function createEmptyObject() {
@@ -39,8 +41,14 @@ define(function (require, exports, module) {
         Undo.endUndoBatch();
     }
 
-    function createEmptyComponent() {
+    function createEmptyComponent(name) {
+        var script = ScriptTemplate.replace(/NewScript/g, name);
 
+        name += '.js';
+
+        var folder = Project.getSourceFolder();
+        var file = FileSystem.getFileForPath(cc.path.join(folder.fullPath, name));
+        file.write(script);
     }
 
     function registerCommand() {
@@ -78,8 +86,8 @@ define(function (require, exports, module) {
     	var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
     	menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_GAME_OBJECT);
 
-		menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
-        menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_COMPONENT);
+        // menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
+        // menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_COMPONENT);
 
 		for(var i in cmds){
 			menu.addGameEditorMenuItem(cmds[i]);

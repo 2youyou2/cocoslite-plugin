@@ -229,7 +229,7 @@ define(function (require, exports, module) {
 
         cl.Component.prototype.toJSON = function(){
             var json = {};
-            json.class = this.classname;
+            json.class = this.className;
 
             for(var i=0; i<this.properties.length; i++){
                 var k = this.properties[i];
@@ -315,7 +315,18 @@ define(function (require, exports, module) {
 		var originRemoveComponent = gp.removeComponent;
 
 		gp.addComponent = function() {
-			var c = originAddComponent.apply(this, arguments);
+			var c;
+			
+			// if gameobject already add this component then return it.
+			// also don't need undo/redo
+			if(typeof arguments[0] === 'string') {
+				c = this.getComponent(arguments[0]);
+				if(c) {
+					return c;
+				}
+			}
+
+			c = originAddComponent.apply(this, arguments);
 			EventManager.trigger(EventManager.COMPONENT_ADDED, c);
 
 			var self = this;

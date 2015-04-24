@@ -1,0 +1,8 @@
+<span class="content" v-on="mouseover: onMouseEnter, click: onClick">
+	{{name | capitalize}}
+	<span v-show="pathes" class="fa-caret-right indicate"></span>
+</span>
+
+<ul v-if="pathes" style="left: 180px">
+	<li v-repeat="pathes" v-component="add-component" >
+</ul>

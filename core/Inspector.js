@@ -4,51 +4,33 @@
 define(function (require, exports, module) {
     "use strict";
 
-	var Resizer 	   = brackets.getModule("utils/Resizer"),
-		ThemeManager   = brackets.getModule("view/ThemeManager"),
-		ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
-		Dialogs        = brackets.getModule("widgets/Dialogs");
+	var Resizer 	               = brackets.getModule("utils/Resizer"),
+		AppInit                    = brackets.getModule("utils/AppInit"),
+		ThemeManager               = brackets.getModule("view/ThemeManager"),
+		ExtensionUtils             = brackets.getModule("utils/ExtensionUtils"),
+		_                          = brackets.getModule("thirdparty/lodash"),
+		Dialogs                    = brackets.getModule("widgets/Dialogs");
 
-    var ObjectManager  = require("core/ObjectManager"),
-    	Project        = require("core/Project"),
-    	EventManager   = require("core/EventManager"),
-    	Undo 		   = require("core/Undo"),
-    	EditorManager  = require("editor/EditorManager"),
-    	Vue            = require("thirdparty/Vue"),
-    	Dropkick       = require("thirdparty/dropkick"),
-    	ColorPicker    = require("thirdparty/colorpicker/js/bootstrap-colorpicker"),
-    	InspectorHtml  = require("text!html/Inspector.html"),
-    	ShowAssetsHtml = require("text!html/ShowAssets.html");
+    var ObjectManager              = require("core/ObjectManager"),
+    	EventManager               = require("core/EventManager"),
+    	Undo 		               = require("core/Undo"),
+    	EditorManager              = require("editor/EditorManager"),
+    	Vue                        = require("thirdparty/Vue"),
+    	Dropkick                   = require("thirdparty/dropkick"),
+    	ShowAssets                 = require("widgets/ShowAssets"),
+    	AddComponentPanel          = require("widgets/AddComponentPanel"),
+    	InspectorHtml              = require("text!html/Inspector.html");
 
 
-    var $content = $(InspectorHtml);
-    $content.insertAfter(".content");
+    // inspector content, include title and component inspector view
+    var $content;
+    // main view content 
+    var $mainContent;
 
-    var $inspector    = $content.find(".inspector");
-    var $addComponent = $content.find(".add-component");
-
-    Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
-
-    $content.on("panelResizeUpdate", onResize);
-
-    $.extend({
-	    includePath: '',
-	    include: function(file) {
-	        var files = typeof file == "string" ? [file]:file;
-	        for (var i = 0; i < files.length; i++) {
-	            var name = files[i];
-	            var att = name.split('.');
-	            var ext = att[att.length - 1].toLowerCase();
-	            var isCSS = ext == "css";
-	            var tag = isCSS ? "link" : "script";
-	            var attr = isCSS ? " type='text/css' rel='stylesheet' " : " language='javascript' type='text/javascript' ";
-	            var link = (isCSS ? "href" : "src") + "='" + $.includePath + name + "'";
-	            if ($(tag + "[" + link + "]").length == 0) $('head').append($("<" + tag + attr + link + "></" + tag + ">"));
-	        }
-	   }
-	});
-    var cssPath = ExtensionUtils.getModulePath(module, "../thirdparty/colorpicker/css/bootstrap-colorpicker.css");
-	$.include([cssPath]);
+    // component inspector view
+    var $inspector;
+    // add-component button
+    var $addComponent;
 
 	var currentObject = null, tempObject = null;
 	var showing = false;
@@ -58,7 +40,7 @@ define(function (require, exports, module) {
 	}
 
 	function onResize() {
-        $(".main-view .content").css({"right": width() + "px"});
+        $mainContent.css({"right": width() + "px"});
         cc.view._resizeEvent();
 	}
 
@@ -70,7 +52,7 @@ define(function (require, exports, module) {
         }
         
 		$content.css({"right":"0px"});
-		$(".main-view .content").css({"right": width() + "px"});
+		$mainContent.css({"right": width() + "px"});
         
         if(cc.view) {
         	cc.view._resizeEvent();
@@ -85,7 +67,7 @@ define(function (require, exports, module) {
         }
 
 		$content.css({"right":-$content.width()+"px"});
-		$(".main-view .content").css({"right": "0px"});
+		$mainContent.css({"right": "0px"});
 		
 		if(cc.view) {
 			cc.view._resizeEvent();
@@ -210,64 +192,6 @@ define(function (require, exports, module) {
 		return $input;
 	}
 
-	function showSelectAssets(filter, onChooseAsset) {
-
-		onChooseAsset = onChooseAsset ? onChooseAsset : function() {};
-
-		Project.getResources(filter).then(function(resources) {
-
-			var grid = [];
-			var row;
-
-			resources.splice(0,0, {
-				fullPath: "",
-				name: "None"
-			})
-
-			for(var i=0; i<resources.length; i++) {
-				// if(i % 4 === 0) {
-				// 	row = [];
-				// 	grid.push(row);
-				// }
-
-				var file = resources[i];
-
-				var data = {
-					fullPath: file.fullPath,
-					name: file.name
-				};
-
-				grid.push(data);
-			}
-
-			var $dialog = $(ShowAssetsHtml);
-
-			new Vue({
-				el: $dialog[0],
-				data: {
-					grid: grid
-				},
-				methods: {
-					chooseAsset: onChooseAsset
-				}
-			})
-
-			var dialog = Dialogs.showModalDialogUsingTemplate($dialog);
-
-			dialog.done(function (id) {
-	            if (id === Dialogs.DIALOG_BTN_OK) {
-	                
-	            }
-	        });
-
-		});
-	}
-
-	function imgFilter(file) {
-		var name = file.name;
-		return name.endWith('.png') || name.endWith('.jpg');
-	}
-
 
 	function createInputForObject(obj, key, value) {
 		var $input = null;
@@ -312,7 +236,7 @@ define(function (require, exports, module) {
 		else if(value.constructor === cl.EnumValue) {
 			$input = $('<span style="overflow:initial"><select></span>');
 			var $select = $input.find('select');
-			$select.attr('id', obj.classname + '_' + key);
+			$select.attr('id', obj.className + '_' + key);
 
 			value.Enum.forEach(function(key, value) {
 				var $option = $("<option>")
@@ -341,7 +265,7 @@ define(function (require, exports, module) {
 			$input.append($imgWrap);
 
 			$search.click(function() {
-				showSelectAssets(imgFilter, function(data) {
+				ShowAssets.showSelectAssets(ShowAssets.imgFilter, function(data) {
 					$img.attr("src", data.fullPath);
 					$input.finishEdit();
 				});
@@ -450,10 +374,10 @@ define(function (require, exports, module) {
 
 		var el = $('<div>');
 		el.appendTo($inspector);
-		el.attr('id', component.classname);
+		el.attr('id', component.className);
 		el.addClass('component');
 
-		var title = $('<div class="component-title">'+component.classname+'</div>');
+		var title = $('<div class="component-title">'+component.className+'</div>');
 		el.append(title);
 
 		var icon = $('<span class="fa-caret-down indicate">');
@@ -489,7 +413,7 @@ define(function (require, exports, module) {
 		}
 	}
 
-	function initObjectUI(obj){
+	function initObjectUI(){
 		var cs = currentObject.components;
 		if(!cs) {
             return;
@@ -510,8 +434,8 @@ define(function (require, exports, module) {
 
 		currentObject = obj;
 
-		// $addComponent.show();
-		initObjectUI(obj);
+		$addComponent.show();
+		initObjectUI();
 	}
 
 	function handleComponentAdded(event, component) {
@@ -527,7 +451,7 @@ define(function (require, exports, module) {
 			return;
 		}
 
-		$inspector.find('#'+component.classname).remove();
+		$inspector.find('#'+component.className).remove();
 	}
 
 	function handleObjectPropertyChanged(event, o, p) {
@@ -551,18 +475,41 @@ define(function (require, exports, module) {
         }
 	}
 
-
 	function clear() {
 		currentObject = null;
 		$inspector.empty();
 		$addComponent.hide();
 	}
+	
+	function initAddComponentButton() {
+		AddComponentPanel.attachButton($addComponent);
+	}
+
+	AppInit.htmlReady(function() {
+
+		$mainContent = $(".main-view .content");
+	    $content = $(InspectorHtml);
+	    $content.insertAfter($mainContent);
+
+	    $inspector    = $content.find(".inspector");
+	    $addComponent = $content.find(".add-component");
+
+	    Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
+
+	    $content.on("panelResizeUpdate", onResize);
+
+		$.include(["thirdparty/colorpicker/css/bootstrap-colorpicker.css", 
+				   "thirdparty/webui-popover/jquery.webui-popover.css"]);
+	});
+
+
 
 	EventManager.on(EventManager.SELECT_OBJECTS,          handleSelectedObject);
 	EventManager.on(EventManager.COMPONENT_ADDED,         handleComponentAdded);
 	EventManager.on(EventManager.COMPONENT_REMOVED,       handleComponentRemoved);
 	EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, handleObjectPropertyChanged);
 	EventManager.on(EventManager.SCENE_CLOSED,            clear);
+	EventManager.on(EventManager.PROJECT_OPEN,            initAddComponentButton);
 
 	exports.show  = show;
 	exports.hide  = hide;

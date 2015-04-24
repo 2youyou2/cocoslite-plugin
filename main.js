@@ -42,6 +42,11 @@ define(function (require, exports, module) {
                     "core/MenusManager",
                     "core/GameEditor",
                     
+                    "widgets/ShowAssets",
+
+                    "thirdparty/colorpicker/js/bootstrap-colorpicker",
+                    "thirdparty/webui-popover/jquery.webui-popover",
+
                     "editor/EditorManager",
                     "editor/SceneEditor",
                     "editor/MeshEditor",
@@ -53,6 +58,8 @@ define(function (require, exports, module) {
             modules = ["ide/ide",
                        "ide/ChromeConnect"];
         }
+
+        modules.push("common");
 
         require(modules);
     }

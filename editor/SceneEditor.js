@@ -79,16 +79,16 @@ define(function (require, exports, module) {
         }
 
         function beginPlaying() {
-            var tempJson = _scene.toJSON();
+            var tempJson = sceneToString();
 
             switchToGameState();
             EventManager.trigger(EventManager.SCENE_BEFORE_PLAYING);
 
-            cl.SceneManager.parseData(tempJson, function(tempScene) {
+            cl.SceneManager.loadSceneWithContent(tempJson, function(tempScene) {
                 cc.director.runScene(tempScene);
 
                 EventManager.trigger(EventManager.SCENE_BEGIN_PLAYING, tempScene);
-            });
+            }, true);
 
             $playBtn.addClass('checked');
         }
@@ -148,7 +148,10 @@ define(function (require, exports, module) {
         menu.addGameEditorMenuItem(Commands.CMD_STEP);
     }
 
-    
+    function sceneToString() {
+        return JSON.stringify(_scene, null, '\t');
+    }
+
     function initEditor() {
 
         var originGetText = _editor.document.getText;
@@ -156,7 +159,7 @@ define(function (require, exports, module) {
             var text = "";
             
             if(_scene) {
-                text = JSON.stringify(_scene, null, '\t');
+                text = sceneToString();
             } else {
                 text = originGetText.apply(this, arguments);
             }

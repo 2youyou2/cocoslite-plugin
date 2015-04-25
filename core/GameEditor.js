@@ -5,7 +5,6 @@ define(function (require, exports, module) {
     "use strict";
 
     var ProjectManager   = brackets.getModule("project/ProjectManager"),
-        Menus            = brackets.getModule("command/Menus"),
         CommandManager   = brackets.getModule("command/CommandManager");
 
     var Commands         = require("core/Commands"),
@@ -174,18 +173,11 @@ define(function (require, exports, module) {
 
     }
 
-    function registerMenus() {
-        var menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
-        menu.addGameEditorMenuDivider();
-        menu.addGameEditorMenuItem(Commands.CMD_OPEN_IDE);
-    }
 
     CommandManager.register("OpenScript", Commands.CMD_OPEN_SCRIPT, handleOpenScript);
     CommandManager.register("IDE", Commands.CMD_OPEN_IDE, openIDE);
 
     ProjectManager.on("projectOpen", hackGameObject),
-
-    registerMenus();
 
     window.addEventListener('beforeunload', handleWindowClose);
 });

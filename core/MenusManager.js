@@ -4,12 +4,13 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var Menus        = brackets.getModule("command/Menus"),
-        Commands     = brackets.getModule("command/Commands"),
-        AppInit      = brackets.getModule("utils/AppInit");
-    var EditorType   = brackets.EditorType;
+    var Menus                = brackets.getModule("command/Menus"),
+        bracketsCommands     = brackets.getModule("command/Commands"),
+        AppInit              = brackets.getModule("utils/AppInit");
+    var EditorType           = brackets.EditorType;
 
-    var EventManager = require("core/EventManager");
+    var EventManager         = require("core/EventManager"),
+        Commands             = require("core/Commands");
 
     var _gameEditorMenus = {};
     var _persistentMenus = {};
@@ -306,24 +307,24 @@ define(function (require, exports, module) {
     function initMenus() {
         var menus = [
             [Menus.AppMenuBar.FILE_MENU, [
-                Commands.FILE_OPEN,
-                Commands.FILE_CLOSE,
-                Commands.FILE_CLOSE_ALL,
-                Commands.FILE_SAVE,
-                Commands.FILE_SAVE_ALL,
-                Commands.FILE_SAVE_AS
+                bracketsCommands.FILE_OPEN,
+                bracketsCommands.FILE_CLOSE,
+                bracketsCommands.FILE_CLOSE_ALL,
+                bracketsCommands.FILE_SAVE,
+                bracketsCommands.FILE_SAVE_ALL,
+                bracketsCommands.FILE_SAVE_AS
             ]],
             [Menus.AppMenuBar.EDIT_MENU, [
-                Commands.EDIT_UNDO,
-                Commands.EDIT_REDO,
-                Commands.EDIT_CUT,
-                Commands.EDIT_COPY,
-                Commands.EDIT_PASTE,
-                Commands.EDIT_SELECT_ALL
+                bracketsCommands.EDIT_UNDO,
+                bracketsCommands.EDIT_REDO,
+                bracketsCommands.EDIT_CUT,
+                bracketsCommands.EDIT_COPY,
+                bracketsCommands.EDIT_PASTE,
+                bracketsCommands.EDIT_SELECT_ALL
             ]],
             [Menus.AppMenuBar.VIEW_MENU, [
-                Commands.CMD_THEMES_OPEN_SETTINGS,
-                Commands.VIEW_HIDE_SIDEBAR
+                bracketsCommands.CMD_THEMES_OPEN_SETTINGS,
+                bracketsCommands.VIEW_HIDE_SIDEBAR
             ]],
             ["debug-menu", [
                 "debug.switchLanguage",
@@ -333,19 +334,34 @@ define(function (require, exports, module) {
 
         registerEditorMenus(EditorType.All, menus);
 
+        // file menu
         var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.FILE_CLOSE_ALL);
+        menu.addGameEditorMenuDivider(Menus.AFTER, bracketsCommands.FILE_CLOSE_ALL);
 
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_PROJECT, "", Menus.FIRST);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE_UNTITLED,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
+        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE_UNTITLED);
+        menu.addGameEditorMenuDivider(Menus.LAST);
+        menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
+
+        // edit menu
         menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_REDO);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.EDIT_PASTE);
+        menu.addGameEditorMenuDivider(Menus.AFTER, bracketsCommands.EDIT_REDO);
+        menu.addGameEditorMenuDivider(Menus.AFTER, bracketsCommands.EDIT_PASTE);
 
+        // view menu
         menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
-        menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.VIEW_HIDE_SIDEBAR);
+        menu.addGameEditorMenuDivider(Menus.BEFORE, bracketsCommands.VIEW_HIDE_SIDEBAR);
+        
+        menu.addGameEditorMenuItem(Commands.CMD_OPEN_IDE);
+        menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.CMD_OPEN_IDE);
 
 
+        // project context menu
         menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-        menu.removeMenuItem(Commands.FILE_NEW);
+        menu.removeMenuItem(bracketsCommands.FILE_NEW);
+        menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.AFTER, bracketsCommands.FILE_NEW_FOLDER);
+        menu.addMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
     }
 
     function init() {
@@ -370,6 +386,6 @@ define(function (require, exports, module) {
         }
     }
 
-    init();
+    AppInit.appReady(init);
 
 });

@@ -2,25 +2,21 @@ define(function (require, exports, module) {
     "use strict";
 
     var ProjectManager     = brackets.getModule("project/ProjectManager"),
-        Menus              = brackets.getModule("command/Menus"),
         CommandManager     = brackets.getModule("command/CommandManager"),
         bracketsCommands   = brackets.getModule("command/Commands"),
+        bracketsStrings    = brackets.getModule("strings"),
         FileSystem         = brackets.getModule("filesystem/FileSystem"),
-        Strings            = brackets.getModule("strings"),
         Dialogs            = brackets.getModule("widgets/Dialogs"),
-        AsyncUtils         = brackets.getModule("utils/Async"),
         PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
     var CreateProjectTemp  = require("text!html/CreateProject.html"),
         NewSceneContent    = require("text!template/template.scene"),
-        MenusManager       = require("core/MenusManager"),
         Commands           = require("core/Commands"),
         Strings            = require("strings"),
         EventManager       = require("core/EventManager");
 
     var isCocosProject;
     var resFolder, srcFolder;
-    var sources;
 
     function loadFolder(item, container, useFile, filter, cb) {
         if(filter(item)) {
@@ -45,17 +41,20 @@ define(function (require, exports, module) {
         }
     }
 
-    function loadSources() {
+    function loadSources(folder) {
         var deferred = new $.Deferred();
+        var sources  = [];
 
-        loadFolder(srcFolder, sources, false,
+        folder = folder ? folder : srcFolder;
+
+        loadFolder(folder, sources, false,
             function(item) {
                 return item.name.endWith(".js");
             }, 
             function() {
                 try{
                     require(sources, function() {
-                        deferred.resolve();
+                        deferred.resolve(sources);
                     });
                 }
                 catch(e) {
@@ -81,7 +80,6 @@ define(function (require, exports, module) {
     function reset() {
         isCocosProject = false;
         resFolder = srcFolder = null;
-        sources = [];
     }
 
     ProjectManager.on("projectOpen", function(e, root) {
@@ -120,7 +118,7 @@ define(function (require, exports, module) {
 
         var templateVars = {
             errorMessage : errorMessage,
-            Strings      : Strings
+            Strings      : bracketsStrings
         };
 
         dialog = Dialogs.showModalDialogUsingTemplate(Mustache.render(CreateProjectTemp, templateVars));
@@ -176,32 +174,13 @@ define(function (require, exports, module) {
 
     }
 
-    
-    function registerMenu() {
-        var menu = Menus.getMenu(Menus.AppMenuBar.FILE_MENU);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_PROJECT, "", Menus.FIRST);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_SCENE_UNTITLED,   "", Menus.AFTER, Commands.CMD_NEW_PROJECT);
-        menu.addGameEditorMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE_UNTITLED);
-
-        menu.addGameEditorMenuDivider(Menus.LAST);
-        menu.addGameEditorMenuItem(Commands.CMD_PROJECT_SETTINGS, "", Menus.LAST);
-
-        menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-        menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.AFTER, bracketsCommands.FILE_NEW_FOLDER);
-        menu.addMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
-    }
-
 
     CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_NEW_PROJECT, handleNewProject);
     CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE,   handleNewScene);
     CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE_UNTITLED,   handleNewSceneUntitled);
     CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS, handleProjectSettings);
 
-    registerMenu();
 
-    exports.getSources = function() {
-        return sources;
-    }
     exports.getResources = getResources;
 
     exports.getResourceFolder = function() {

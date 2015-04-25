@@ -4,21 +4,22 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var AppInit         = brackets.getModule("utils/AppInit"),
-        Menus           = brackets.getModule("command/Menus"),
-        CommandManager  = brackets.getModule("command/CommandManager"),
-        EditorManager   = brackets.getModule("editor/EditorManager"),
-        ProjectManager  = brackets.getModule("project/ProjectManager"),
-        StatusBar       = brackets.getModule("widgets/StatusBar");
+    var AppInit                 = brackets.getModule("utils/AppInit"),
+        WorkspaceManager        = brackets.getModule("view/WorkspaceManager"),
+        Menus                   = brackets.getModule("command/Menus"),
+        CommandManager          = brackets.getModule("command/CommandManager"),
+        EditorManager           = brackets.getModule("editor/EditorManager"),
+        ProjectManager          = brackets.getModule("project/ProjectManager"),
+        StatusBar               = brackets.getModule("widgets/StatusBar");
 
-    var Project         = require("core/Project"),
-        Commands        = require("core/Commands"),
-        Strings         = require("strings"),
-        EventManager    = require("core/EventManager"),
-        Undo            = require("core/Undo"),
-        Inspector       = require("core/Inspector"),
-        ObjectManager   = require("core/ObjectManager"),
-        Cocos           = require("core/Cocos");
+    var Project                 = require("core/Project"),
+        Commands                = require("core/Commands"),
+        Strings                 = require("strings"),
+        EventManager            = require("core/EventManager"),
+        Undo                    = require("core/Undo"),
+        Inspector               = require("core/Inspector"),
+        ObjectManager           = require("core/ObjectManager"),
+        Cocos                   = require("core/Cocos");
 
 
     var _editor = null;
@@ -194,6 +195,10 @@ define(function (require, exports, module) {
         cc.director.runScene(_scene);
 
         EventManager.trigger(EventManager.SCENE_LOADED, _scene);
+
+        // fixed focus gameCanvas may break main-view layout
+        // todo: find a better way to solve this problem
+        WorkspaceManager.recomputeLayout();
     }
 
 

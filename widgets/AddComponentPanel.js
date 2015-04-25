@@ -128,7 +128,7 @@ define(function (require, exports, module) {
                         CommandManager.execute(cmd);
 
                         // hide popover
-                        $button.click();
+                        _$button.click();
                     }
                 },
                 onMouseEnter: function() {

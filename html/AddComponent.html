@@ -5,7 +5,7 @@
         <span v-show="index" class="fa-caret-left indicate"></span>
     </div>
     <ul class="root" style="margin-left:{{$root.index * -180}}px">
-        <li v-repeat="pathes" v-component="add-component" >
+        <li v-repeat="pathes | component-folder " v-component="add-component" >
     </ul>
 </div>
 

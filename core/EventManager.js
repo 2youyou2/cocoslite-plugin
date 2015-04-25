@@ -33,4 +33,6 @@ define(function (require, exports, module) {
     // GameEditor
     exports.IDE_FOCUS                   = "ide_focus";
 
+    // ComponentManager
+    exports.NEW_EMPTY_COMPONENT         = "new_empty_component";
 });

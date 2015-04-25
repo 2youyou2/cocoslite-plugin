@@ -41,17 +41,62 @@ define(function (require, exports, module) {
         Undo.endUndoBatch();
     }
 
-    function createEmptyComponent(name) {
-        var script = ScriptTemplate.replace(/NewScript/g, name);
-
-        name += '.js';
-
-        var folder = Project.getSourceFolder();
-        var file = FileSystem.getFileForPath(cc.path.join(folder.fullPath, name));
-        file.write(script);
+    function createIDForComponent(className) {
+        return Commands.CMD_COMPONENT + '.' + className;
     }
 
-    function registerCommand() {
+    function createEmptyComponent(className, path, addToObjects) {
+        var script = ScriptTemplate.replace(/NewScript/g, className);
+
+        if(!path) {
+            var folder = Project.getSourceFolder();
+            path = folder.fullPath;
+        }
+
+        try {
+            var file = FileSystem.getFileForPath(cc.path.join(path, className + '.js'));
+            file.write(script, undefined, function() {
+                require([file.fullPath], loaded);
+            });
+
+            
+        }
+        catch(err) {
+            console.log("ComponentManager.createEmptyComponent failed : ", err);
+        }
+
+        function loaded() {
+            var id = createIDForComponent(className);
+
+            registerCommand(className, id);
+
+            EventManager.trigger(EventManager.NEW_EMPTY_COMPONENT, className);
+
+            if(addToObjects) {
+                addComponentToObjects(className);
+            }
+        }
+    }
+
+    function addComponentToObjects(className) {
+        Undo.beginUndoBatch();
+
+        var currentObjects = Selector.getSelectObjects();
+
+        for(var i in currentObjects){
+            currentObjects[i].addComponent(className);
+        }
+
+        Undo.endUndoBatch();
+    }
+
+    function registerCommand(className, id) {
+        CommandManager.register(className, id, function(){
+           addComponentToObjects(className); 
+        });
+    }
+
+    function registerCommands() {
         CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_GAME_OBJECT, createEmptyObject);
         CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_COMPONENT,   createEmptyComponent);
 
@@ -60,22 +105,10 @@ define(function (require, exports, module) {
 
         for(var k in cs){
 
-            var id = Commands.CMD_COMPONENT + '.' + k;
+            var id = createIDForComponent(k);
             cmds.push(id);
 
-            (function(k) {
-                CommandManager.register(k, id, function(){
-                    Undo.beginUndoBatch();
-
-                    var currentObjects = Selector.getSelectObjects();
-
-                    for(var i in currentObjects){
-                        currentObjects[i].addComponent(k);
-                    }
-
-                    Undo.endUndoBatch();
-                });
-            })(k);
+            registerCommand(k, id);
         }
 
         return cmds;
@@ -108,7 +141,7 @@ define(function (require, exports, module) {
     }
 
     EventManager.on(EventManager.PROJECT_OPEN, function() {
-        var cmds = registerCommand();
+        var cmds = registerCommands();
         registerMenus(cmds);
         updateComponentMenus();
     });

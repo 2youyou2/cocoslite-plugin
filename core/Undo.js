@@ -69,6 +69,7 @@ define(function (require, exports, module) {
 		this.temp = function() {
 			tempStack = stack;
 			stack = new Undo.Stack();
+			stack.disableTriggerChange = true;
 		};
 
 		this.recover = function() {
@@ -207,7 +208,7 @@ define(function (require, exports, module) {
 		changed: function() {
 			// do nothing, override
 
-			if(editor) {
+			if(editor && !this.disableTriggerChange) {
 				editor.trigger("change", editor, []);
             }
 		}

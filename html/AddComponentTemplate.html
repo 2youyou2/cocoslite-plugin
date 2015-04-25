@@ -3,7 +3,7 @@
     <span v-show="pathes" class="fa-caret-right indicate"></span>
 </span>
 
-<ul v-if="pathes" style="left: 180px">
+<ul v-if="pathes" style="left: 180px" id="{{newScriptPanel ? 'newScriptPanel' : ''}}">
     <li v-repeat="pathes" v-component="add-component" >
 </ul>
 

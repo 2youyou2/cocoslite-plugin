@@ -61,6 +61,7 @@ define(function (require, exports, module) {
 
         folders.pathes['newScript'] = {
             name: "New Script",
+            newScriptPanel: true,
             pathes: {
                 content: {
                     newScript: true

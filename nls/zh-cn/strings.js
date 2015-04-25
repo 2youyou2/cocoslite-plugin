@@ -6,6 +6,7 @@
 define({
     "NEW_PROJECT"          : "新建工程",
     "NEW_SCENE"            : "新建场景",
+    "NEW_EMPTY_SCRIPT"     : "新建脚本",
     "PROJECT_SETTINGS"     : "设置",
     "GAME_OBJECT"          : "实体",
     "COMPONENT"            : "组件",

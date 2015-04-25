@@ -4,18 +4,19 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var CommandManager = brackets.getModule("command/CommandManager"),
-        FileSystem     = brackets.getModule("filesystem/FileSystem"),
-        Menus          = brackets.getModule("command/Menus");
+    var CommandManager          = brackets.getModule("command/CommandManager"),
+        bracketsCommands        = brackets.getModule("command/Commands"),
+        FileSystem              = brackets.getModule("filesystem/FileSystem"),
+        Menus                   = brackets.getModule("command/Menus");
 
-    var Strings        = require("strings"),
-        Commands       = require("core/Commands"),
-        Selector       = require("core/Selector"),
-        Undo           = require("core/Undo"),
-        Project        = require("core/Project"),
-        EventManager   = require("core/EventManager"),
-        ObjectManager  = require("core/ObjectManager"),
-        ScriptTemplate = require("text!template/NewScript.js");
+    var Strings                 = require("strings"),
+        Commands                = require("core/Commands"),
+        Selector                = require("core/Selector"),
+        Undo                    = require("core/Undo"),
+        Project                 = require("core/Project"),
+        EventManager            = require("core/EventManager"),
+        ObjectManager           = require("core/ObjectManager"),
+        ScriptTemplate          = require("text!template/NewScript.js");
 
 
     function createEmptyObject() {
@@ -45,6 +46,19 @@ define(function (require, exports, module) {
         return Commands.CMD_COMPONENT + '.' + className;
     }
 
+    function scriptLoaded(className, addToObjects) {
+        var id = createIDForComponent(className);
+
+        registerCommand(className, id);
+
+        EventManager.trigger(EventManager.NEW_EMPTY_COMPONENT, className);
+
+        if(addToObjects) {
+            addComponentToObjects(className);
+        }
+    }
+
+
     function createEmptyComponent(className, path, addToObjects) {
         var script = ScriptTemplate.replace(/NewScript/g, className);
 
@@ -56,7 +70,9 @@ define(function (require, exports, module) {
         try {
             var file = FileSystem.getFileForPath(cc.path.join(path, className + '.js'));
             file.write(script, undefined, function() {
-                require([file.fullPath], loaded);
+                require([file.fullPath], function() {
+                    scriptLoaded(className, addToObjects);
+                });
             });
 
             
@@ -65,17 +81,21 @@ define(function (require, exports, module) {
             console.log("ComponentManager.createEmptyComponent failed : ", err);
         }
 
-        function loaded() {
-            var id = createIDForComponent(className);
+    }
 
-            registerCommand(className, id);
+    function createEmptyComponentInProject() {
 
-            EventManager.trigger(EventManager.NEW_EMPTY_COMPONENT, className);
+        CommandManager.execute(bracketsCommands.FILE_NEW, 'Untitiled', '.js', function(file) {
+            var className = file.name;
+            className = className.slice(0, className.lastIndexOf('.'));
+            var script = ScriptTemplate.replace(/NewScript/g, className);
 
-            if(addToObjects) {
-                addComponentToObjects(className);
-            }
-        }
+            file.write(script, undefined, function() {
+                require([file.fullPath], function() {
+                    scriptLoaded(className);
+                });
+            });
+        });
     }
 
     function addComponentToObjects(className) {
@@ -97,8 +117,10 @@ define(function (require, exports, module) {
     }
 
     function registerCommands() {
-        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_GAME_OBJECT, createEmptyObject);
-        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_CREATE_EMPTY_COMPONENT,   createEmptyComponent);
+        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_NEW_EMPTY_GAME_OBJECT, createEmptyObject);
+        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_NEW_EMPTY_COMPONENT,   createEmptyComponent);
+        CommandManager.register(Strings.NEW_EMPTY_SCRIPT, Commands.CMD_NEW_COMPONENT_IN_PROJECT,   createEmptyComponentInProject);
+
 
         var cs = cl.ComponentManager.getAllClasses();
         var cmds = [];
@@ -117,10 +139,13 @@ define(function (require, exports, module) {
     function registerMenus(cmds) {
 
         var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
-        menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_GAME_OBJECT);
 
-        // menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
-        // menu.addGameEditorMenuItem(Commands.CMD_CREATE_EMPTY_COMPONENT);
+        menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
+        menu.addMenuItem(Commands.CMD_NEW_COMPONENT_IN_PROJECT, "", Menus.AFTER, Commands.CMD_NEW_SCENE);
+
+        menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
+        // menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_COMPONENT);
 
         for(var i in cmds){
             menu.addGameEditorMenuItem(cmds[i]);

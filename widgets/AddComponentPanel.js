@@ -143,7 +143,7 @@ define(function (require, exports, module) {
 
                 onNewScript: function() {
                     var name = $(this.$el).find('input').val();
-                    CommandManager.execute(Commands.CMD_CREATE_EMPTY_COMPONENT, name, null, true);
+                    CommandManager.execute(Commands.CMD_NEW_EMPTY_COMPONENT, name, null, true);
                     _$button.click();
                 }
             }

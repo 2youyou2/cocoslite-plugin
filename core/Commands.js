@@ -10,8 +10,9 @@ define(function (require, exports, module) {
 
     exports.CMD_GAME_OBJECT                 = "cl.gameObject";
     exports.CMD_COMPONENT                   = "cl.component";
-    exports.CMD_CREATE_EMPTY_GAME_OBJECT    = "cl.gameObject.new";
-    exports.CMD_CREATE_EMPTY_COMPONENT      = "cl.component.new";
+    exports.CMD_NEW_EMPTY_GAME_OBJECT       = "cl.gameObject.new";
+    exports.CMD_NEW_EMPTY_COMPONENT         = "cl.component.new";
+    exports.CMD_NEW_COMPONENT_IN_PROJECT    = "cl.component.new.in.project";
 
     exports.CMD_PLAY                        = "cl.play";
     exports.CMD_PAUSE                       = "cl.pause";

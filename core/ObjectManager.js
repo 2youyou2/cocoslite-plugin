@@ -251,21 +251,6 @@ define(function (require, exports, module) {
             return json;
         };
 
-
-
-        // hack parse json to GameObject.
-        // crate inner data for GameObject.
-        // inner data is used for editor data storage
-        var originParseGameObject = cl.SceneManager.parseGameObject;
-        cl.SceneManager.parseGameObject = function(parent, data) {
-            var o = originParseGameObject.apply(this, arguments);
-            
-            o.properties.forEach(function(p) {
-                o[p] = data[p] === undefined ? o[p] : data[p];
-            });
-
-            return 0;
-        }
     }
 
     function hackGameObject () {
@@ -373,9 +358,10 @@ define(function (require, exports, module) {
             this.lock = false;
             this.open = false;
 
-            this.properties = ["visible", "lock", "open", "name"];
             injectObject(this);
         }
+
+        gp.properties = gp.properties.concat(["visible", "lock", "open"]);
     }
 
     function hackComponent() {

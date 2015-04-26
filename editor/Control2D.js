@@ -193,11 +193,11 @@ define(function (require, exports, module) {
             return true;
         };
 
-        this.onTouchEnded = function(touch){
+        this.onTouchEnded = function(touch) {
             mouseDown = false;
         };
 
-        this.onMouseMove = function(event){
+        this.onMouseMove = function(event) {
             if(!obj || mouseDown) {
                 return;
             }

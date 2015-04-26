@@ -277,10 +277,6 @@ define(function (require, exports, module) {
 
             originAddChild.apply(self, arguments);
 
-            if(child.constructor === cl.GameObject) {
-                EventManager.trigger(EventManager.OBJECT_ADDED, child);
-            }
-
             var args = arguments;
             function undo(){
                 self.removeChild(child);
@@ -288,7 +284,12 @@ define(function (require, exports, module) {
             function redo(){
                 self.addChild.apply(self, args);
             }
-            Undo.objectPropertyChanged(undo, redo);
+            
+            if(child.constructor === cl.GameObject) {
+                EventManager.trigger(EventManager.OBJECT_ADDED, child);
+                
+                Undo.objectPropertyChanged(undo, redo);
+            }
         }
 
         // hack removeChild method
@@ -307,7 +308,10 @@ define(function (require, exports, module) {
             function redo(){
                 self.removeChild(child);
             }
-            Undo.objectPropertyChanged(undo, redo);
+
+            if(child.constructor === cl.GameObject) {
+                Undo.objectPropertyChanged(undo, redo);
+            }
         }
 
 

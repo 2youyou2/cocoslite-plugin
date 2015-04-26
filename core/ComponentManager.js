@@ -19,28 +19,6 @@ define(function (require, exports, module) {
         ScriptTemplate          = require("text!template/NewScript.js");
 
 
-    function createEmptyObject() {
-        Undo.beginUndoBatch();
-        var currentObjects = Selector.getSelectObjects();
-
-
-        var objs = [];
-        if(currentObjects && currentObjects.length>0){
-            for(var i in currentObjects){
-                var obj = new cl.GameObject();
-                currentObjects[i].addChild(obj);
-                objs.push(obj);
-            }
-        } else {
-            var scene = cc.director.getRunningScene();
-            var obj = new cl.GameObject();
-            scene.canvas.addChild(obj);
-            objs.push(obj);
-        }
-
-        Selector.selectObjects(objs);
-        Undo.endUndoBatch();
-    }
 
     function createIDForComponent(className) {
         return Commands.CMD_COMPONENT + '.' + className;
@@ -117,10 +95,6 @@ define(function (require, exports, module) {
     }
 
     function registerCommands() {
-        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_NEW_EMPTY_GAME_OBJECT, createEmptyObject);
-        CommandManager.register(Strings.CREATE_EMPTY, Commands.CMD_NEW_EMPTY_COMPONENT,   createEmptyComponent);
-        CommandManager.register(Strings.NEW_EMPTY_SCRIPT, Commands.CMD_NEW_COMPONENT_IN_PROJECT,   createEmptyComponentInProject);
-
 
         var cs = cl.ComponentManager.getAllClasses();
         var cmds = [];
@@ -138,13 +112,7 @@ define(function (require, exports, module) {
 
     function registerMenus(cmds) {
 
-        var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_GAME_OBJECT);
-
-        menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
-        menu.addMenuItem(Commands.CMD_NEW_COMPONENT_IN_PROJECT, "", Menus.AFTER, Commands.CMD_NEW_SCENE);
-
-        menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
+        var menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
         // menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_COMPONENT);
 
         for(var i in cmds){
@@ -174,5 +142,8 @@ define(function (require, exports, module) {
     EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs) {
         updateComponentMenus();
     });
+
+    CommandManager.register(Strings.NEW_EMPTY,        Commands.CMD_NEW_EMPTY_COMPONENT,        createEmptyComponent);
+    CommandManager.register(Strings.NEW_EMPTY_SCRIPT, Commands.CMD_NEW_COMPONENT_IN_PROJECT,   createEmptyComponentInProject);
 
 });

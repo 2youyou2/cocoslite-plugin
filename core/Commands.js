@@ -11,6 +11,7 @@ define(function (require, exports, module) {
     exports.CMD_GAME_OBJECT                 = "cl.gameObject";
     exports.CMD_COMPONENT                   = "cl.component";
     exports.CMD_NEW_EMPTY_GAME_OBJECT       = "cl.gameObject.new";
+    exports.CMD_NEW_EMPTY_CHILD_GAME_OBJECT = "cl.gameObject.new.child";
     exports.CMD_NEW_EMPTY_COMPONENT         = "cl.component.new";
     exports.CMD_NEW_COMPONENT_IN_PROJECT    = "cl.component.new.in.project";
 

@@ -7,10 +7,12 @@ define(function (require, exports, module) {
     var Menus                = brackets.getModule("command/Menus"),
         bracketsCommands     = brackets.getModule("command/Commands"),
         AppInit              = brackets.getModule("utils/AppInit");
+
     var EditorType           = brackets.EditorType;
 
     var EventManager         = require("core/EventManager"),
-        Commands             = require("core/Commands");
+        Commands             = require("core/Commands"),
+        Strings              = require("strings");
 
     var _gameEditorMenus = {};
     var _persistentMenus = {};
@@ -356,12 +358,17 @@ define(function (require, exports, module) {
         menu.addGameEditorMenuItem(Commands.CMD_OPEN_IDE);
         menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.CMD_OPEN_IDE);
 
+        // GameObject menu
+        var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_CHILD_GAME_OBJECT);
 
         // project context menu
         menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
         menu.removeMenuItem(bracketsCommands.FILE_NEW);
         menu.addMenuItem(Commands.CMD_NEW_SCENE, "", Menus.AFTER, bracketsCommands.FILE_NEW_FOLDER);
-        menu.addMenuDivider(Menus.AFTER, Commands.CMD_NEW_SCENE);
+        menu.addMenuItem(Commands.CMD_NEW_COMPONENT_IN_PROJECT, "", Menus.AFTER, Commands.CMD_NEW_SCENE);
+        menu.addMenuDivider(Menus.AFTER, Commands.CMD_NEW_COMPONENT_IN_PROJECT);
     }
 
     function init() {

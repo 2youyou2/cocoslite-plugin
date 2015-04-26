@@ -1,9 +1,14 @@
 define(function (require, exports, module) {
     "use strict";
 
+    var CommandManager  = brackets.getModule("command/CommandManager");
+
     var Project         = require("core/Project"),
         EventManager    = require("core/EventManager"),
-        Undo            = require("core/Undo");
+        Undo            = require("core/Undo"),
+        Commands        = require("core/Commands"),
+        Selector        = require("core/Selector"),
+        Strings         = require("strings");
 
 
     !function(Object, getPropertyDescriptor, getPropertyNames){
@@ -284,7 +289,7 @@ define(function (require, exports, module) {
             function redo(){
                 self.addChild.apply(self, args);
             }
-            
+
             if(child.constructor === cl.GameObject) {
                 EventManager.trigger(EventManager.OBJECT_ADDED, child);
                 
@@ -402,6 +407,45 @@ define(function (require, exports, module) {
         hackComponent();
         hackCocos();
     }
+
+
+    function createEmptyChildObject() {
+        Undo.beginUndoBatch();
+        var currentObjects = Selector.getSelectObjects();
+
+
+        var objs = [];
+        if(currentObjects && currentObjects.length>0){
+            for(var i in currentObjects){
+                var obj = new cl.GameObject();
+                currentObjects[i].addChild(obj);
+                objs.push(obj);
+            }
+        } else {
+            var scene = cc.director.getRunningScene();
+            var obj = new cl.GameObject();
+            scene.canvas.addChild(obj);
+            objs.push(obj);
+        }
+
+        Selector.selectObjects(objs);
+        Undo.endUndoBatch();
+    }
+
+    function createEmptyObject() {
+        Undo.beginUndoBatch();
+
+        var scene = cc.director.getRunningScene();
+        var obj = new cl.GameObject();
+        scene.canvas.addChild(obj);
+
+        Selector.selectObjects([obj]);
+        Undo.endUndoBatch();
+    }
+
+
+    CommandManager.register(Strings.NEW_EMPTY,       Commands.CMD_NEW_EMPTY_GAME_OBJECT,       createEmptyObject);
+    CommandManager.register(Strings.NEW_EMPTY_CHILD, Commands.CMD_NEW_EMPTY_CHILD_GAME_OBJECT, createEmptyChildObject);
 
     EventManager.on(EventManager.COCOS_LOADED, handleCocosLoaded);
 });

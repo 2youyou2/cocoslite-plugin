@@ -18,11 +18,13 @@ define(function (require, exports, module) {
 
         var operation = Operation.Positon;
 
-        var obj = null;
-        var wordMat = null;
-        var mouseDown = false;
+        var obj             = null;
+        var wordMat         = null;
+        var mouseDown       = false;
         var selectedObjects = null;
-        var canDoOperation = false;
+        var canDoOperation  = false;
+
+        var lastTouchMovePoint = null;
 
         var range = 15;
 
@@ -144,41 +146,51 @@ define(function (require, exports, module) {
 
         function handlePosition(touch){
             for(var i=0; i<selectedObjects.length; i++){
-                var t = selectedObjects[i].getComponent("TransformComponent");
-                var delta = touch.getDelta();
+                var obj = selectedObjects[i];
+                
+                var t = obj.getComponent("TransformComponent");
+                var parent = obj.parent;
+
+                var p1 = parent.convertToNodeSpace(touch.getLocation());
+                var p2 = parent.convertToNodeSpace(lastTouchMovePoint);
+
+                var delta = cl.p(p2).sub(p1);
+                
                 if(positionRect.hover) {
                     t.position = cc.pAdd(t.position, delta);
                 }
                 else if(xPositionRect.hover) {
-                    t.position = cc.pAdd(t.position, cc.p(delta.x, 0));
+                    t.x += delta.x;
                 }
                 else if(yPositionRect.hover) {
-                    t.position = cc.pAdd(t.position, cc.p(0, delta.y));
+                    t.y += delta.y;
                 }
             }
         }
 
-        function handleScale(touch){
+        function handleScale(touch) {
 
         }
 
-        function handleRotation(touch){
+        function handleRotation(touch) {
 
         }
 
         
-        this.onTouchBegan = function(touch){
+        this.onTouchBegan = function(touch) {
             if(!obj) {
                 return false;
             }
 
-            mouseDown = canDoOperation;
+            mouseDown          = canDoOperation;
+            lastTouchMovePoint = touch.getLocation();
+
             return canDoOperation;
         };
 
-        this.onTouchMoved = function(touch){
+        this.onTouchMoved = function(touch) {
 
-            switch(operation){
+            switch(operation) {
                 case Operation.Positon:
                     handlePosition(touch);
                     break;
@@ -189,6 +201,8 @@ define(function (require, exports, module) {
                     handleRotation(touch);
                     break;
             }
+
+            lastTouchMovePoint = touch.getLocation();
             
             return true;
         };

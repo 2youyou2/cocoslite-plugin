@@ -13,12 +13,12 @@ require.config({
 define(function (require, exports, module) {
     "use strict";
 
-    var ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
-        ProjectModel   = brackets.getModule("project/ProjectModel"),
-        ProjectManager = brackets.getModule("project/ProjectManager"),
-        UrlParams      = brackets.getModule("utils/UrlParams").UrlParams,
-        PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
-        NodeDomain     = brackets.getModule("utils/NodeDomain");
+    var ExtensionUtils         = brackets.getModule("utils/ExtensionUtils"),
+        ProjectModel           = brackets.getModule("project/ProjectModel"),
+        ProjectManager         = brackets.getModule("project/ProjectManager"),
+        UrlParams              = brackets.getModule("utils/UrlParams").UrlParams,
+        PreferencesManager     = brackets.getModule("preferences/PreferencesManager"),
+        NodeDomain             = brackets.getModule("utils/NodeDomain");
 
     function initNodeDomain() {
         window.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));

@@ -11,8 +11,10 @@ define(function (require, exports, module) {
 
     var $sidebar = $("#sidebar");
     var $content = $("<div id='hierarchy-content' class='hierarchy-content quiet-scrollbars' />");
+    $content.attr("tabindex", 99);
     $content.insertAfter($sidebar.find(".horz-resizer"));
 
+    var keyManager;
 
     var root     = {children:[]};
     var tempRoot = null;
@@ -22,33 +24,14 @@ define(function (require, exports, module) {
         $content.empty();
         $content.append($(html));
 
-        function select(obj, e){
+        function select(item, e){
 
-            // if(self.keyManager.keyDown("cmd") || self.keyManager.keyDown("ctrl")){
+            var obj = item ? objMap[item.id] : null;
 
-            // } 
-            // else {
-                if(root.currentObjects) {
-                    root.currentObjects.forEach(function(item){
-                        item.selected = false;
-                    });
-                }
-                
-                root.currentObjects = [];
-            // }
+            var ctrlKey = brackets.platform === 'mac' ? 91 : cc.KEY.ctrl;
+            var ctrlKeyDown = keyManager.matchKeyDown(ctrlKey);
 
-            if(obj) {
-                obj.selected = true;
-                root.currentObjects.push(obj);
-            }
-
-            var selectedObjs = [];
-            
-            root.currentObjects.forEach(function(item){
-                selectedObjs.push(objMap[item.id]);
-            });
-            
-            Selector.selectObjects(selectedObjs);
+            Selector.clickOnObject(obj, ctrlKeyDown);
 
             if(e) {
                 e.stopPropagation();
@@ -212,6 +195,10 @@ define(function (require, exports, module) {
         if(data) {
             data[property] = object[property];
         }
+    });
+
+    EventManager.on(EventManager.PROJECT_OPEN, function() {
+        keyManager = new cl.KeyManager($content[0]);
     })
 
     EventManager.on(EventManager.OBJECT_ADDED,   addObject);

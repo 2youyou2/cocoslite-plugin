@@ -25,6 +25,29 @@ define(function (require, exports, module) {
     }
     
 
+    function clickOnObject(obj, ctrlKeyDown) {
+        var objs = obj ? [obj] : [];
+
+
+        if(obj) {
+            var ctrlKey = brackets.platform === 'mac' ? 91 : cc.KEY.ctrl;
+
+            if(ctrlKeyDown || cl.keyManager.matchKeyDown(ctrlKey)) {
+                var index = selectedObjects.indexOf(obj);
+
+                if(index === -1) {
+                    objs = selectedObjects.concat(objs);
+                } else {
+                    objs = selectedObjects.filter(function(v, k) {
+                        return k !== index;
+                    });
+                }
+            }
+        }
+
+        selectObjects(objs);
+    }
+
     function initListener(){
         if(inited) {
             return;
@@ -73,7 +96,8 @@ define(function (require, exports, module) {
                 };
                 
                 var obj = hitTest(scene);
-                selectObjects(obj ? [obj] : []);
+                
+                clickOnObject(obj);
 
                 return true;
             },
@@ -194,12 +218,13 @@ define(function (require, exports, module) {
     }
 
     EventManager.on(EventManager.SCENE_LOADED, handleSceneLoaded);
-    EventManager.on(EventManager.SCENE_SWITCH_STATE, handleSceneSwitchState);
+    EventManager.on(EventManager.SCENE_SWITCH_STATE,  handleSceneSwitchState);
     EventManager.on(EventManager.SCENE_BEGIN_PLAYING, temp);
     EventManager.on(EventManager.SCENE_END_PLAYING,   recover);
     EventManager.on(EventManager.SCENE_CLOSED,        clear);
 
     exports.selectObjects = selectObjects;
+    exports.clickOnObject = clickOnObject;
     exports.setEnable = setEnable;
     exports.getSelectObjects = function() { return selectedObjects; }
     exports.clear = clear;

@@ -23,7 +23,7 @@ define(function (require, exports, module) {
 
         var operation = Operation.Position;
 
-        var obj             = null;
+        var firstObject     = null;
         var wordMat         = null;
         var mouseDown       = false;
         var selectedObjects = null;
@@ -40,10 +40,10 @@ define(function (require, exports, module) {
 
 
         this.renderScene = function(ctx, objs) {
-            obj = null;
+            firstObject = null;
             selectedObjects = objs;
             if(selectedObjects && selectedObjects.length>0) {
-                obj = selectedObjects[0];
+                firstObject = selectedObjects[0];
                 render(ctx);
             }
         };
@@ -118,7 +118,7 @@ define(function (require, exports, module) {
 
             ctx.lineWidth = 1;
 
-            var angle = obj.rotationX / 180 * Math.PI;
+            var angle = firstObject.rotationX / 180 * Math.PI;
 
             var x = radius * Math.sin(angle);
             var y = radius * Math.cos(angle);
@@ -144,7 +144,7 @@ define(function (require, exports, module) {
 
         function render(ctx) {
 
-            wordMat = obj.getNodeToWorldTransform();
+            wordMat = firstObject.getNodeToWorldTransform();
             ctx.translate(0.5, 0.5);
             ctx.translate(wordMat.tx, wordMat.ty);
 
@@ -238,19 +238,20 @@ define(function (require, exports, module) {
         }
 
         function handleRotation(touch) {
+                
+            var parent = firstObject.parent;
+
+            var p1 = firstObject.convertToNodeSpace(touch.getLocation());
+            var p2 = firstObject.convertToNodeSpace(lastTouchMovePoint);
+
+            var angle1 = -cc.pToAngle(p1);
+            var angle2 = -cc.pToAngle(p2);
+
+            var delta = (angle1 - angle2) * 180 / Math.PI;
+
             for(var i=0; i<selectedObjects.length; i++) {
                 var obj = selectedObjects[i];
-                
                 var t = obj.getComponent("TransformComponent");
-                var parent = obj.parent;
-
-                var p1 = obj.convertToNodeSpace(touch.getLocation());
-                var p2 = obj.convertToNodeSpace(lastTouchMovePoint);
-
-                var angle1 = -cc.pToAngle(p1);
-                var angle2 = -cc.pToAngle(p2);
-
-                var delta = (angle1 - angle2) * 180 / Math.PI;
 
                 t.rotation = cl.p(t.rotationX+delta, t.rotationY+delta);
             }
@@ -258,7 +259,7 @@ define(function (require, exports, module) {
 
         
         this.onTouchBegan = function(touch) {
-            if(!obj) {
+            if(!firstObject) {
                 return false;
             }
 
@@ -292,7 +293,7 @@ define(function (require, exports, module) {
         };
 
         this.onMouseMove = function(event) {
-            if(!obj || mouseDown) {
+            if(!firstObject || mouseDown) {
                 return;
             }
 
@@ -369,16 +370,16 @@ define(function (require, exports, module) {
 
             var key;
             switch(e.which) {
-                case 81:
+                case cc.KEY.q :
                     key = 'Hand';
                     break;
-                case 87:
+                case cc.KEY.w :
                     key = 'Position';
                     break;
-                case 69:
+                case cc.KEY.e :
                     key = 'Rotation';
                     break;
-                case 82:
+                case cc.KEY.r :
                     key = 'Scale';
                     break;
             }

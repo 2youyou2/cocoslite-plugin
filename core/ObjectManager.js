@@ -200,57 +200,6 @@ define(function (require, exports, module) {
             return json;
         };
 
-
-        cl.GameObject.prototype.toJSON = function(){
-            var json = {};
-
-            var components = json.components = [];
-
-            var cs = this.components;
-            for(var i in cs) {
-                components.push(cs[i].toJSON());
-            }
-
-            for(var k=0; k<this.children.length; k++){
-                var child = this.children[k];
-                if(child.constructor === cl.GameObject){
-                    
-                    if(!json.children) {
-                        json.children = [];
-                    }
-
-                    var cj = child.toJSON();
-                    json.children.push(cj);
-                }
-            }
-
-            var self = this;
-            this.properties.forEach(function(p) {
-                json[p] = self[p];
-            });
-
-            return json;
-        };
-
-        cl.Component.prototype.toJSON = function(){
-            var json = {};
-            json.class = this.className;
-
-            for(var i=0; i<this.properties.length; i++){
-                var k = this.properties[i];
-
-                var value = this[k];
-
-                if(this["toJSON"+k]) {
-                    json[k] = this["toJSON"+k]();
-                }
-                else if(value !== null || value !== undefined){
-                    json[k] = value.toJSON ? value.toJSON() : value;
-                }
-            }
-            return json;
-        };
-
     }
 
     function hackGameObject () {
@@ -399,7 +348,6 @@ define(function (require, exports, module) {
         Undo.beginUndoBatch();
         var currentObjects = Selector.getSelectObjects();
 
-
         var objs = [];
         if(currentObjects && currentObjects.length>0){
             for(var i in currentObjects){
@@ -421,11 +369,23 @@ define(function (require, exports, module) {
     function createEmptyObject() {
         Undo.beginUndoBatch();
 
-        var scene = cc.director.getRunningScene();
-        var obj = new cl.GameObject();
-        scene.canvas.addChild(obj);
+        var currentObjects = Selector.getSelectObjects();
 
-        Selector.selectObjects([obj]);
+        var objs = [];
+        if(currentObjects && currentObjects.length>0){
+            for(var i in currentObjects){
+                var obj = new cl.GameObject();
+                currentObjects[i].parent.addChild(obj);
+                objs.push(obj);
+            }
+        } else {
+            var scene = cc.director.getRunningScene();
+            var obj = new cl.GameObject();
+            scene.canvas.addChild(obj);
+            objs.push(obj);
+        }
+
+        Selector.selectObjects(objs);
         Undo.endUndoBatch();
     }
 

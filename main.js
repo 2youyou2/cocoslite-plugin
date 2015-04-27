@@ -41,6 +41,7 @@ define(function (require, exports, module) {
                     "core/Project",
                     "core/MenusManager",
                     "core/GameEditor",
+                    "core/CopyManager",
                     
                     "widgets/ShowAssets",
 

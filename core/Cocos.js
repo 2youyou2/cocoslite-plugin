@@ -50,9 +50,12 @@ define(function (require, exports, module) {
         cl.$canvas = $scene.find('#gameCanvas');
 
         cl.$fgCanvas = $scene.find("#fgCanvas");
+        cl.$fgCanvas.attr("tabindex", 99);
+
         cl.fgCanvas = cl.$fgCanvas[0];
 
-        cl.$fgCanvas.ctx = cl.fgCanvas.getContext('2d');
+        var ctx = cl.fgCanvas.getContext('2d');
+        
         var render = function(){
             if(!cc._canvas || (cc.director && cc.director.isPaused())) {
                 return;
@@ -61,11 +64,9 @@ define(function (require, exports, module) {
             var selectedObjects = Selector.getSelectObjects();
             var editors = EditorManager.getEditors();
 
-            var fg = cl.$fgCanvas;
             var maxW = cc._canvas.width ;
             var maxH = cc._canvas.height;
      
-            var ctx = fg.ctx;
             ctx.clearRect(0,0,maxW,maxH);
 
             ctx.save();
@@ -91,7 +92,6 @@ define(function (require, exports, module) {
         var updateSize = function(){ 
             cl.fgCanvas.setAttribute("width",  cc._canvas.width);
             cl.fgCanvas.setAttribute("height", cc._canvas.height);
-            cl.fgCanvas.setAttribute("tabindex", 99);
         };
 
         var isRegisterEvent = false;

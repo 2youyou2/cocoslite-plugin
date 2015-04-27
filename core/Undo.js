@@ -44,68 +44,77 @@ define(function (require, exports, module) {
 
 
 	var Undo = function(){
-		var stack = new Undo.Stack();
-		var tempStack = null;
 
-		this.objectPropertyChanged = function(oldValue, newValue, obj, p, dirty){
-			var cmd = new Undo.PropertyCmd(oldValue, newValue, obj, p, dirty);
-			stack.add(cmd);
+		var _stack     = new Undo.Stack();
+		var _enable    = true;
+		var _tempStack = null;
+
+		this.objectPropertyChanged = function(oldValue, newValue, obj, p, dirty) {
+			var cmd;
+			if(_enable) {
+				cmd = new Undo.PropertyCmd(oldValue, newValue, obj, p, dirty);
+				_stack.add(cmd);
+			}
 			return cmd;
 		};
 
-		this.beginUndoBatch = function(){
-			stack.beginBatch();
+		this.beginUndoBatch = function() {
+			_stack.beginBatch();
 		};
 
-		this.endUndoBatch = function(){
-			stack.endBatch();
+		this.endUndoBatch = function() {
+			_stack.endBatch();
 		};
 
-		this.clear = function(){
-			stack = new Undo.Stack();
-			tempStack = null;
+		this.clear = function() {
+			_stack = new Undo.Stack();
+			_tempStack = null;
 		};
 
 		this.temp = function() {
-			tempStack = stack;
-			stack = new Undo.Stack();
-			stack.disableTriggerChange = true;
+			_tempStack = _stack;
+			_stack = new Undo.Stack();
+			_stack.disableTriggerChange = true;
 		};
 
 		this.recover = function() {
-			stack = tempStack;
+			_stack = _tempStack;
 		}
 
-		this.undoing = function(){
-			return stack.undoing;
+		this.undoing = function() {
+			return _stack.undoing;
 		};
 
-		this.dirty = function(){
-			return stack.dirty();
+		this.dirty = function() {
+			return _stack.dirty();
 		};
 
-		this.save = function(){
-			stack.save();
+		this.save = function() {
+			_stack.save();
 		};
+
+		this.setEnable = function(enable) {
+			_enable = enable;
+		}
 
 		this.undo = EditorCommandHandlers.undo = function(){
-			if(stack.canUndo()) {
-	    		stack.undo();
+			if(_enable && _stack.canUndo()) {
+	    		_stack.undo();
             }
 		};
 
 		this.redo = EditorCommandHandlers.redo = function(){
-			if(stack.canRedo()) {
-	    		stack.redo();
+			if(_enable && _stack.canRedo()) {
+	    		_stack.redo();
             }
 		};
 
 		var undoList = [];
-		this.registerUndoType = function(key){
+		this.registerUndoType = function(key) {
 			undoList.push(key);
 		};
 
-		this.canInjectDocument = function(doc){
+		this.canInjectDocument = function(doc) {
 			var name = doc.file.name;
 			for(var k in undoList){
 				if(name.endWith(undoList[k])) {

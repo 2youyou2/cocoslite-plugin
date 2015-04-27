@@ -141,12 +141,6 @@ define(function (require, exports, module) {
         CommandManager.register(Strings.PLAY,  Commands.CMD_PLAY,  switchPlayState);
         CommandManager.register(Strings.PAUSE, Commands.CMD_PAUSE, switchPauseState);
         CommandManager.register(Strings.STEP,  Commands.CMD_STEP,  nextFrame);
-
-        var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
-        menu.addGameEditorMenuDivider();
-        menu.addGameEditorMenuItem(Commands.CMD_PLAY);
-        menu.addGameEditorMenuItem(Commands.CMD_PAUSE);
-        menu.addGameEditorMenuItem(Commands.CMD_STEP);
     }
 
     function sceneToString() {
@@ -290,7 +284,6 @@ define(function (require, exports, module) {
         cl.createCanvas = createCanvas;
 
         hackGameObject();
-        initPlayBar();
     }
 
     function loadScene() {
@@ -302,6 +295,7 @@ define(function (require, exports, module) {
         cl.SceneManager.loadSceneWithContent(content, handleSceneLoaded, true);
     }
 
+    initPlayBar();
 
     EditorManager.on("activeEditorChange", handleActiveEditorChange);
 

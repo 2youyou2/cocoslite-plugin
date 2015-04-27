@@ -91,6 +91,7 @@ define(function (require, exports, module) {
         var updateSize = function(){ 
             cl.fgCanvas.setAttribute("width",  cc._canvas.width);
             cl.fgCanvas.setAttribute("height", cc._canvas.height);
+            cl.fgCanvas.setAttribute("tabindex", 99);
         };
 
         var isRegisterEvent = false;

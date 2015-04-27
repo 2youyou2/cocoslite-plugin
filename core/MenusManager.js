@@ -351,6 +351,11 @@ define(function (require, exports, module) {
         menu.addGameEditorMenuDivider(Menus.AFTER, bracketsCommands.EDIT_REDO);
         menu.addGameEditorMenuDivider(Menus.AFTER, bracketsCommands.EDIT_PASTE);
 
+        menu.addGameEditorMenuDivider();
+        menu.addGameEditorMenuItem(Commands.CMD_PLAY);
+        menu.addGameEditorMenuItem(Commands.CMD_PAUSE);
+        menu.addGameEditorMenuItem(Commands.CMD_STEP);
+
         // view menu
         menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
         menu.addGameEditorMenuDivider(Menus.BEFORE, bracketsCommands.VIEW_HIDE_SIDEBAR);

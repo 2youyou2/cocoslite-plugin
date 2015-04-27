@@ -4,19 +4,24 @@
 define(function (require, exports, module) {
     "use strict";
 
+    var AppInit       = brackets.getModule("utils/AppInit");
+
     var EditorManager = require("editor/EditorManager");
 
-    var Params = function() {
+    var editor;
+
+    var Editor = function() {
 
         this._order = 10000;
 
         var Operation = {
-            Positon:  0,
+            Position:  0,
             Scale:    1,
-            Rotation: 2
+            Rotation: 2,
+            Hand:     3
         };
 
-        var operation = Operation.Positon;
+        var operation = Operation.Position;
 
         var obj             = null;
         var wordMat         = null;
@@ -27,38 +32,30 @@ define(function (require, exports, module) {
         var lastTouchMovePoint = null;
 
         var range = 15;
+        var radius = 100;
 
         var positionRect  = rect(-range/2, -range/2, range, range);
-        var xPositionRect = rect(100, -range/3, range/1.5, range/1.5);
-        var yPositionRect = rect(-range/3, 100, range/1.5, range/1.5);
+        var xPositionRect = rect(radius, -range/3, range/1.5, range/1.5);
+        var yPositionRect = rect(-range/3, radius, range/1.5, range/1.5);
 
 
-        this.renderScene = function(ctx, objs){
+        this.renderScene = function(ctx, objs) {
             obj = null;
             selectedObjects = objs;
-            if(selectedObjects && selectedObjects.length>0){
+            if(selectedObjects && selectedObjects.length>0) {
                 obj = selectedObjects[0];
                 render(ctx);
             }
         };
 
 
-        function rect(x,y,width,height){
+        function rect(x,y,width,height) {
             return {x:x, y:y, width:width, height:height};
         }
 
 
-        function renderPosition(ctx){
+        function renderPosition(ctx, rect) {
             ctx.lineWidth = 1;
-
-            // ctx.fillStyle = "#ffffff";
-            // ctx.beginPath();
-            // ctx.moveTo(0,range/3);
-            // ctx.lineTo(range/3,0);
-            // ctx.lineTo(0,-range/3);
-            // ctx.lineTo(-range/3,0);
-            // ctx.fill();
-
 
             // ctx.globalAlpha = yPositionRect.hover ? 1 : 0.6;
 
@@ -66,11 +63,20 @@ define(function (require, exports, module) {
             ctx.fillStyle   = yPositionRect.hover ? "#ffffff" : "#ffff00";
             ctx.beginPath();
             ctx.moveTo(0,0);
-            ctx.lineTo(0,100);
+            ctx.lineTo(0,radius);
             ctx.stroke();
 
             var yr = yPositionRect;
-            ctx.fillRect(yr.x, yr.y, yr.width, yr.height);
+
+            if(rect) {
+                ctx.fillRect(yr.x, yr.y, yr.width, yr.height);    
+            } else {
+                ctx.moveTo(yr.x, yr.y);
+                ctx.lineTo(yr.x+yr.width, yr.y);
+                ctx.lineTo(yr.x+yr.width/2, yr.y+yr.height);
+                ctx.fill();
+            }
+            
 
             // ctx.globalAlpha = xPositionRect.hover ? 1 : 0.6;
 
@@ -78,11 +84,19 @@ define(function (require, exports, module) {
             ctx.fillStyle   = xPositionRect.hover ? "#ffffff" : "#ff0000";
             ctx.beginPath();
             ctx.moveTo(0,0);
-            ctx.lineTo(100,0);
+            ctx.lineTo(radius,0);
             ctx.stroke();
 
             var xr = xPositionRect;
-            ctx.fillRect(xr.x, xr.y, xr.width, xr.height);
+
+            if(rect) {
+                ctx.fillRect(xr.x, xr.y, xr.width, xr.height);    
+            } else {
+                ctx.moveTo(xr.x, xr.y);
+                ctx.lineTo(xr.x, xr.y+xr.height);
+                ctx.lineTo(xr.x+xr.width, xr.y+xr.height/2);
+                ctx.fill();
+            }
 
 
             // ctx.globalAlpha = positionRect.hover ? 1 : 0.6;
@@ -90,22 +104,52 @@ define(function (require, exports, module) {
             ctx.fillRect(positionRect.x, positionRect.y, positionRect.width, positionRect.height);
         }
 
-        function renderScale(ctx){
-
+        function renderScale(ctx) {
+            renderPosition(ctx, rect);
         }
 
-        function renderRotation(ctx){
+        function renderRotation(ctx) {
 
+            ctx.strokeStyle = canDoOperation ? "#fff" : "#00f";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(0,0, radius, 0,2*Math.PI);
+            ctx.stroke();
+
+            ctx.lineWidth = 1;
+
+            var angle = obj.rotationX / 180 * Math.PI;
+
+            var x = radius * Math.sin(angle);
+            var y = radius * Math.cos(angle);
+
+            ctx.strokeStyle = "#ffff00";
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(-x, -y);
+            ctx.stroke();
+
+
+            angle -= Math.PI/2;
+            
+            x = radius * Math.sin(angle);
+            y = radius * Math.cos(angle);
+
+            ctx.strokeStyle = "#ffff00";
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(-x, -y);
+            ctx.stroke();
         }
 
-        function render(ctx){
+        function render(ctx) {
 
             wordMat = obj.getNodeToWorldTransform();
             ctx.translate(0.5, 0.5);
             ctx.translate(wordMat.tx, wordMat.ty);
 
             switch(operation){
-                case Operation.Positon:
+                case Operation.Position:
                     renderPosition(ctx);
                     break;
                 case Operation.Scale:
@@ -118,8 +162,7 @@ define(function (require, exports, module) {
         }
 
 
-
-        function hitPosition(p){
+        function hitPosition(p) {
             positionRect.hover = xPositionRect.hover = yPositionRect.hover = false;
 
             if(cc.rectContainsPoint(positionRect, p)) {
@@ -135,17 +178,18 @@ define(function (require, exports, module) {
             return positionRect.hover || xPositionRect.hover || yPositionRect.hover;
         }
 
-        function hitScale(p){
-
+        function hitScale(p) {
+            return hitPosition(p);
         }
 
-        function hitRotation(p){
-
+        function hitRotation(p) {
+            var l = cc.pLength(p);
+            return Math.abs(l-radius) <= 4;
         }
 
 
-        function handlePosition(touch){
-            for(var i=0; i<selectedObjects.length; i++){
+        function handlePosition(touch) {
+            for(var i=0; i<selectedObjects.length; i++) {
                 var obj = selectedObjects[i];
                 
                 var t = obj.getComponent("TransformComponent");
@@ -154,7 +198,7 @@ define(function (require, exports, module) {
                 var p1 = parent.convertToNodeSpace(touch.getLocation());
                 var p2 = parent.convertToNodeSpace(lastTouchMovePoint);
 
-                var delta = cl.p(p2).sub(p1);
+                var delta = cl.p(p1).sub(p2);
                 
                 if(positionRect.hover) {
                     t.position = cc.pAdd(t.position, delta);
@@ -169,11 +213,47 @@ define(function (require, exports, module) {
         }
 
         function handleScale(touch) {
+            for(var i=0; i<selectedObjects.length; i++) {
+                var obj = selectedObjects[i];
+                
+                var t = obj.getComponent("TransformComponent");
+                var parent = obj.parent;
 
+                var p1 = parent.convertToNodeSpace(touch.getLocation());
+                var p2 = parent.convertToNodeSpace(lastTouchMovePoint);
+
+                var delta = cl.p(p1).sub(p2);
+                
+                if(positionRect.hover) {
+                    t.scaleX += delta.x > 0 ? 0.1 : -0.1;
+                    t.scaleY += delta.y > 0 ? 0.1 : -0.1;
+                }
+                else if(xPositionRect.hover) {
+                    t.scaleX += delta.x > 0 ? 0.1 : -0.1;
+                }
+                else if(yPositionRect.hover) {
+                    t.scaleY += delta.y > 0 ? 0.1 : -0.1;
+                }
+            }
         }
 
         function handleRotation(touch) {
+            for(var i=0; i<selectedObjects.length; i++) {
+                var obj = selectedObjects[i];
+                
+                var t = obj.getComponent("TransformComponent");
+                var parent = obj.parent;
 
+                var p1 = obj.convertToNodeSpace(touch.getLocation());
+                var p2 = obj.convertToNodeSpace(lastTouchMovePoint);
+
+                var angle1 = -cc.pToAngle(p1);
+                var angle2 = -cc.pToAngle(p2);
+
+                var delta = (angle1 - angle2) * 180 / Math.PI;
+
+                t.rotation = cl.p(t.rotationX+delta, t.rotationY+delta);
+            }
         }
 
         
@@ -191,7 +271,7 @@ define(function (require, exports, module) {
         this.onTouchMoved = function(touch) {
 
             switch(operation) {
-                case Operation.Positon:
+                case Operation.Position:
                     handlePosition(touch);
                     break;
                 case Operation.Scale:
@@ -222,7 +302,7 @@ define(function (require, exports, module) {
             canDoOperation = false;
 
             switch(operation){
-                case Operation.Positon:
+                case Operation.Position:
                     canDoOperation = hitPosition(p);
                     break;
                 case Operation.Scale:
@@ -233,12 +313,82 @@ define(function (require, exports, module) {
                     break;
             }
         };
+
+        this.switchState = function(id) {
+            operation = Operation[id];
+        }
     }
 
     function init(){
-        EditorManager.register("Control2D", new Params);
+        editor = new Editor;
+        EditorManager.register("Control2D", editor);
     }
 
-    init();
+    AppInit.appReady(function() {
+        init();
+
+        var current;
+
+        function handleClick() {
+            if(!editor) {
+                return;
+            }
+
+            var temp = $(this);
+            var id = temp.attr('id');
+
+            editor.switchState(id);
+
+            toggleCurrent(temp);
+
+            current = temp;
+        }
+
+        function toggleCurrent(btn) {
+            if(current[0] != btn[0]) {
+                btn.toggleClass('active');
+                current.toggleClass('active');
+            }
+
+            current = btn;
+        }
+
+        var $controls = $('<span class="control-tool" />');
+
+        var controls = {};
+        controls["Hand"]     = $('<span id="Hand"     class="icon control-tool-hand     fa-hand-o-up" >').appendTo($controls).click(handleClick);
+        controls["Position"] = $('<span id="Position"  class="icon control-tool-position iconicfill-move-alt1 active">').appendTo($controls).click(handleClick);
+        controls["Rotation"] = $('<span id="Rotation" class="icon control-tool-rotation iconicfill-spin">').appendTo($controls).click(handleClick);
+        controls["Scale"]    = $('<span id="Scale"    class="icon control-tool-scale    iconicfill-fullscreen">').appendTo($controls).click(handleClick);
+
+        current = controls["Position"];
+
+        $("#play-bar").prepend($controls);
+
+        cl.$fgCanvas.keyup(function(e){
+
+            var key;
+            switch(e.which) {
+                case 81:
+                    key = 'Hand';
+                    break;
+                case 87:
+                    key = 'Position';
+                    break;
+                case 69:
+                    key = 'Rotation';
+                    break;
+                case 82:
+                    key = 'Scale';
+                    break;
+            }
+
+            if(key) {
+                editor.switchState(key);
+                toggleCurrent(controls[key]);
+            }
+        });    
+    });
+
     exports.init = init;
 });

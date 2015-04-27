@@ -289,9 +289,13 @@ define(function (require, exports, module) {
         else if(value.constructor === cc.Color) {
             $input = $("<span class='input-group'><input type='text'class='form-control' value='#fff'><span class='input-group-addon'><i></i></span>");
 
+            var noNeedSync = false;
+
             $input.colorpicker({color:'#fff'}).on('changeColor.colorpicker', function(event){
                 $input.color = event.color.toRGB();
-                $input.finishEdit(true);
+                if(!noNeedSync) {
+                    $input.finishEdit(true);
+                }
             }).on('endChangeColor.colorpicker', function() {
                 Undo.endUndoBatch();
             }).on('beginChangeColor.colorpicker', function() {
@@ -301,7 +305,9 @@ define(function (require, exports, module) {
             cl.defineGetterSetter($input, "value", function() {
                 return $input.color;
             }, function(color) {
+                noNeedSync = true;
                 $input.colorpicker('setValue', cc.colorToHex(color));
+                noNeedSync = false;
             });
         }
         else if(value.constructor === Array) {

@@ -7,17 +7,11 @@ define(function (require, exports, module) {
     var FileSystem      = brackets.getModule("filesystem/FileSystem"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
-    var Scene           = require("text!html/Scene.html"),
-        Selector        = require("core/Selector"),
+    var Selector        = require("core/Selector"),
         EventManager    = require("core/EventManager"),
         EditorManager   = require("editor/EditorManager");
 
-    var $scene = $(Scene);
 
-    function initTopBar() {
-        var $topBar = $('<div id="top-bar">');
-        $topBar.insertBefore($('.main-view'));
-    }
 
     function initConfig(){
         window.cl = {};
@@ -44,55 +38,16 @@ define(function (require, exports, module) {
         cc.game._initConfig();
     }
 
-
-    function initCanvas(){
-
-        cl.$canvas = $scene.find('#gameCanvas');
-
-        cl.$fgCanvas = $scene.find("#fgCanvas");
-        cl.$fgCanvas.attr("tabindex", 99);
-
-        cl.fgCanvas = cl.$fgCanvas[0];
-
-        var ctx = cl.fgCanvas.getContext('2d');
-        
-        var render = function(){
-            if(!cc._canvas || (cc.director && cc.director.isPaused())) {
-                return;
-            }
-
-            var selectedObjects = Selector.getSelectObjects();
-            var editors = EditorManager.getEditors();
-
-            var maxW = cc._canvas.width ;
-            var maxH = cc._canvas.height;
-     
-            ctx.clearRect(0,0,maxW,maxH);
-
-            ctx.save();
-            ctx.scale(1, -1);
-            ctx.translate(0, -maxH);
-            
-            for(var i in editors){
-                var editor = editors[i];
-                if(!editor.renderScene) { continue; }
-
-                ctx.save();
-                editor.renderScene(ctx, selectedObjects);
-                ctx.restore();
-            }
-            
-            ctx.restore();
-        };
-        
-        setInterval(render, 100);
-    }
-
     function initCocos() {
-        var updateSize = function(){ 
+        function updateSize() { 
             cl.fgCanvas.setAttribute("width",  cc._canvas.width);
             cl.fgCanvas.setAttribute("height", cc._canvas.height);
-        };
+
+            var scene = cc.director.getRunningScene();
+            if(scene && scene.canvas) {
+                scene.canvas.recalculatePosition();
+            }
+        }
 
         var isRegisterEvent = false;
         cc.game.onStart = function(){
@@ -205,16 +160,10 @@ define(function (require, exports, module) {
                 EventManager.trigger(EventManager.COCOS_LOADED);
             });
         });
-    }
 
-    function getSceneHtml() {
-        return $scene;
     }
 
     initConfig();
-    initCanvas();
     initCocos();
-    initTopBar();
-    
-    exports.getSceneHtml = getSceneHtml;
+
 });

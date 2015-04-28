@@ -185,8 +185,7 @@ define(function (require, exports, module) {
             var children = json.root.children = [];
 
             json.root.canvas = {};
-            json.root.canvas.x = this.canvas.x;
-            json.root.canvas.y = this.canvas.y;
+            json.root.canvas.offset = this.canvas.offset;
             json.root.canvas.scale = this.canvas.scale;
 
             for(var k=0; k<this.canvas.children.length; k++){

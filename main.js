@@ -47,11 +47,13 @@ define(function (require, exports, module) {
 
                     "thirdparty/colorpicker/js/bootstrap-colorpicker",
                     "thirdparty/webui-popover/jquery.webui-popover",
+                    "thirdparty/jquery-ui",
 
                     "editor/EditorManager",
                     "editor/SceneEditor",
                     "editor/MeshEditor",
-                    "editor/Control2D"];
+                    "editor/Control2D",
+                    "editor/CanvasControl"];
 
             initNodeDomain();
         }

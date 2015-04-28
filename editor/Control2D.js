@@ -6,22 +6,25 @@ define(function (require, exports, module) {
 
     var AppInit       = brackets.getModule("utils/AppInit");
 
-    var EditorManager = require("editor/EditorManager");
+    var EditorManager = require("editor/EditorManager"),
+        EventManager  = require("core/EventManager");
 
     var editor;
 
+    var Operation = {
+        Position:  0,
+        Scale:    1,
+        Rotation: 2,
+        Hand:     3
+    };
+
+    var operation = Operation.Position;
+
+
     var Editor = function() {
 
-        this._order = 10000;
+        this._order = Number.MAX_VALUE;
 
-        var Operation = {
-            Position:  0,
-            Scale:    1,
-            Rotation: 2,
-            Hand:     3
-        };
-
-        var operation = Operation.Position;
 
         var firstObject     = null;
         var wordMat         = null;
@@ -187,7 +190,6 @@ define(function (require, exports, module) {
             return Math.abs(l-radius) <= 4;
         }
 
-
         function handlePosition(touch) {
             for(var i=0; i<selectedObjects.length; i++) {
                 var obj = selectedObjects[i];
@@ -259,6 +261,7 @@ define(function (require, exports, module) {
 
         
         this.onTouchBegan = function(touch) {
+
             if(!firstObject) {
                 return false;
             }
@@ -316,7 +319,10 @@ define(function (require, exports, module) {
         };
 
         this.switchState = function(id) {
+            var oldOperation = operation;
             operation = Operation[id];
+
+            EventManager.trigger(EventManager.CONTROL_STATE_CHANGED, oldOperation, operation);
         }
     }
 
@@ -357,10 +363,10 @@ define(function (require, exports, module) {
         var $controls = $('<span class="control-tool" />');
 
         var controls = {};
-        controls["Hand"]     = $('<span id="Hand"     class="icon control-tool-hand     fa-hand-o-up" >').appendTo($controls).click(handleClick);
-        controls["Position"] = $('<span id="Position"  class="icon control-tool-position iconicfill-move-alt1 active">').appendTo($controls).click(handleClick);
-        controls["Rotation"] = $('<span id="Rotation" class="icon control-tool-rotation iconicfill-spin">').appendTo($controls).click(handleClick);
-        controls["Scale"]    = $('<span id="Scale"    class="icon control-tool-scale    iconicfill-fullscreen">').appendTo($controls).click(handleClick);
+        controls["Hand"]     = $('<span id="Hand"      class="cl-icon-button control-tool-hand     fa-hand-o-up" >').appendTo($controls).click(handleClick);
+        controls["Position"] = $('<span id="Position"  class="cl-icon-button control-tool-position iconicfill-move-alt1 active">').appendTo($controls).click(handleClick);
+        controls["Rotation"] = $('<span id="Rotation"  class="cl-icon-button control-tool-rotation iconicfill-spin">').appendTo($controls).click(handleClick);
+        controls["Scale"]    = $('<span id="Scale"     class="cl-icon-button control-tool-scale    iconicfill-fullscreen">').appendTo($controls).click(handleClick);
 
         current = controls["Position"];
 
@@ -392,4 +398,8 @@ define(function (require, exports, module) {
     });
 
     exports.init = init;
+    exports.Operation = Operation;
+    exports.getOperation = function() {
+        return operation;
+    }
 });

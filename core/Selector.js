@@ -13,8 +13,10 @@ define(function (require, exports, module) {
 
     var mousedown = false;
     
-    var scene = null, tempScene = null;
-    var tempSelectedObjects = [], selectedObjects = [];
+    var scene = null;
+    var tempScene = null;
+    var tempSelectedObjects = [];
+    var selectedObjects = [];
 
     var currentDelegate = null;
 
@@ -205,19 +207,18 @@ define(function (require, exports, module) {
     
     function handleSceneLoaded(e, s) {
         scene = s;
-        initListener();
     }
 
     function handleSceneSwitchState(e, state) {
         if(state === 'game') {
             enable = false;
-        } 
-        else if(state === 'scene') {
+        } else if(state === 'scene') {
             enable = true;
         }
     }
 
-    EventManager.on(EventManager.SCENE_LOADED, handleSceneLoaded);
+    EventManager.on(EventManager.SCENE_LOADED,        handleSceneLoaded);
+    EventManager.on(EventManager.PROJECT_OPEN,        initListener);
     EventManager.on(EventManager.SCENE_SWITCH_STATE,  handleSceneSwitchState);
     EventManager.on(EventManager.SCENE_BEGIN_PLAYING, temp);
     EventManager.on(EventManager.SCENE_END_PLAYING,   recover);

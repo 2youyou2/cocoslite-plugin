@@ -35,4 +35,7 @@ define(function (require, exports, module) {
 
     // ComponentManager
     exports.NEW_EMPTY_COMPONENT         = "new_empty_component";
+
+    // Control2D
+    exports.CONTROL_STATE_CHANGED       = "control_state_changed";
 });

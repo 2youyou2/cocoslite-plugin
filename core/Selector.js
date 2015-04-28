@@ -13,8 +13,6 @@ define(function (require, exports, module) {
 
     var mousedown = false;
     
-    var scene = null;
-    var tempScene = null;
     var tempSelectedObjects = [];
     var selectedObjects = [];
 
@@ -97,6 +95,7 @@ define(function (require, exports, module) {
                     return null;
                 };
                 
+                var scene = cc.director.getRunningScene();
                 var obj = hitTest(scene);
                 
                 clickOnObject(obj);
@@ -110,11 +109,6 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                // for(var i in selectedObjects){
-                //  var t = selectedObjects[i].getComponent("TransformComponent");
-                //     var delta = touch.getDelta();
-                //     t.position = cc.pAdd(t.position, delta);
-                // }
             },
             onTouchEnded: function(touch, event){
                 mousedown = false;
@@ -186,27 +180,24 @@ define(function (require, exports, module) {
 
     function clear() {
         tempSelectedObjects = selectedObjects = [];
-        tempScene = scene = null;
     }
 
-    function temp(e, s) {
+    function handleBeginPlaying(e, s) {
         tempSelectedObjects = selectedObjects;
         selectedObjects = [];
 
-        tempScene = scene;
-        scene = s;
+        Undo.setEnable(false);
+        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
+        Undo.setEnable(true);
     }
 
-    function recover() {
+    function handleEndPlaying() {
         selectedObjects = tempSelectedObjects;
         tempSelectedObjects = [];
 
-        scene = tempScene;
-        tempScene = null;
-    }
-    
-    function handleSceneLoaded(e, s) {
-        scene = s;
+        Undo.setEnable(false);
+        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
+        Undo.setEnable(true);
     }
 
     function handleSceneSwitchState(e, state) {
@@ -217,11 +208,10 @@ define(function (require, exports, module) {
         }
     }
 
-    EventManager.on(EventManager.SCENE_LOADED,        handleSceneLoaded);
     EventManager.on(EventManager.PROJECT_OPEN,        initListener);
     EventManager.on(EventManager.SCENE_SWITCH_STATE,  handleSceneSwitchState);
-    EventManager.on(EventManager.SCENE_BEGIN_PLAYING, temp);
-    EventManager.on(EventManager.SCENE_END_PLAYING,   recover);
+    EventManager.on(EventManager.SCENE_BEGIN_PLAYING, handleBeginPlaying);
+    EventManager.on(EventManager.SCENE_END_PLAYING,   handleEndPlaying);
     EventManager.on(EventManager.SCENE_CLOSED,        clear);
 
     exports.selectObjects = selectObjects;

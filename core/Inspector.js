@@ -504,7 +504,7 @@ define(function (require, exports, module) {
 
         $content.on("panelResizeUpdate", onResize);
 
-        $.include(["thirdparty/colorpicker/css/bootstrap-colorpicker.css", 
+        $.include(["thirdparty/colorpicker/css/bootstrap-colorpicker.css",
                    "thirdparty/webui-popover/jquery.webui-popover.css"]);
     });
 

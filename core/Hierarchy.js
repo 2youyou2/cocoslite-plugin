@@ -201,12 +201,12 @@ define(function (require, exports, module) {
         keyManager = new cl.KeyManager($content[0]);
     })
 
-    EventManager.on(EventManager.OBJECT_ADDED,   addObject);
-    EventManager.on(EventManager.OBJECT_REMOVED, removeObject);
+    EventManager.on(EventManager.OBJECT_ADDED,         addObject);
+    EventManager.on(EventManager.OBJECT_REMOVED,       removeObject);
     
-    EventManager.on(EventManager.SCENE_LOADED,   createContent);
-    EventManager.on(EventManager.SCENE_CLOSED,   clear);
-    EventManager.on(EventManager.SELECT_OBJECTS, selectedObjects);
+    EventManager.on(EventManager.SCENE_LOADED,         createContent);
+    EventManager.on(EventManager.SCENE_CLOSED,         clear);
+    EventManager.on(EventManager.SELECT_OBJECTS,       selectedObjects);
     EventManager.on(EventManager.SCENE_BEFORE_PLAYING, temp);
     EventManager.on(EventManager.SCENE_BEGIN_PLAYING,  createContent);
     EventManager.on(EventManager.SCENE_END_PLAYING,    recover);

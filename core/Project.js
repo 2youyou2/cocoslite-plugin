@@ -123,6 +123,13 @@ define(function (require, exports, module) {
 
         dialog = Dialogs.showModalDialogUsingTemplate(Mustache.render(CreateProjectTemp, templateVars));
 
+        $projectName = dialog.getElement().find(".name");
+        $projectName.val("CocosLiteProject");
+        $projectName.focus();
+        $projectLocation = dialog.getElement().find(".location");
+        $projectLocation.val(PreferencesManager.getViewState("cocoslite.project.location"));
+        $browseBtn = dialog.getElement().find(".browse");
+
         dialog.done(function (id) {
             if (id === Dialogs.DIALOG_BTN_OK) {
                 cl.cocosDomain.exec("newProject", $projectName.val(), $projectLocation.val())
@@ -137,12 +144,6 @@ define(function (require, exports, module) {
             }
         });
 
-        $projectName = dialog.getElement().find(".name");
-        $projectName.value("CocosLiteProject");
-        $projectName.focus();
-        $projectLocation = dialog.getElement().find(".location");
-        $projectLocation.val(PreferencesManager.getViewState("cocoslite.project.location"));
-        $browseBtn = dialog.getElement().find(".browse");
 
         $browseBtn.click(function(){
             FileSystem.showOpenDialog(false, true, Strings.CHOOSE_FOLDER, $projectLocation.val(), null, function (err, files) {

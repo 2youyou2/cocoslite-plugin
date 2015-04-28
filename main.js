@@ -20,8 +20,30 @@ define(function (require, exports, module) {
         PreferencesManager     = brackets.getModule("preferences/PreferencesManager"),
         NodeDomain             = brackets.getModule("utils/NodeDomain");
 
+    function initCocosLite() {
+        window.cl = {};
+
+        cl.clDir              = ExtensionUtils.getModulePath(module, "");
+        cl.engineDir          = ExtensionUtils.getModulePath(module, "cocos2d-js/frameworks/cocos2d-html5");
+        cl.clEngineDir        = ExtensionUtils.getModulePath(module, "cocos2d-js/frameworks/cocos2d-html5/cocoslite");
+        cl.cocosConsoleDir    = ExtensionUtils.getModulePath(module, "cocos2d-js/tools/cocos2d-console/bin/");
+
+
+        cl.getModule = function(path) {
+            if(path.indexOf(".js") === -1) {
+                path += ".js";
+            }
+            return require(cc.path.join(cl.clEngineDir, path));
+        }
+    }
+
+
     function initNodeDomain() {
-        window.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
+        cl.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
+        cl.cocosDomain.exec("registerEnvironment", cl.cocosConsoleDir)
+            .done(function(){
+                console.log("registerEnvironment success.");
+            });
     }
 
     function initEditor() {
@@ -53,6 +75,7 @@ define(function (require, exports, module) {
                     "editor/SceneEditor",
                     "editor/MeshEditor",
                     "editor/Control2D",
+                    "editor/Simulator",
                     "editor/CanvasControl"];
 
             initNodeDomain();
@@ -140,5 +163,7 @@ define(function (require, exports, module) {
     }
 
     hackBrackets();
+
+    initCocosLite();
     initEditor();
 });

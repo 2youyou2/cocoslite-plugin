@@ -14,15 +14,6 @@ define(function (require, exports, module) {
 
 
     function initConfig(){
-        window.cl = {};
-        cl.engineDir = ExtensionUtils.getModulePath(module, "../cocos2d-js/frameworks/cocos2d-html5");
-        cl.clDir = ExtensionUtils.getModulePath(module, "../cocos2d-js/frameworks/cocos2d-html5/cocoslite");
-        cl.getModule = function(path) {
-            if(path.indexOf(".js") === -1) {
-                path += ".js";
-            }
-            return require(cc.path.join(cl.clDir, path));
-        }
 
         document.ccConfig = {
             "engineDir": cl.engineDir,
@@ -100,7 +91,7 @@ define(function (require, exports, module) {
         };
 
         function loadCocosLiteModule(cb) {
-            var dir = FileSystem.getDirectoryForPath(cl.clDir);
+            var dir = FileSystem.getDirectoryForPath(cl.clEngineDir);
             var sources = [];
 
             function readSource(item, cb) {

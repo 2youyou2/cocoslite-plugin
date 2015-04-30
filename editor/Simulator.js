@@ -89,7 +89,7 @@ define(function (require, exports, module) {
 
         if(name === 'mac') {
             options.connectConsole = true;
-            
+
             var path = cc.path.join(current.path, "Contents/MacOS");
 
             if(!FileSystem.isAbsolutePath(path)) {
@@ -107,7 +107,13 @@ define(function (require, exports, module) {
             if(name === 'web') {
                 cmd = "cocos run -p web";
             } else {
-                cmd =  current.path;
+                var path = current.path;
+
+                if(!FileSystem.isAbsolutePath(path)) {
+                    path = cc.path.join(projectDir, path);
+                }
+
+                cmd =  path;
                 options.connectConsole = true;
             } 
 

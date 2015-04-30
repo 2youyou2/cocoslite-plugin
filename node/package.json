@@ -1,6 +1,7 @@
 {
     "name": "cocoslite",
     "dependencies": {
-        "ws": "~0.4.31"
+        "ws": "~0.4.31",
+        "decompress-zip": "0.0.2"
     }
 }

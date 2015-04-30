@@ -14,5 +14,6 @@ define({
     "COMPONENT"            : "组件",
     "PLAY"                 : "播放",
     "PAUSE"                : "暂停",
-    "STEP"                 : "下一帧"
+    "STEP"                 : "下一帧",
+    "Simulate"             : "模拟"
 });

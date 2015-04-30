@@ -20,4 +20,6 @@ define(function (require, exports, module) {
     exports.CMD_STEP                        = "cl.step";
 
     exports.CMD_HIDE_INSPECTOR              = "cl.hide.inspector";
+
+    exports.CMD_SIMULATE                    = "cl.simulate";
 });

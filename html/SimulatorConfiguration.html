@@ -1,0 +1,25 @@
+
+<div class="modal simulator-dialog">
+    <div class="modal-header">
+        <h1 class="dialog-title">Simulator Configuration</h1>
+    </div>
+    <div class="modal-body">
+        <div class="field-container">
+            <div v-repeat="configure: list" class="configure">
+                <div class="configrue-title" v-on="click: onClick($index)">
+                    <span class='{{configure.checked ? "fa-dot-circle-o" : "fa-circle-o"}}'>
+                    {{configure.title}}
+                </div>
+                <span class="configure-content" v-if="configure.path">
+                    <span>Runtime path</span> 
+                    <span><input value="{{configure.path}}"></span>
+                    <span><button>Browse...</button></span>
+                </span>
+            </div>
+         </div>
+    </div>
+    <div class="modal-footer">
+        <button class="dialog-button btn" data-button-id="cancel">Cancel</button>
+        <button class="dialog-button btn primary" data-button-id="ok">Ok</button>
+    </div>
+</div>

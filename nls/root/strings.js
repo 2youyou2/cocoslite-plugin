@@ -14,5 +14,6 @@ define({
     "COMPONENT"            : "Component",
     "PLAY"                 : "Play",
     "PAUSE"                : "Pause",
-    "STEP"                 : "Step"
+    "STEP"                 : "Step",
+    "Simulate"             : "Simulate"
 });

@@ -132,8 +132,20 @@ define(function (require, exports, module) {
 
         dialog.done(function (id) {
             if (id === Dialogs.DIALOG_BTN_OK) {
-                cl.cocosDomain.exec("newProject", $projectName.val(), $projectLocation.val())
-                    .done(function(){
+
+                var projectName = $projectName.val();
+                var dest = $projectLocation.val();
+
+                var cmd = "cocos new " + projectName + " -l js -t runtime -d " + dest;
+
+                cl.cocosDomain.exec("runCommand", cmd, "").then(function() {
+
+                    var zip = cc.path.join(cl.clDir, "template/node_modules.zip");
+                    var unzipDir = cc.path.join(dest, projectName);
+
+                    return cl.cocosDomain.exec("unzip", zip, unzipDir);
+
+                }).done(function(){
                         ProjectManager.openProject($projectLocation.val() + "/" + $projectName.val());
                     })
                     .fail(function (err) {

@@ -79,8 +79,8 @@
 
 
     function simulate(cmd, options, callback) {
-        if(endsWith(cmd, " Mac")) {
-            cmd = cmd.replace(/\ /, '\\ ');
+        if(endsWith(cmd, " Mac") || endsWith(cmd, " Mac.app")) {
+            cmd = cmd.replace(/\ Mac/g, '\\ Mac');
         }
 
         if(_simulateProcess) {
@@ -134,6 +134,7 @@
         function onSimulateData(data) {
             console.log('stdout: ' + data);
 
+            // wait for server creating tcp listener
             if(data.indexOf('Console: listening on  0.0.0.0 : ' + port) !== -1) {
                 connectToConsole();
             }

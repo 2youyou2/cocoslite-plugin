@@ -149,6 +149,7 @@ define(function (require, exports, module) {
                     show = !name.match(ProjectModel._exclusionListRegEx) &&
                            relativePath.indexOf('res') === 0 ||
                            relativePath.indexOf('src') === 0 ||
+                           relativePath.indexOf('runtime') === 0 ||
                            relativePath === 'main.js' ||
                            name === '.cocos-project.json';
                 // }

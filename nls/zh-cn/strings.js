@@ -15,5 +15,7 @@ define({
     "PLAY"                 : "播放",
     "PAUSE"                : "暂停",
     "STEP"                 : "下一帧",
-    "Simulate"             : "模拟"
+    "Simulate"             : "模拟",
+    "CHOOSE_RUNTIME_PATH"  : "选择运行时路径",
+    "RUNTIME_PATH"         : "运行时路径"
 });

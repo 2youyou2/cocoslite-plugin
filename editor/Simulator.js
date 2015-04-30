@@ -4,35 +4,34 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var AppInit        = brackets.getModule("utils/AppInit"),
-        ProjectManager = brackets.getModule("project/ProjectManager"),
-        CommandManager = brackets.getModule("command/CommandManager"),
-        Dialogs        = brackets.getModule("widgets/Dialogs");
+    var AppInit                 = brackets.getModule("utils/AppInit"),
+        ProjectManager          = brackets.getModule("project/ProjectManager"),
+        CommandManager          = brackets.getModule("command/CommandManager"),
+        Dialogs                 = brackets.getModule("widgets/Dialogs"),
+        FileSystem              = brackets.getModule("filesystem/FileSystem"),
+        PreferencesManager      = brackets.getModule("preferences/PreferencesManager");
 
-    var EventManager   = require("core/EventManager"),
-        Strings        = require("strings"),
-        Commands       = require("core/Commands"),
-        SimulatorHtml  = require("text!html/SimulatorConfiguration.html"),
-        Vue            = require("thirdparty/Vue");
+    var EventManager            = require("core/EventManager"),
+        Strings                 = require("strings"),
+        Commands                = require("core/Commands"),
+        SimulatorHtml           = require("text!html/SimulatorConfiguration.html"),
+        Vue                     = require("thirdparty/Vue");
 
     /**
      * Simulator configuration.
      * @type {object}
      */
     var _configuration = {
-        list: [
-            {
-                name:  "mac",
+        configs: {
+            mac: {
                 title: "Mac OSX",
                 path:  "runtime/mac/PrebuiltRuntimeJs.app",
             },
-            {
-                name:  "win",
+            win: {
                 title: "win32",
                 path:  "runtime/win32/PrebuiltRuntimeJs.exe",
             },
-            {
-                name:  "web",
+            web: {
                 title: "Web"
             },
             // {
@@ -50,48 +49,83 @@ define(function (require, exports, module) {
             //     title: "Remote Debugging",
             //     ip: "127.0.0.1",
             // }
-        ],
-        current: 0
+        },
+        current: 'mac'
     };
 
 
     var _$dialog;
+
+    function initConfigurationFromPreferences() {
+        var state = PreferencesManager.getViewState("cocoslite.simulator.configuration");
+        _configuration.current = state.current;
+        
+        for(var k in _configuration.configs) {
+            _configuration.configs[k] = state.configs[k];
+        }
+    }
 
     function configure() {
         var dialog = Dialogs.showModalDialogUsingTemplate(_$dialog);
 
         dialog.done(function (id) {
             if (id === Dialogs.DIALOG_BTN_OK) {
-                
+                PreferencesManager.setViewState("cocoslite.simulator.configuration", _configuration);
+            } else if (id === Dialogs.DIALOG_BTN_CANCEL){
+                initConfigurationFromPreferences();
             }
         });
     }
 
     function runSimulator() {
-        var current = _configuration.list[_configuration.current];
+        var current = _configuration.configs[_configuration.current];
+        var name = _configuration.current;
+        var projectDir = ProjectManager.getProjectRoot().fullPath;
 
         var cmd = "";
         var options = {
-            cwd: ProjectManager.getProjectRoot().fullPath
+            cwd: projectDir
         }
 
-        if(current.name === 'web') {
-            cmd = "cocos run -p web";
-        } else {
-            var path = current.path;
-
-            if(current.name === 'mac') {
-                path = cc.path.join(current.path, "Contents/MacOS/PrebuiltRuntimeJs\ Mac");
-            }
-
-            cmd =  path;
+        if(name === 'mac') {
             options.connectConsole = true;
-        } 
+            
+            var path = cc.path.join(current.path, "Contents/MacOS");
 
-        cl.cocosDomain.exec("simulate", cmd, JSON.stringify(options));
+            if(!FileSystem.isAbsolutePath(path)) {
+                path = cc.path.join(projectDir, path);
+            }
+            var dir = FileSystem.getDirectoryForPath(path);
+            dir.getContents(function(err, files) {
+                cmd = files[0].fullPath;
+                if(cmd) {
+                    cl.cocosDomain.exec("simulate", cmd, JSON.stringify(options));
+                }
+            });
+            
+        } else {
+            if(name === 'web') {
+                cmd = "cocos run -p web";
+            } else {
+                cmd =  current.path;
+                options.connectConsole = true;
+            } 
+
+            cl.cocosDomain.exec("simulate", cmd, JSON.stringify(options));
+        }
     }
 
     AppInit.appReady(function() {
+
+        // read configuration from preferences cache
+        var state = PreferencesManager.getViewState("cocoslite.simulator.configuration");
+        if(state) {
+            initConfigurationFromPreferences();
+        } else {
+            PreferencesManager.setViewState("cocoslite.simulator.configuration", _configuration);
+        }
+
+
         var $simulator = $('<span class="simulator"></span>');
         var $content   = $('<span class="simulator-content">Simulator</span>').appendTo($simulator);
         var $configure = $('<span class="simulator-configure fa-cog"></span>').appendTo($simulator);
@@ -104,20 +138,35 @@ define(function (require, exports, module) {
 
         _$dialog = $(SimulatorHtml);
 
-        // 
-        _configuration.list.forEach(function(item) {
-            item.checked = false;
-        });
-        _configuration.list[_configuration.current].checked = true;
+        var configs = _configuration.configs;
+        for(var k in configs) {
+            configs[k].checked = false;
+        }
+        configs[_configuration.current].checked = true;
 
         new Vue({
             el: _$dialog[0],
             data: _configuration,
             methods: {
-                onClick: function(index) {
-                    _configuration.list[_configuration.current].checked = false;
-                    _configuration.current = index;
-                    _configuration.list[_configuration.current].checked = true;
+                onClickTitle: function(key) {
+                    configs[_configuration.current].checked = false;
+                    _configuration.current = key;
+                    configs[_configuration.current].checked = true;
+                },
+
+                onClickBrowse: function(item) {
+                    FileSystem.showOpenDialog(false, false, Strings.CHOOSE_RUNTIME_PATH, null, null, function (err, files) {
+                        if (!err) {
+                            // If length == 0, user canceled the dialog; length should never be > 1
+                            if (files.length > 0) {
+                                // Load the new project into the folder tree
+                                item.path = files[0];
+                            }
+                        } 
+                        else {
+                            console.log(err);
+                        }
+                    });
                 }
             }
         });

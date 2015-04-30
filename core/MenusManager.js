@@ -328,6 +328,10 @@ define(function (require, exports, module) {
                 bracketsCommands.CMD_THEMES_OPEN_SETTINGS,
                 bracketsCommands.VIEW_HIDE_SIDEBAR
             ]],
+            [Menus.AppMenuBar.HELP_MENU, [
+                bracketsCommands.HELP_SHOW_EXT_FOLDER,
+                bracketsCommands.HELP_CHECK_FOR_UPDATE
+            ]],
             ["debug-menu", [
                 "debug.switchLanguage",
                 "debug.showDeveloperTools"

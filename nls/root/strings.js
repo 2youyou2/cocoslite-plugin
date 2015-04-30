@@ -15,5 +15,7 @@ define({
     "PLAY"                 : "Play",
     "PAUSE"                : "Pause",
     "STEP"                 : "Step",
-    "Simulate"             : "Simulate"
+    "Simulate"             : "Simulate",
+    "CHOOSE_RUNTIME_PATH"  : "Choose Runtime Path",
+    "RUNTIME_PATH"         : "Runtime Path"
 });

@@ -18,6 +18,7 @@ define(function (require, exports, module) {
         ProjectManager         = brackets.getModule("project/ProjectManager"),
         UrlParams              = brackets.getModule("utils/UrlParams").UrlParams,
         PreferencesManager     = brackets.getModule("preferences/PreferencesManager"),
+        Directory              = brackets.getModule("filesystem/Directory"),
         NodeDomain             = brackets.getModule("utils/NodeDomain");
 
     function initCocosLite() {
@@ -157,6 +158,83 @@ define(function (require, exports, module) {
                 return show;
             }
         }
+
+        function _applyAllCallbacks(callbacks, args) {
+            if (callbacks.length > 0) {
+                var callback = callbacks.pop();
+                try {
+                    callback.apply(undefined, args);
+                } finally {
+                    _applyAllCallbacks(callbacks, args);
+                }
+            }
+        }
+
+
+        Directory.prototype.getAllContents = function (callback) {
+            if (this._allContentsCallbacks) {
+                // There is already a pending call for this directory's contents.
+                // Push the new callback onto the stack and return.
+                this._allContentsCallbacks.push(callback);
+                return;
+            }
+            
+            this._allContentsCallbacks = [callback];
+            
+            this._impl.readdir(this.fullPath, function (err, names, stats) {
+                var contents = [],
+                    contentsStats = [],
+                    contentsStatsErrors;
+                
+                if (err) {
+                    this._clearCachedData();
+                } else {
+                    // Use the "relaxed" parameter to _isWatched because it's OK to
+                    // cache data even while watchers are still starting up
+                    var watched = this._isWatched(true);
+                    
+                    names.forEach(function (name, index) {
+                        var entryPath = this.fullPath + name;
+                        
+                        var entryStats = stats[index],
+                            entry;
+                        
+                        // Note: not all entries necessarily have associated stats.
+                        if (typeof entryStats === "string") {
+                            // entryStats is an error string
+                            if (contentsStatsErrors === undefined) {
+                                contentsStatsErrors = {};
+                            }
+                            contentsStatsErrors[entryPath] = entryStats;
+                        } else {
+                            // entryStats is a FileSystemStats object
+                            if (entryStats.isFile) {
+                                entry = this._fileSystem.getFileForPath(entryPath);
+                            } else {
+                                entry = this._fileSystem.getDirectoryForPath(entryPath);
+                            }
+                            
+                            if (watched) {
+                                entry._stat = entryStats;
+                            }
+                            
+                            contents.push(entry);
+                            contentsStats.push(entryStats);
+                        }
+                    }, this);
+                }
+                
+                // Reset the callback list before we begin calling back so that
+                // synchronous reentrant calls are handled correctly.
+                var currentCallbacks = this._allContentsCallbacks;
+                
+                this._allContentsCallbacks = null;
+                
+                // Invoke all saved callbacks
+                var callbackArgs = [err, contents, contentsStats, contentsStatsErrors];
+                _applyAllCallbacks(currentCallbacks, callbackArgs);
+            }.bind(this));
+        };
 
         initEditorType();
         hackPreferencesManager();

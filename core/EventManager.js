@@ -22,6 +22,7 @@ define(function (require, exports, module) {
 
     // Project
     exports.PROJECT_OPEN                = "project_open";
+    exports.PROJECT_CLOSE               = "project_close";
 
     // ObjectManager
     exports.OBJECT_PROPERTY_CHANGED     = "object_property_changed";

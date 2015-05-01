@@ -89,6 +89,10 @@ define(function (require, exports, module) {
     }
 
     function registerCommand(className, id) {
+        if(CommandManager.get(id)) {
+            return;
+        }
+        
         CommandManager.register(className, id, function(){
            addComponentToObjects(className); 
         });
@@ -111,7 +115,6 @@ define(function (require, exports, module) {
     }
 
     function registerMenus(cmds) {
-
         var menu = Menus.addMenu(Strings.COMPONENT, Commands.CMD_COMPONENT);
         // menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_COMPONENT);
 
@@ -133,17 +136,35 @@ define(function (require, exports, module) {
         }
     }
 
-    EventManager.on(EventManager.PROJECT_OPEN, function() {
+    function handleProjectOpen() {
         var cmds = registerCommands();
         registerMenus(cmds);
         updateComponentMenus();
-    });
+    }
 
-    EventManager.on(EventManager.SELECT_OBJECTS, function(event, objs) {
+    function handleProjectClose() {
+        var menu = Menus.getMenu(Commands.CMD_COMPONENT);
+        if(menu) {
+            Menus.removeMenu(Commands.CMD_COMPONENT);
+        }
+
+        // cl.ComponentManager.clear();
+    }
+
+    function unregisterComponent(component) {
+        cl.ComponentManager.unregister(component.Constructor.className);
+    }
+
+    function handleSelectObjects() {
         updateComponentMenus();
-    });
+    }
+
+    EventManager.on(EventManager.PROJECT_OPEN,   handleProjectOpen);
+    EventManager.on(EventManager.PROJECT_CLOSE,  handleProjectClose);
+    EventManager.on(EventManager.SELECT_OBJECTS, handleSelectObjects);
 
     CommandManager.register(Strings.NEW_EMPTY,        Commands.CMD_NEW_EMPTY_COMPONENT,        createEmptyComponent);
     CommandManager.register(Strings.NEW_EMPTY_SCRIPT, Commands.CMD_NEW_COMPONENT_IN_PROJECT,   createEmptyComponentInProject);
 
+    exports.unregisterComponent = unregisterComponent;
 });

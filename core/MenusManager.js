@@ -370,11 +370,7 @@ define(function (require, exports, module) {
         menu.addGameEditorMenuItem(Commands.CMD_OPEN_IDE);
         menu.addGameEditorMenuDivider(Menus.BEFORE, Commands.CMD_OPEN_IDE);
 
-        // GameObject menu
-        var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_GAME_OBJECT);
-        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_CHILD_GAME_OBJECT);
-
+       
         // project context menu
         menu = Menus.getContextMenu(Menus.ContextMenuIds.PROJECT_MENU);
         menu.removeMenuItem(bracketsCommands.FILE_NEW);
@@ -405,6 +401,23 @@ define(function (require, exports, module) {
         }
     }
 
+    function handleProjectOpen() {
+        // GameObject menu
+        var menu = Menus.addMenu(Strings.GAME_OBJECT, Commands.CMD_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_GAME_OBJECT);
+        menu.addGameEditorMenuItem(Commands.CMD_NEW_EMPTY_CHILD_GAME_OBJECT);
+    }
+
+    function handleProjectClose() {
+        // GameObject menu
+        var menu = Menus.getMenu(Commands.CMD_GAME_OBJECT);
+        if(menu) {
+            Menus.removeMenu(Commands.CMD_GAME_OBJECT);
+        }
+    }
+
     AppInit.appReady(init);
 
+    EventManager.on(EventManager.PROJECT_OPEN,  handleProjectOpen);
+    EventManager.on(EventManager.PROJECT_CLOSE, handleProjectClose);
 });

@@ -275,7 +275,7 @@ define(function (require, exports, module) {
         }
     }
 
-    function handlePojectOpen() {
+    function handleProjectOpen() {
 
         function hackGameObject() {
 
@@ -304,6 +304,10 @@ define(function (require, exports, module) {
         _projectOpened = true;
 
         hackGameObject();
+    }
+
+    function handleProjectClose() {
+        _projectOpened = false;
     }
 
     function loadScene() {
@@ -353,8 +357,9 @@ define(function (require, exports, module) {
 
     bracketsEditorManager.on("activeEditorChange", handleActiveEditorChange);
 
-    EventManager.on(EventManager.PROJECT_OPEN, handlePojectOpen);
-    EventManager.on(EventManager.GAME_START,   loadScene);
+    EventManager.on(EventManager.PROJECT_OPEN,  handleProjectOpen);
+    EventManager.on(EventManager.PROJECT_CLOSE, handleProjectClose);
+    EventManager.on(EventManager.GAME_START,    loadScene);
 
     exports.isPlaying = function() {
         return _playing;

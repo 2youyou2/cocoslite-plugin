@@ -10,6 +10,7 @@ define(function (require, exports, module) {
         PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
     var CreateProjectTemp  = require("text!html/CreateProject.html"),
+        ComponentManager   = require("core/ComponentManager"),
         NewSceneContent    = require("text!template/template.scene"),
         Commands           = require("core/Commands"),
         Strings            = require("strings"),
@@ -17,8 +18,11 @@ define(function (require, exports, module) {
 
     var isCocosProject;
     var resFolder, srcFolder;
+    var projectClosePromise;
 
-    function loadFolder(item, container, useFile, filter, cb) {
+    function loadFolder(item, container, useFile, filter) {
+        var deferred = new $.Deferred();
+
         if(filter(item)) {
             var file = useFile ? item : item.fullPath;
             container.push(file);
@@ -26,22 +30,30 @@ define(function (require, exports, module) {
 
         if(item.isDirectory) {
             item.getContents(function(err, subItems) {
-                var i = 0;
-                subItems.forEach(function(subItem) {
-                    loadFolder(subItem, container, useFile, filter, function() {
-                        if(++i === subItems.length) {
-                            cb();
-                        }
+
+                if(subItems.length === 0) {
+                    deferred.resolve();
+                } else {
+                    var i = 0;
+                    subItems.forEach(function(subItem) {
+                        loadFolder(subItem, container, useFile, filter).then(function(){ 
+                            if(++i === subItems.length) {
+                                deferred.resolve();
+                            }
+                        });
                     });
-                });
+                }
+                    
             });
         }
         else{
-            cb();
+            deferred.resolve();
         }
+
+        return deferred.promise();
     }
 
-    function loadSources(folder) {
+    function loadSources(folder, unload) {
         var deferred = new $.Deferred();
         var sources  = [];
 
@@ -50,20 +62,39 @@ define(function (require, exports, module) {
         loadFolder(folder, sources, false,
             function(item) {
                 return item.name.endWith(".js");
-            }, 
-            function() {
-                try{
+            }
+        ).then(function() {
+            try{
+                if(unload) {
+                    
+                    sources.forEach(function(item) {
+                        var component = require(item);
+                        if(component && component.Constructor) {
+                            ComponentManager.unregisterComponent(component);
+                        }
+
+                        require.undef(item);
+                    });
+                    deferred.resolve(sources);
+
+                } else {
                     require(sources, function() {
                         deferred.resolve(sources);
                     });
                 }
-                catch(e) {
-                    console.err("load source failed : ", e);
-                }
+                
             }
-        );
+            catch(e) {
+                console.err("load source failed : ", e);
+            }
+        });
 
         return deferred.promise();
+    }
+
+
+    function unloadSources(folder) {
+        return loadSources(folder, true);
     }
 
     function getResources(filter) {
@@ -82,7 +113,13 @@ define(function (require, exports, module) {
         resFolder = srcFolder = null;
     }
 
-    ProjectManager.on("projectOpen", function(e, root) {
+    function handleProjectOpen(e, root) {
+
+        function load() {
+            loadSources().then(function(){
+                EventManager.trigger(EventManager.PROJECT_OPEN);
+            });
+        }
 
         reset();
 
@@ -103,13 +140,27 @@ define(function (require, exports, module) {
                 reset();
                 console.err(root.fullPath + " is not a cocos project path.");
             } else {
-                loadSources().then(function(){
-                    EventManager.trigger(EventManager.PROJECT_OPEN);
-                });
+
+
+                if(projectClosePromise) {
+                    projectClosePromise.then(load);
+                    projectClosePromise = null;
+                } else {
+                    load();
+                }
+                
             }
 
         });
-    });
+    };
+
+    function handleProjectClose() {
+        EventManager.trigger(EventManager.PROJECT_CLOSE);
+    }
+
+    function handleBeforeProjectClose() {
+        projectClosePromise = unloadSources();
+    }
 
     function handleNewProject() {
         var dialog, $projectName, $projectLocation, $browseBtn;
@@ -188,11 +239,14 @@ define(function (require, exports, module) {
     }
 
 
-    CommandManager.register(Strings.NEW_PROJECT, Commands.CMD_NEW_PROJECT, handleNewProject);
-    CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE,   handleNewScene);
-    CommandManager.register(Strings.NEW_SCENE,   Commands.CMD_NEW_SCENE_UNTITLED,   handleNewSceneUntitled);
-    CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS, handleProjectSettings);
+    CommandManager.register(Strings.NEW_PROJECT,      Commands.CMD_NEW_PROJECT,          handleNewProject);
+    CommandManager.register(Strings.NEW_SCENE,        Commands.CMD_NEW_SCENE,            handleNewScene);
+    CommandManager.register(Strings.NEW_SCENE,        Commands.CMD_NEW_SCENE_UNTITLED,   handleNewSceneUntitled);
+    CommandManager.register(Strings.PROJECT_SETTINGS, Commands.CMD_PROJECT_SETTINGS,     handleProjectSettings);
 
+    ProjectManager.on("beforeProjectClose",  handleBeforeProjectClose);
+    ProjectManager.on("projectClose",        handleProjectClose);
+    ProjectManager.on("projectOpen",         handleProjectOpen);
 
     exports.getResources = getResources;
 

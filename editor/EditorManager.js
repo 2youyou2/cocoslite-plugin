@@ -4,6 +4,8 @@
 define(function (require, exports, module) {
     "use strict";
 
+    var EventManager = require("core/EventManager");
+
     var editors = {};
     var orderedEditors = [];
 
@@ -31,6 +33,8 @@ define(function (require, exports, module) {
             orderedEditors.splice(index, 1);
         }
     }
+
+
 
     exports.getEditors = getEditors;
     exports.getOrderedEditors = getOrderedEditors;

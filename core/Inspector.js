@@ -426,8 +426,8 @@ define(function (require, exports, module) {
             return;
         }
 
-        for(var key in cs){
-            initComponentUI(cs[key]);
+        for(var i=0; i<cs.length; i++){
+            initComponentUI(cs[i]);
         }
     }
 

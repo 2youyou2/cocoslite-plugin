@@ -325,8 +325,8 @@ define(function (require, exports, module) {
 
     function createCanvas(scene, data) {
         
-        var width = 480;
-        var height = 320;
+        var width = 960;
+        var height = 640;
 
         var canvas = new cc.LayerColor(cc.color(0,0,0,255), width, height);
         scene.addChild(canvas);

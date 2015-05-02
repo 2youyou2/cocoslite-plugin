@@ -77,6 +77,7 @@ define(function (require, exports, module) {
                     "editor/MeshEditor",
                     "editor/Control2D",
                     "editor/Simulator",
+                    "editor/PhysicsEditor",
                     "editor/CanvasControl"];
 
             initNodeDomain();

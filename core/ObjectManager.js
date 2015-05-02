@@ -182,6 +182,7 @@ define(function (require, exports, module) {
             var json = {};
             json.root = {};
             json.root.res = this.res;
+            json.root.physics = this.physics;
             var children = json.root.children = [];
 
             json.root.canvas = {};

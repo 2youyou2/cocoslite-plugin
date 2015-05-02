@@ -101,7 +101,7 @@ define(function (require, exports, module) {
         var deferred = new $.Deferred();
         var resources = [];
 
-        loadFolder(resFolder, resources, true, filter, function() {
+        loadFolder(resFolder, resources, true, filter).then(function() {
             deferred.resolve(resources);
         });
 

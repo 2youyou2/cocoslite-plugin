@@ -23,7 +23,7 @@ define(function (require, exports, module) {
             "frameRate" : 15,
             "id" : "gameCanvas",
             "renderMode" : 2,
-            "modules":["cocos2d"]
+            "modules":["chipmunk"]
         };
 
         cc.game._initConfig();

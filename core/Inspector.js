@@ -291,7 +291,8 @@ define(function (require, exports, module) {
 
             var noNeedSync = false;
 
-            $input.colorpicker({color:'#fff'}).on('changeColor.colorpicker', function(event){
+            $input.colorpicker({color:'#fff'})
+            .on('changeColor.colorpicker', function(event){
                 $input.color = event.color.toRGB();
                 if(!noNeedSync) {
                     $input.finishEdit(true);

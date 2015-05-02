@@ -240,6 +240,8 @@ define(function (require, exports, module) {
         // fixed focus gameCanvas may break main-view layout
         // todo: find a better way to solve this problem
         WorkspaceManager.recomputeLayout();
+
+        // _scene.update = function(){};
     }
 
 

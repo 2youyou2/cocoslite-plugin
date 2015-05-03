@@ -26,6 +26,9 @@ define(function (require, exports, module) {
         var secondID;
 
         this.renderScene = function(ctx, selectedObjects) {
+            if(!cl.space) {
+                return;
+            }
             if(selectedObjects && selectedObjects.length === 1) {
                 obj    = selectedObjects[0];
                 var cs = obj.components;
@@ -144,10 +147,18 @@ define(function (require, exports, module) {
 
 
     function handleSceneLoaded(event, scene) {
+        if(!cl.space) {
+            return;
+        }
+
         cl.space.gravity = cp.v(0, 0);
     }
 
     function handleCocosLoaded() {
+        if(!cl.space) {
+            return;
+        }
+
         var originSetSensor = cp.Shape.prototype.setSensor;
         cp.Shape.prototype.setSensor = function(sensor) {
             if(_playing) {
@@ -169,6 +180,10 @@ define(function (require, exports, module) {
     }
 
     function handleEndPlaying(event, scene) {
+        if(!cl.space) {
+            return;
+        }
+
         _playing = false;
 
         cl.space = scene.space;

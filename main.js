@@ -28,6 +28,7 @@ define(function (require, exports, module) {
         cl.engineDir          = ExtensionUtils.getModulePath(module, "cocos2d-js/frameworks/cocos2d-html5");
         cl.clEngineDir        = ExtensionUtils.getModulePath(module, "cocos2d-js/frameworks/cocos2d-html5/cocoslite");
         cl.cocosConsoleDir    = ExtensionUtils.getModulePath(module, "cocos2d-js/tools/cocos2d-console/bin/");
+        cl.templatesDir       = ExtensionUtils.getModulePath(module, "cocos2d-js/templates/");
 
 
         cl.getModule = function(path) {
@@ -41,10 +42,8 @@ define(function (require, exports, module) {
 
     function initNodeDomain() {
         cl.cocosDomain = new NodeDomain("cocos", ExtensionUtils.getModulePath(module, "node/CocosDomain"));
-        cl.cocosDomain.exec("registerEnvironment", cl.cocosConsoleDir)
-            .done(function(){
-                console.log("registerEnvironment success.");
-            });
+        cl.cocosDomain.exec("registerEnvironment", 'COCOS_CONSOLE_ROOT', cl.cocosConsoleDir);
+        cl.cocosDomain.exec("registerEnvironment", 'TEMPLATES',          cl.templatesDir);
     }
 
     function initEditor() {

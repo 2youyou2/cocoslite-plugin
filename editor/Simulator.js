@@ -50,7 +50,7 @@ define(function (require, exports, module) {
             //     ip: "127.0.0.1",
             // }
         },
-        current: 'mac'
+        current: brackets.platform
     };
 
 

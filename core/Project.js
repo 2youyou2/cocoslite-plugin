@@ -163,7 +163,11 @@ define(function (require, exports, module) {
     }
 
     function handleNewProject() {
-        var dialog, $projectName, $projectLocation, $browseBtn;
+        var dialog, 
+            $projectName, 
+            $projectLocation, 
+            $browseBtn, 
+            $onlyCocos;
 
         var errorMessage = "";
 
@@ -174,27 +178,48 @@ define(function (require, exports, module) {
 
         dialog = Dialogs.showModalDialogUsingTemplate(Mustache.render(CreateProjectTemp, templateVars));
 
-        $projectName = dialog.getElement().find(".name");
+        var $el = dialog.getElement();
+
+        $projectName = $el.find(".name");
         $projectName.val("CocosLiteProject");
         $projectName.focus();
-        $projectLocation = dialog.getElement().find(".location");
-        $projectLocation.val(PreferencesManager.getViewState("cocoslite.project.location"));
-        $browseBtn = dialog.getElement().find(".browse");
+        $projectLocation = $el.find(".location").val(PreferencesManager.getViewState("cocoslite.project.location"));
+        $browseBtn = $el.find(".browse");
+        
+        var checked = PreferencesManager.getViewState("cocoslite.project.onlyCocosLite");
+        checked = checked === undefined ? true : checked;
+        $onlyCocos = $el.find(".cocoslite").attr('checked', checked);
+        
 
         dialog.done(function (id) {
             if (id === Dialogs.DIALOG_BTN_OK) {
 
                 var projectName = $projectName.val();
-                var dest = $projectLocation.val();
+                var dest        = $projectLocation.val();
+                var onlyCocos   = $onlyCocos[0].checked;
 
-                var cmd = "cocos new " + projectName + " -l js -t runtime -d " + dest;
+                var promise = null;
+                var projectDir = cc.path.join(dest, projectName);
 
-                cl.cocosDomain.exec("runCommand", cmd, "").then(function() {
+                if(onlyCocos) {
+                    var templateDir  = cc.path.join(cl.templatesDir, "js-template-cocoslite");
+                    var projectClDir = cc.path.join(projectDir,      "frameworks/cocos2d-html5/cocoslite");
+
+                    promise  = cl.cocosDomain.exec("copyDir", templateDir, projectDir).then(function() {
+                        return cl.cocosDomain.exec("copyDir", cl.clEngineDir, projectClDir);
+                    });
+
+                } else {
+
+                    var cmd = "cocos new " + projectName + " -l js -t runtime -d " + dest;
+                    promise = cl.cocosDomain.exec("runCommand", cmd, "");
+
+                }
+
+                promise.then(function() {
 
                     var zip = cc.path.join(cl.clDir, "template/node_modules.zip");
-                    var unzipDir = cc.path.join(dest, projectName);
-
-                    return cl.cocosDomain.exec("unzip", zip, unzipDir);
+                    return cl.cocosDomain.exec("unzip", zip, projectDir);
 
                 }).done(function(){
                         ProjectManager.openProject($projectLocation.val() + "/" + $projectName.val());
@@ -203,7 +228,8 @@ define(function (require, exports, module) {
                         console.error("failed to create cocos project.", err);
                     });
 
-                PreferencesManager.setViewState("cocoslite.project.location", $projectLocation.val());
+                PreferencesManager.setViewState("cocoslite.project.location",      dest);
+                PreferencesManager.setViewState("cocoslite.project.onlyCocosLite", onlyCocos);
             }
         });
 

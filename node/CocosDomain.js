@@ -1,11 +1,14 @@
 (function () {
     "use strict";
     
-    var os   = require("os");
-    var exec = require('child_process').exec;
-    var path = require('path');
-    var net  = require('net');
+    var os            = require("os");
+    var exec          = require('child_process').exec;
+    var path          = require('path');
+    var net           = require('net');
+    var ncp           = require('ncp').ncp;
+    var fs            = require('fs');
     var DecompressZip = require("decompress-zip");
+
 
     function onChildProcess(child, callback) {
         child.stdout.on('data', function(data) {
@@ -20,16 +23,9 @@
         });
     }
 
-    function registerEnvironment(consoleDir) {
-        process.env.COCOS_CONSOLE_ROOT = consoleDir;
-        process.env.PATH += ":" + consoleDir;
-
-        // var dirname = path.dirname(process.execPath);
-        // console.log("dirname : " + dirname);
-        
-        // for(var i in process.env) {
-        //     console.log("evn: %s, %s", i, process.env[i]);
-        // }
+    function registerEnvironment(key, env) {
+        process.env[key] = env;
+        process.env.PATH += ":" + env;
     }
 
     function runCommand(cmd, options, callback) {
@@ -43,6 +39,15 @@
         onChildProcess(child, callback);
 
         return child;
+    }
+
+    function copyDir(src, dest, callback) {
+        ncp(src, dest, function (err) {
+            if (err) {
+                return console.error(err);
+            }
+            callback();
+        });
     }
 
     function unzip(file, dest, callback) {
@@ -79,6 +84,8 @@
 
 
     function simulate(cmd, options, callback) {
+        options = JSON.parse(options);
+
         if(endsWith(cmd, " Mac") || endsWith(cmd, " Mac.app")) {
             cmd = cmd.replace(/\ Mac/g, '\\ Mac');
         }
@@ -93,7 +100,6 @@
             _simulateConsoleClient = null;
         }
 
-        options = JSON.parse(options);
 
         _simulateProcess   = runCommand(cmd, options, callback);
 
@@ -174,7 +180,17 @@
             registerEnvironment,   // command handler function
             false,                 // whether this command is synchronous in Node
             "Returns result",
-            ["consoleDir"],
+            ["key, env"],
+            ["result"]
+        );
+
+        domainManager.registerCommand(
+            "cocos",    
+            "copyDir", 
+            copyDir,   
+            true,       
+            "Returns result",
+            ["src, dest"],
             ["result"]
         );
 

@@ -159,9 +159,10 @@ define(function (require, exports, module) {
         if(obj) {
             var parent = obj.getParent();
 
-            parent.open = true;
-
-            expandToPath(parent._innerData);
+            if(parent) {
+                parent._innerData.open = true;
+                expandToPath(parent._innerData);
+            }
         }
     }
 

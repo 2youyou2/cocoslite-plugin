@@ -24,6 +24,8 @@ define(function (require, exports, module) {
     }
 
     function cut() {
+        clear();
+        
         Undo.beginUndoBatch();
 
         var objs = Selector.getSelectObjects().concat([]);

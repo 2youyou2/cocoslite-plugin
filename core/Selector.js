@@ -77,18 +77,19 @@ define(function (require, exports, module) {
 
                 var worldPoint = touch.getLocation();
 
-                var hitTest = function(object){
-                    if(object.constructor === cl.GameObject){
-                        if(!object.lock && object.visible && object.hitTest(worldPoint)) {
-                            return object;
-                        }
-                    }
+                var hitTest = function(object) {
 
                     var children = object.children;
                     for(var i=children.length-1; i>=0; i--){
                         var o = hitTest(children[i]);
                         if(o) {
                             return o;
+                        }
+                    }
+                    
+                    if(object.constructor === cl.GameObject){
+                        if(!object.lock && object.visible && object.hitTest(worldPoint)) {
+                            return object;
                         }
                     }
 

@@ -313,9 +313,6 @@ define(function (require, exports, module) {
     }
 
     function loadScene() {
-        // hack cocos loader path
-        // this will make cocos load res from current project path
-        cc.loader.resPath = ProjectManager.getProjectRoot().fullPath;
 
         var content = _editor.document.getText();
         cl.SceneManager.loadSceneWithContent(content, handleSceneLoaded, true);

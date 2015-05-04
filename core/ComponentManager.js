@@ -104,6 +104,10 @@ define(function (require, exports, module) {
         var cmds = [];
 
         for(var k in cs){
+            var c = cs[k];
+            if(c._show_ && !c._show_()) {
+                continue;
+            }
 
             var id = createIDForComponent(k);
             cmds.push(id);

@@ -152,6 +152,7 @@ define(function (require, exports, module) {
                            relativePath.indexOf('src') === 0 ||
                            relativePath.indexOf('runtime') === 0 ||
                            relativePath === 'main.js' ||
+                           name === 'project.json' ||
                            name === '.cocos-project.json';
                 // }
 

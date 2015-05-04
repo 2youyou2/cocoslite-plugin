@@ -28,7 +28,11 @@ define(function (require, exports, module) {
         for(var key in cs) {
             var c = cs[key];
 
-            var folder = c.folder;
+            if(c._show_ && !c._show_()) {
+                continue;
+            }
+
+            var folder = c._folder_;
             if(!folder) {
                 folders.pathes[c.className] = {name:c.className};
                 } else {
@@ -93,6 +97,8 @@ define(function (require, exports, module) {
                                 '</div>'+
                             '</div>';
 
+
+        $button.webuiPopover('destroy');
         $button.webuiPopover({template: template, content:$el, width:'190px', animation:'pop'})
             .on("show.webui.popover", function() {
                 folders.index = 0;
@@ -110,7 +116,7 @@ define(function (require, exports, module) {
 
     AppInit.htmlReady(function () {
 
-         Vue.component('add-component', {
+        Vue.component('add-component', {
             template: AddComponentTemplate,
             data: function() {
                 return {

@@ -6,6 +6,7 @@ define(function (require, exports, module) {
         bracketsCommands   = brackets.getModule("command/Commands"),
         bracketsStrings    = brackets.getModule("strings"),
         FileSystem         = brackets.getModule("filesystem/FileSystem"),
+        FileUtils          = brackets.getModule("file/FileUtils"),
         Dialogs            = brackets.getModule("widgets/Dialogs"),
         PreferencesManager = brackets.getModule("preferences/PreferencesManager");
 
@@ -141,6 +142,11 @@ define(function (require, exports, module) {
                 console.err(root.fullPath + " is not a cocos project path.");
             } else {
 
+                // hack cocos loader path
+                // this will make cocos load res from current project path
+                cc.loader.resPath = root.fullPath;
+
+                cl.readConfig();
 
                 if(projectClosePromise) {
                     projectClosePromise.then(load);
@@ -160,6 +166,24 @@ define(function (require, exports, module) {
 
     function handleBeforeProjectClose() {
         projectClosePromise = unloadSources();
+    }
+
+    function setValueToProjectJson(projectDir, key, value) {
+        var deferred = new $.Deferred();
+
+        var path = cc.path.join(projectDir, 'project.json');
+        var file = FileSystem.getFileForPath(path);
+
+        FileUtils.readAsText(file).done(function(data) {
+            var json = JSON.parse(data);
+            json[key] = value;
+
+            FileUtils.writeText(file, JSON.stringify(json, null, '\t'), true).done(function() {
+                deferred.resolve();
+            });
+        })
+
+        return deferred.promise();
     }
 
     function handleNewProject() {
@@ -190,6 +214,9 @@ define(function (require, exports, module) {
         checked = checked === undefined ? true : checked;
         $onlyCocos = $el.find(".cocoslite").attr('checked', checked);
         
+        var physics = PreferencesManager.getViewState("cocoslite.project.physics");
+        physics = physics === undefined ? 'None' : physics;
+        $el.find("#"+physics).attr('checked', true);
 
         dialog.done(function (id) {
             if (id === Dialogs.DIALOG_BTN_OK) {
@@ -197,6 +224,7 @@ define(function (require, exports, module) {
                 var projectName = $projectName.val();
                 var dest        = $projectLocation.val();
                 var onlyCocos   = $onlyCocos[0].checked;
+                physics         = $el.find("input[name='physics']:checked").attr('id');
 
                 var promise = null;
                 var projectDir = cc.path.join(dest, projectName);
@@ -221,15 +249,20 @@ define(function (require, exports, module) {
                     var zip = cc.path.join(cl.clDir, "template/node_modules.zip");
                     return cl.cocosDomain.exec("unzip", zip, projectDir);
 
-                }).done(function(){
-                        ProjectManager.openProject($projectLocation.val() + "/" + $projectName.val());
-                    })
-                    .fail(function (err) {
-                        console.error("failed to create cocos project.", err);
-                    });
+                })
+                .then(function(){
+                    return setValueToProjectJson(projectDir, 'physics', physics);
+                })
+                .done(function(){
+                    ProjectManager.openProject($projectLocation.val() + "/" + $projectName.val());
+                })
+                .fail(function (err) {
+                    console.error("failed to create cocos project.", err);
+                });
 
                 PreferencesManager.setViewState("cocoslite.project.location",      dest);
                 PreferencesManager.setViewState("cocoslite.project.onlyCocosLite", onlyCocos);
+                PreferencesManager.setViewState("cocoslite.project.physics",       physics);
             }
         });
 

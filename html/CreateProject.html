@@ -20,6 +20,14 @@
                     <td>Only CocsLite:</td>
                     <td><input type="checkbox" value=true class="cocoslite"/></td>
                 </tr>
+                <tr>
+                    <td>Physics:</td>
+                    <td style="padding: 8px 0px;">
+                        <span><input type="radio" name="physics" id="None" />     None     </span>
+                        <span><input type="radio" name="physics" id="Chipmunk" /> Chipmunk </span>
+                        <span><input type="radio" name="physics" id="Box2D" disabled=true />    Box2D    </span>
+                    </td>
+                </tr>
             </table>
             {{#errorMessage}}<div class="alert" style="margin-bottom: 0">{{{errorMessage}}}</div>{{/errorMessage}}
          </div>

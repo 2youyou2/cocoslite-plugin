@@ -1,8 +1,15 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true, indent: 4, maxerr: 50 */
 /*global cl, cc*/
 
-(function(){
-    "use strict";
+(function (factory) {
+    if(typeof exports === 'object') {
+        factory(require, module.exports, module);
+    } else if(typeof define === 'function') {
+        define(factory);
+    }
+})(function(require, exports, module) {
+
+    var EventDispatcher = cl.getModule('core/EventDispatcher');
     
     var TerrainDirection = cl.Enum('TerrainDirection', 'Top', 'Left', 'Right', 'Bottom');
 
@@ -27,6 +34,8 @@
         TerrainDirection.forEach(function(key, value) {
             self.descriptors.push(new cl.TerrainSegmentDescription(value));
         });
+
+        EventDispatcher.makeEventDispatcher(this);
     };
 
     var _p = cl.TerrainMaterial.prototype;
@@ -125,11 +134,13 @@
 
                 self.initWithJson(json);
                 self.loading = false;
+                
+                self.trigger("loaded");
 
                 if(cb) {
                     cb();
                 }
-            }, cl.SceneManager.tryReviver.bind(cl.SceneManager));
+            }, cl.Component.tryReviver);
         }
     };
 
@@ -141,4 +152,4 @@
 
         return this;
     };
-})();
+});

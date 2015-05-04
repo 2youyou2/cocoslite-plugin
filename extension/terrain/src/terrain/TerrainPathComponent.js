@@ -13,14 +13,14 @@
     var Component = cl.getModule("component/Component");
     
     var TerrainPathComponent = Component.extendComponent("TerrainPathComponent", {
+        properties: ["closed", "pathVerts"],
+        
         ctor: function () {
 
             this.closed = false;
             this._pathVerts = [];
-            
-            this.addProperties(["closed", "pathVerts"]);
 
-            this._super(this);
+            this._super();
         },
 
         _getPathVerts: function(){
@@ -317,8 +317,11 @@
             }
             else
             {
-                aSegmentList[0].splice(0, 0, aSegmentList[aSegmentList.length - 1]);
-                aSegmentList.remove(aSegmentList.length - 1);
+                var last = aSegmentList[aSegmentList.length - 1];
+                for(var i=0; i<last.length; i++) {
+                    aSegmentList[0].splice(i, 0, last[i]);
+                }
+                aSegmentList.splice(aSegmentList.length - 1, 1);
             }
             return true;
         },
@@ -385,7 +388,9 @@
             }
             var Closest = aStart.add(AB.mult(t));
             return Closest;
-        }
+        },
+
+        _folder_:  "terrain"
     });
 
     var _p = TerrainPathComponent.prototype;

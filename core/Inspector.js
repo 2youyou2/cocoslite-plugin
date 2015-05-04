@@ -254,7 +254,7 @@ define(function (require, exports, module) {
             });
             $input.find(".select-icon").addClass("fa-play");
         }
-        else if(value.constructor === cc.Sprite) {
+        else if(value.constructor === cc.Sprite || value.constructor === cc.Texture2D) {
             $input = $("<span class='sprite'>");
             
             var $search = $("<span class='search fa-search'>");
@@ -274,9 +274,15 @@ define(function (require, exports, module) {
             cl.defineGetterSetter($input, "value", function(){
                 return $img.attr("src").replace(cc.loader.resPath, "");
             }, function(file){
-                if(typeof file === "object" && file.constructor === cc.Sprite) {
-                    if(file.getTexture()) {
-                        file = file.getTexture().url;
+                if(typeof file === "object") {
+                    var texture = file;
+                    
+                    if(file.constructor === cc.Sprite) {
+                        texture = file.getTexture();
+                    }
+
+                    if(texture) {
+                        file = texture.url;
                         file = cc.loader.getUrl(file);
                     } else {
                         file = null;

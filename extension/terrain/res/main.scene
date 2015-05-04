@@ -1,0 +1,270 @@
+{
+	"root": {
+		"res": [
+			"res/Rocky.png",
+			"res/RockyFill.png",
+			"res/1.png",
+			"res/MossyEdges.png",
+			"res/2.png"
+		],
+		"children": [
+			{
+				"components": [
+					{
+						"class": "TransformComponent",
+						"position": {
+							"x": 48.320924261874175,
+							"y": 184.6379974326059
+						},
+						"scale": {
+							"x": 40,
+							"y": 40
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0
+						}
+					},
+					{
+						"class": "MeshComponent"
+					},
+					{
+						"class": "TerrainPathComponent",
+						"closed": true,
+						"pathVerts": [
+							{
+								"x": 11.485173299101415,
+								"y": 1.7974005134788182,
+								"hover": false
+							},
+							{
+								"x": 13.625,
+								"y": 0.4500000000000002
+							},
+							{
+								"x": 5,
+								"y": 0
+							},
+							{
+								"x": 0,
+								"y": 0,
+								"hover": false
+							},
+							{
+								"x": 0.39403080872914087,
+								"y": 9.514987163029527
+							},
+							{
+								"x": 4.892105263157897,
+								"y": 3.8307766367137353,
+								"hover": false
+							},
+							{
+								"x": 7.5724646983311965,
+								"y": 2.3211489088575084,
+								"hover": false
+							}
+						]
+					},
+					{
+						"class": "TerrainComponent",
+						"fill": "cl.Enum.TerrainFillMode.Closed",
+						"fillY": 0,
+						"fillZ": -0.5,
+						"splitCorners": true,
+						"smoothPath": true,
+						"splistDist": 4,
+						"pixelsPerUnit": 48,
+						"createCollider": true,
+						"terrainMaterial": "res/cave.tm"
+					}
+				],
+				"name": "GameObject",
+				"tag": -1,
+				"visible": true,
+				"lock": false,
+				"open": true
+			},
+			{
+				"components": [
+					{
+						"class": "TransformComponent",
+						"position": {
+							"x": 405.70218228498084,
+							"y": 348.54043645699625
+						},
+						"scale": {
+							"x": 40,
+							"y": 40
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0
+						}
+					},
+					{
+						"class": "MeshComponent"
+					},
+					{
+						"class": "TerrainPathComponent",
+						"closed": true,
+						"pathVerts": [
+							{
+								"x": 11.63921694480103,
+								"y": 2.506001283697046,
+								"hover": false
+							},
+							{
+								"x": 13.625,
+								"y": 0.4500000000000002
+							},
+							{
+								"x": 7.1103337612323525,
+								"y": 0.16453786906289913,
+								"hover": false
+							},
+							{
+								"x": 3.197625160462133,
+								"y": 1.2120346598202811,
+								"hover": false
+							},
+							{
+								"x": 2.242554557124519,
+								"y": 2.7524711168164284,
+								"hover": false
+							},
+							{
+								"x": 1.8112323491655964,
+								"y": 5.340404364569961,
+								"hover": false
+							},
+							{
+								"x": 4.183504492939667,
+								"y": 5.64849165596919,
+								"hover": false
+							},
+							{
+								"x": 5.66232349165597,
+								"y": 5.802535301668806,
+								"hover": false
+							},
+							{
+								"x": 7.418421052631582,
+								"y": 4.262098844672657
+							}
+						]
+					},
+					{
+						"class": "TerrainComponent",
+						"fill": "cl.Enum.TerrainFillMode.Closed",
+						"fillY": 0,
+						"fillZ": -0.5,
+						"splitCorners": true,
+						"smoothPath": true,
+						"splistDist": 4,
+						"pixelsPerUnit": 48,
+						"createCollider": true,
+						"terrainMaterial": "res/cave.tm"
+					}
+				],
+				"name": "GameObject",
+				"tag": -1,
+				"visible": true,
+				"lock": false,
+				"open": true
+			},
+			{
+				"components": [
+					{
+						"class": "TransformComponent",
+						"position": {
+							"x": 381.0551989730423,
+							"y": 13.341463414634163
+						},
+						"scale": {
+							"x": 40,
+							"y": 40
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0
+						}
+					},
+					{
+						"class": "MeshComponent"
+					},
+					{
+						"class": "TerrainPathComponent",
+						"closed": true,
+						"pathVerts": [
+							{
+								"x": 11.515982028241341,
+								"y": 2.167105263157894,
+								"hover": false
+							},
+							{
+								"x": 13.087227214377414,
+								"y": -0.0819319640564844,
+								"hover": false
+							},
+							{
+								"x": 5.1385750962772825,
+								"y": -0.08193196405648351,
+								"hover": false
+							},
+							{
+								"x": 0,
+								"y": 0,
+								"hover": false
+							},
+							{
+								"x": 0.2707958921694491,
+								"y": 1.674165596919127,
+								"hover": false
+							},
+							{
+								"x": 2.365789473684213,
+								"y": 1.150417201540436,
+								"hover": false
+							},
+							{
+								"x": 5.046148908857512,
+								"y": 1.181225930680359,
+								"hover": false
+							},
+							{
+								"x": 7.972978177150194,
+								"y": 2.3827663671373553,
+								"hover": false
+							}
+						]
+					},
+					{
+						"class": "TerrainComponent",
+						"fill": "cl.Enum.TerrainFillMode.Closed",
+						"fillY": 0,
+						"fillZ": -0.5,
+						"splitCorners": true,
+						"smoothPath": true,
+						"splistDist": 4,
+						"pixelsPerUnit": 48,
+						"createCollider": true,
+						"terrainMaterial": "res/cave.tm"
+					}
+				],
+				"name": "GameObject",
+				"tag": -1,
+				"visible": true,
+				"lock": false,
+				"open": true
+			}
+		],
+		"canvas": {
+			"offset": {
+				"x": 0,
+				"y": 0
+			},
+			"scale": 0.8114583333333333
+		}
+	}
+}

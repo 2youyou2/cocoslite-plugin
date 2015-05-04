@@ -25,14 +25,14 @@
         "InvertedClosed"
     );
 
-    var Params = function() {
+    var ctor = function() {
 
         // private
         var path = null,
             mesh = null,
-            terrainMaterial = null,
-            dMesh = null,
-            unitsPerUV = cl.p(1,1);
+            unitsPerUV = cl.p(1,1),
+            terrainMaterial = new cl.TerrainMaterial(),
+            dMesh = new cl.DynamicMesh();
 
         Component.init(this, {
             fill: TerrainFillMode.Closed,
@@ -47,24 +47,12 @@
             depth: 4,
             sufaceOffset: [0,0,0,0],
 
-            ctor: function () {
-                this.properties = ["fill", "fillY", "fillZ", "splitCorners", "smoothPath", "splistDist", "pixelsPerUnit", "vertexColor",
-                                    "createCollider", "terrainMaterial"];
-
-                terrainMaterial = new cl.TerrainMaterial();
-
-                this._super(this, ["MeshComponent", "TerrainPathComponent"]);
-            },
-
-            onEnter: function() {
-                // this.recreatePath();
-            },
-
             _getTerrainMaterial: function() {
                 return terrainMaterial;
             },
             _setTerrainMaterial: function(file) {
                 terrainMaterial.initWithFile(file);
+                terrainMaterial.on('loaded', this.recreatePath.bind(this));
             },
 
             toJSONterrainMaterial: function() {
@@ -74,11 +62,10 @@
             recreatePath: function() {
                 var fill = this.fill;
 
-                if(!dMesh) { dMesh = new cl.DynamicMesh(); }
-                if(!path)  { path = this.getComponent("TerrainPathComponent"); }
-                if(!mesh)  { mesh = this.getComponent("MeshComponent"); }
+                path = this.getComponent("TerrainPathComponent");
+                mesh = this.getComponent("MeshComponent");
 
-                if(!terrainMaterial || terrainMaterial.loading || !mesh){
+                if(!terrainMaterial || terrainMaterial.loading || !mesh) {
                     return;
                 }
 
@@ -296,17 +283,24 @@
                 }
             }
         });
-
         
+
+        cl.defineGetterSetter(this, "terrainMaterial", "_getTerrainMaterial", "_setTerrainMaterial");
+
+        this._super(["MeshComponent", "TerrainPathComponent"]);
     }
 
-    var TerrainComponent = Component.extendComponent("TerrainComponent", new Params);
+    var TerrainComponent = Component.extendComponent("TerrainComponent", {
+        properties: ["fill", "fillY", "fillZ", "splitCorners", "smoothPath", "splistDist", 
+                    "pixelsPerUnit", "vertexColor", "createCollider", "terrainMaterial"],
+
+        ctor: ctor,
+
+        _folder_ :  "terrain"
+    });
 
 
-    var _p = TerrainComponent.prototype;
-    cl.defineGetterSetter(_p, "terrainMaterial", "_getTerrainMaterial", "_setTerrainMaterial");
-
-    exports.Params = Params;
+    exports.Params = ctor;
     exports.Component = TerrainComponent;
 
 });

@@ -32,7 +32,7 @@ define(function (require, exports, module) {
     window.document.body.addEventListener("keyup",   handleKeyUp,   true);
 
 
-    var Params = function() {
+    var Editor = function() {
         var points;
         var obj;
         var currentPoint;
@@ -235,7 +235,7 @@ define(function (require, exports, module) {
 
 
     function init(){
-        EditorManager.register("TerrainEditor", new Params);
+        EditorManager.register("TerrainEditor", new Editor);
     }
 
     init();

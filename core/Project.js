@@ -168,7 +168,7 @@ define(function (require, exports, module) {
         projectClosePromise = unloadSources();
     }
 
-    function setValueToProjectJson(projectDir, key, value) {
+    function updateProjectJson(projectDir, options) {
         var deferred = new $.Deferred();
 
         var path = cc.path.join(projectDir, 'project.json');
@@ -176,7 +176,10 @@ define(function (require, exports, module) {
 
         FileUtils.readAsText(file).done(function(data) {
             var json = JSON.parse(data);
-            json[key] = value;
+
+            var physics = options['physics'];
+            json['physics'] = physics;
+            json['modules'] = physics === 'none' ? ['core'] : [physics];
 
             FileUtils.writeText(file, JSON.stringify(json, null, '\t'), true).done(function() {
                 deferred.resolve();
@@ -215,7 +218,7 @@ define(function (require, exports, module) {
         $onlyCocos = $el.find(".cocoslite").attr('checked', checked);
         
         var physics = PreferencesManager.getViewState("cocoslite.project.physics");
-        physics = physics === undefined ? 'None' : physics;
+        physics = physics === undefined ? 'none' : physics;
         $el.find("#"+physics).attr('checked', true);
 
         dialog.done(function (id) {
@@ -231,10 +234,18 @@ define(function (require, exports, module) {
 
                 if(onlyCocos) {
                     var templateDir  = cc.path.join(cl.templatesDir, "js-template-cocoslite");
-                    var projectClDir = cc.path.join(projectDir,      "frameworks/cocos2d-html5/cocoslite");
+                    var projectHtml5Dir = cc.path.join(projectDir,      "frameworks/cocos2d-html5");
 
                     promise  = cl.cocosDomain.exec("copyDir", templateDir, projectDir).then(function() {
-                        return cl.cocosDomain.exec("copyDir", cl.clEngineDir, projectClDir);
+                        var deferred = new $.Deferred();
+                        
+                        FileSystem.getDirectoryForPath(projectHtml5Dir).create(function() {
+                            cl.cocosDomain.exec("copyDir", cl.engineDir, projectHtml5Dir).done(function(){
+                                deferred.resolve();
+                            })
+                        });
+
+                        return deferred.promise();
                     });
 
                 } else {
@@ -251,7 +262,8 @@ define(function (require, exports, module) {
 
                 })
                 .then(function(){
-                    return setValueToProjectJson(projectDir, 'physics', physics);
+
+                    return updateProjectJson(projectDir, {'physics': physics});
                 })
                 .done(function(){
                     ProjectManager.openProject($projectLocation.val() + "/" + $projectName.val());

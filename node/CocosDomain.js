@@ -42,7 +42,11 @@
     }
 
     function copyDir(src, dest, callback) {
-        ncp(src, dest, function (err) {
+        var options = {
+            filter: /^(?!\.git$|.gitignore$)/
+        }
+
+        ncp(src, dest, options, function (err) {
             if (err) {
                 return console.error(err);
             }

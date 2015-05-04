@@ -5,6 +5,7 @@ define(function (require, exports, module) {
     "use strict";
 
     var FileSystem      = brackets.getModule("filesystem/FileSystem"),
+        WorkspaceManager        = brackets.getModule("view/WorkspaceManager"),
         ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
 
     var Selector        = require("core/Selector"),
@@ -74,6 +75,9 @@ define(function (require, exports, module) {
 
             cc.view.setResolutionPolicy(cc.ResolutionPolicy.EXACT_FIT);
             cc.view.enableRetina(false);
+
+            // fixed focus gameCanvas may break main-view layout
+            WorkspaceManager.recomputeLayout(true);
             cc.view._resizeEvent();
             cc.view.resizeWithBrowserSize(true);
 

@@ -5,7 +5,6 @@ define(function (require, exports, module) {
     "use strict";
 
     var AppInit                 = brackets.getModule("utils/AppInit"),
-        WorkspaceManager        = brackets.getModule("view/WorkspaceManager"),
         Menus                   = brackets.getModule("command/Menus"),
         CommandManager          = brackets.getModule("command/CommandManager"),
         bracketsEditorManager   = brackets.getModule("editor/EditorManager"),
@@ -236,10 +235,6 @@ define(function (require, exports, module) {
         cc.director.runScene(_scene);
 
         EventManager.trigger(EventManager.SCENE_LOADED, _scene);
-
-        // fixed focus gameCanvas may break main-view layout
-        // todo: find a better way to solve this problem
-        WorkspaceManager.recomputeLayout();
 
         // _scene.update = function(){};
     }

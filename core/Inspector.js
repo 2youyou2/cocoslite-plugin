@@ -276,7 +276,7 @@ define(function (require, exports, module) {
             }, function(file){
                 if(typeof file === "object") {
                     var texture = file;
-                    
+
                     if(file.constructor === cc.Sprite) {
                         texture = file.getTexture();
                     }
@@ -435,6 +435,8 @@ define(function (require, exports, module) {
         for(var i=0; i<cs.length; i++){
             initComponentUI(cs[i]);
         }
+
+        $inspector.css('max-height', $content[0].offsetHeight - 40 - $addComponent[0].offsetHeight);
     }
 
     function handleSelectedObject(event, objs){
@@ -513,6 +515,9 @@ define(function (require, exports, module) {
 
         $.include(["thirdparty/colorpicker/css/bootstrap-colorpicker.css",
                    "thirdparty/webui-popover/jquery.webui-popover.css"]);
+
+
+        $inspector.css('max-height', $content.css('height') -25);
     });
 
 

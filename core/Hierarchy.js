@@ -14,6 +14,13 @@ define(function (require, exports, module) {
     $content.attr("tabindex", 99);
     $content.insertAfter($sidebar.find(".horz-resizer"));
 
+    var $title = $('<div class="hierarchy-header panel-header" style="display: block;">' +
+                       '<span class="hierarchy-header-title">Hierarchy</span>' +
+                   '</div>');
+
+    $title.insertBefore($content);
+
+
     var keyManager;
 
     var root     = {children:[]};
@@ -82,7 +89,7 @@ define(function (require, exports, module) {
             }
         });
 
-        Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined);
+        Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined, undefined, undefined, true);
 
         $content.click(function(){
             select(null);

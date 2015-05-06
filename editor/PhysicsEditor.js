@@ -33,22 +33,34 @@ define(function (require, exports, module) {
                 obj    = selectedObjects[0];
                 var cs = obj.components;
 
-                var wordMat = obj.getNodeToWorldTransform();
-                ctx.translate(0.5, 0.5);
-                ctx.translate(wordMat.tx, wordMat.ty);
+                var mat = obj.getNodeToWorldTransform();
+                ctx.transform(mat.a, mat.b, mat.c, mat.d, mat.tx, mat.ty);
+
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = "#f00";
+                ctx.strokeStyle = "#f00"; 
+                ctx.lineWidth = 2;
 
                 for(var i=0; i<cs.length; i++) {
                     var className = cs[i].className;
                     var shape = cs[i];
 
+                    var func = null;
                     switch(className) {
                         case 'PhysicsSegment' :
-                            renderSegment(ctx, shape);
+                            func = renderSegment;
                             break;
                         case 'PhysicsBox' :
-                            renderBox(ctx, shape);
+                            func = renderBox;
                             break;
+                        case 'PhysicsPoly' :
+                            func = renderPoly;
+                            break;
+                        default :
+                            func = function(){}
                     }
+
+                    func(ctx, shape);
                 }
             } 
         }
@@ -58,10 +70,6 @@ define(function (require, exports, module) {
             var start = shape.start;
             var end   = shape.end;
 
-            ctx.lineWidth = 2;
-
-            ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = "#f00"; 
             ctx.beginPath();
             ctx.moveTo(start.x, start.y);
             ctx.lineTo(end.x,   end.y);
@@ -72,11 +80,24 @@ define(function (require, exports, module) {
             var w  = shape.width;
             var h = shape.height;
 
-            ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = "#f00";
-            ctx.fillStyle = "#f00";
-
             ctx.fillRect(-w/2, -h/2, w, h);
+        }
+
+        function renderPoly(ctx, shape) {
+            var verts = shape.verts;
+
+            if(verts.length < 3) return;
+
+            ctx.beginPath();
+            ctx.moveTo(verts[0].x, verts[0].y);
+
+            for(var i=1; i<verts.length; i++) {
+                ctx.lineTo(verts[i].x, verts[i].y)
+            }
+
+            ctx.lineTo(verts[0].x, verts[0].y);
+
+            ctx.fill();
         }
 
         function render (ctx, obj){

@@ -176,32 +176,6 @@ define(function (require, exports, module) {
         }
     }
 
-    function hackObjectJsonControl() {
-
-        cc.Scene.prototype.toJSON = function(){
-            var json = {};
-            json.root = {};
-            json.root.res = this.res;
-            json.root.physics = this.physics;
-            var children = json.root.children = [];
-
-            json.root.canvas = {};
-            json.root.canvas.offset = this.canvas.offset;
-            json.root.canvas.scale = this.canvas.scale;
-
-            for(var k=0; k<this.canvas.children.length; k++){
-                var child = this.canvas.children[k];
-                if(child.constructor === cl.GameObject){
-                    var cj = child.toJSON();
-                    children.push(cj);
-                }
-            }
-
-            return json;
-        };
-
-    }
-
     function hackGameObject () {
 
         var originAddChild    = cc.Node.prototype.addChild;
@@ -325,22 +299,10 @@ define(function (require, exports, module) {
         }
     }
 
-    function hackCocos() {
-        cc.Sprite.prototype.toJSON = cc.Sprite.prototype._pGet = function() {
-            var texture = this.getTexture();
-            return texture ? texture.url : "";
-        };
-
-        cc.Color.prototype.toJSON = function() {
-            return cc.colorToHex(this);
-        }
-    }
 
     function handleCocosLoaded() {
-        hackObjectJsonControl();
         hackGameObject();
         hackComponent();
-        hackCocos();
     }
 
 

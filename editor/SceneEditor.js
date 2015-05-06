@@ -20,23 +20,22 @@ define(function (require, exports, module) {
         Selector                = require("core/Selector"),
         Inspector               = require("core/Inspector"),
         ObjectManager           = require("core/ObjectManager"),
-        Cocos                   = require("core/Cocos"),
         EditorManager           = require("editor/EditorManager"),
         Scene                   = require("text!html/Scene.html");
 
 
-    var _editor = null;
-    var _scene = null;
+    var _editor         = null;
+    var _scene          = null;
 
-    var _projectOpened = false;
+    var _projectOpened  = false;
     var _lazyInitEditor = false;
 
-    var _playing = false;
-    var _paused = false;
+    var _playing        = false;
+    var _paused         = false;
 
-    var _$scene = $(Scene);
+    var _$scene         = $(Scene);
 
-    function initCanvas(){
+    function initCanvas() {
 
         cl.$fgCanvas = _$scene.find("#fgCanvas");
         cl.$fgCanvas.attr("tabindex", 99);
@@ -45,13 +44,13 @@ define(function (require, exports, module) {
 
         var ctx = cl.fgCanvas.getContext('2d');
         
-        var render = function(){
-            if(!cc._canvas || (cc.director && cc.director.isPaused())) {
+        var render = function() {
+            if(!cc._canvas) {
                 return;
             }
 
             var selectedObjects = Selector.getSelectObjects();
-            var editors = EditorManager.getEditors();
+            var editors         = EditorManager.getEditors();
 
             var maxW = cc._canvas.width ;
             var maxH = cc._canvas.height;
@@ -85,7 +84,7 @@ define(function (require, exports, module) {
 
     function initPlayBar() {
 
-        // game state html
+        // Game state html
         var $state        = $('<span id="state-container" ></span>');
         var $sceneState   = $('<span id="scene-state"class="state" title="Switch to Scene Editor Mode">Scene</span>');
         var $gameState    = $('<span id="game-state" class="state disactive" title="Switch to Game Mode">Game</span>');
@@ -93,7 +92,7 @@ define(function (require, exports, module) {
         $state.append($sceneState);
         $state.append($gameState);
 
-        // game controller html
+        // Game controller html
         var $controller   = $('<span id="controller-container" ></span>');
         var $playBtn      = $('<span id="play-btn"       class="fa-play         cl-icon-button" title="Play game"></span>');
         var $pauseBtn     = $('<span id="pause-btn"      class="fa-pause        cl-icon-button" title="Pause game"></span>');
@@ -103,7 +102,7 @@ define(function (require, exports, module) {
         $controller.append($pauseBtn);
         $controller.append($nextFrameBtn);
 
-        // play bar html
+        // Play bar html
         var $playBar = $('<div id="play-bar"/>');
 
         $playBar.append($state);
@@ -170,10 +169,10 @@ define(function (require, exports, module) {
 
             if(_paused) {
                 $pauseBtn.addClass('active');
-                cc.director.getRunningScene().unscheduleUpdate();
+                cc.director.pause();
             } else {
                 $pauseBtn.removeClass('active');
-                cc.director.getRunningScene().scheduleUpdate();
+                cc.director.resume();
             }
         }
 
@@ -231,8 +230,9 @@ define(function (require, exports, module) {
     }
 
     function closeScene() {
-        _editor = _scene = null;
+        _editor  = _scene  = null;
         _playing = _paused = false;
+
         cc.director.runScene(new cc.Scene());
 
         EventManager.trigger(EventManager.SCENE_CLOSED);
@@ -244,8 +244,6 @@ define(function (require, exports, module) {
         cc.director.runScene(_scene);
 
         EventManager.trigger(EventManager.SCENE_LOADED, _scene);
-
-        // _scene.update = function(){};
     }
 
 
@@ -282,7 +280,7 @@ define(function (require, exports, module) {
     }
 
     function handleDocumentSaved() {
-        // update current codemirror's text
+        // Update current codemirror's text
         var doc = _editor.document;
         doc.setText(doc.getText());
     }
@@ -299,13 +297,13 @@ define(function (require, exports, module) {
                 originGameObjectEnter.call(this);
             };
 
-            var originGameObjectUpdate = cl.GameObject.prototype.update;
-            cl.GameObject.prototype.update = function(dt) {
-                if(_paused) {
-                    return;
-                }
-                originGameObjectUpdate.call(this, dt);
-            };
+            // var originGameObjectUpdate = cl.GameObject.prototype.update;
+            // cl.GameObject.prototype.update = function(dt) {
+            //     if(_paused) {
+            //         return;
+            //     }
+            //     originGameObjectUpdate.call(this, dt);
+            // };
         }
 
         if(_lazyInitEditor) {

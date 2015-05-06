@@ -8,7 +8,7 @@ define(function (require, exports, module) {
         bracketsCommands     = brackets.getModule("command/Commands"),
         AppInit              = brackets.getModule("utils/AppInit");
 
-    var EditorType           = brackets.EditorType;
+    var EditorType           = cl.EditorType;
 
     var EventManager         = require("core/EventManager"),
         Commands             = require("core/Commands"),
@@ -73,7 +73,7 @@ define(function (require, exports, module) {
         var menus = getMenus(type);
 
         if(!menus[id]) {
-            if(type === EditorType.All || type === brackets.editorType) {
+            if(type === EditorType.All || type === cl.editorType) {
                 menus[id] = [];
             } 
 
@@ -217,7 +217,7 @@ define(function (require, exports, module) {
         Menus.Menu.prototype.addGameEditorMenuItem = function(command, keyBindings, position, relativeID) {
             var item = null;
 
-            if(brackets.editorType === EditorType.GameEditor) {
+            if(cl.editorType === EditorType.GameEditor) {
                 item = originAddMenuItem.apply(this, arguments);
 
                 var menu = getMenu(EditorType.GameEditor, this.id);

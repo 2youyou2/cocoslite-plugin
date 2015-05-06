@@ -1,7 +1,11 @@
 define(function (require, exports, module) {
     "use strict";
 
-    exports.CMD_OPEN_SCRIPT                 = "cl.openScript";              
+    /**
+     * List of constants for global command IDs.
+     */
+
+    exports.CMD_OPEN_SCRIPT                 = "cl.openScript";                   
     exports.CMD_OPEN_IDE                    = "cl.openIDE";
     exports.CMD_NEW_PROJECT                 = "cl.createProject";
     exports.CMD_NEW_SCENE_UNTITLED          = "cl.createScene.untitled";

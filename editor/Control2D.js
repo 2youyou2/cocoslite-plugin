@@ -9,16 +9,16 @@ define(function (require, exports, module) {
     var EditorManager = require("editor/EditorManager"),
         EventManager  = require("core/EventManager");
 
-    var editor;
+    var _editor;
 
     var Operation = {
-        Position:  0,
+        Position: 0,
         Scale:    1,
         Rotation: 2,
         Hand:     3
     };
 
-    var operation = Operation.Position;
+    var _operation = Operation.Position;
 
 
     var Editor = function() {
@@ -151,7 +151,7 @@ define(function (require, exports, module) {
             ctx.translate(0.5, 0.5);
             ctx.translate(wordMat.tx, wordMat.ty);
 
-            switch(operation){
+            switch(_operation){
                 case Operation.Position:
                     renderPosition(ctx);
                     break;
@@ -274,7 +274,7 @@ define(function (require, exports, module) {
 
         this.onTouchMoved = function(touch) {
 
-            switch(operation) {
+            switch(_operation) {
                 case Operation.Position:
                     handlePosition(touch);
                     break;
@@ -305,7 +305,7 @@ define(function (require, exports, module) {
             
             canDoOperation = false;
 
-            switch(operation){
+            switch(_operation){
                 case Operation.Position:
                     canDoOperation = hitPosition(p);
                     break;
@@ -319,16 +319,16 @@ define(function (require, exports, module) {
         };
 
         this.switchState = function(id) {
-            var oldOperation = operation;
-            operation = Operation[id];
+            var oldOperation = _operation;
+            _operation = Operation[id];
 
-            EventManager.trigger(EventManager.CONTROL_STATE_CHANGED, oldOperation, operation);
+            EventManager.trigger(EventManager.CONTROL_STATE_CHANGED, oldOperation, _operation);
         }
     }
 
     function init(){
-        editor = new Editor;
-        EditorManager.register("Control2D", editor);
+        _editor = new Editor;
+        EditorManager.register("Control2D", _editor);
     }
 
     AppInit.appReady(function() {
@@ -337,14 +337,14 @@ define(function (require, exports, module) {
         var current;
 
         function handleClick() {
-            if(!editor) {
+            if(!_editor) {
                 return;
             }
 
             var temp = $(this);
             var id = temp.attr('id');
 
-            editor.switchState(id);
+            _editor.switchState(id);
 
             toggleCurrent(temp);
 
@@ -391,7 +391,7 @@ define(function (require, exports, module) {
             }
 
             if(key) {
-                editor.switchState(key);
+                _editor.switchState(key);
                 toggleCurrent(controls[key]);
             }
         });    
@@ -400,6 +400,6 @@ define(function (require, exports, module) {
     exports.init = init;
     exports.Operation = Operation;
     exports.getOperation = function() {
-        return operation;
+        return _operation;
     }
 });

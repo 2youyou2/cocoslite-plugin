@@ -4,33 +4,49 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var FileSystem      = brackets.getModule("filesystem/FileSystem"),
-        WorkspaceManager        = brackets.getModule("view/WorkspaceManager"),
-        ExtensionUtils  = brackets.getModule("utils/ExtensionUtils");
+    var FileSystem          = brackets.getModule("filesystem/FileSystem"),
+        WorkspaceManager    = brackets.getModule("view/WorkspaceManager"),
+        ExtensionUtils      = brackets.getModule("utils/ExtensionUtils");
 
-    var Selector        = require("core/Selector"),
-        EventManager    = require("core/EventManager"),
-        EditorManager   = require("editor/EditorManager");
+    var Selector            = require("core/Selector"),
+        EventManager        = require("core/EventManager"),
+        EditorManager       = require("editor/EditorManager");
 
 
-
-    function initConfig(){
+    /**
+     * Init cocos config for inner project
+     * Generally cocos will init config from project.json
+     * but project loaded from editor is different
+     * engine dir, FPS, renderMode, modules, etc.
+     * @private
+     */
+    function _initConfig() {
 
         document.ccConfig = {
-            "engineDir": cl.engineDir,
-            "project_type": "javascript",
-            "debugMode" : 1,
-            "showFPS" : false,
-            "frameRate" : 15,
-            "id" : "gameCanvas",
-            "renderMode" : 2,
-            "modules":["chipmunk"]
+            "engineDir"     : cl.engineDir,
+            "project_type"  : "javascript",
+            "debugMode"     : 1,
+            "showFPS"       : false,
+            "frameRate"     : 15,
+            "id"            : "gameCanvas",
+            "renderMode"    : 2,
+            "modules"       : ["chipmunk", "box2d"]
         };
 
         cc.game._initConfig();
     }
 
-    function initCocos() {
+    /**
+     * Hack some cocos function
+     * After cocos loaded, load cocoslite module
+     * this will auto load all .js files in the cocoslite folder
+     * then trigger a COCOS_LOADED event
+     * @private
+     */
+    function _initCocos() {
+
+        // When cc.view resize
+        //  update fgCanvas size and recalculate current canvas' position
         function updateSize() { 
             cl.fgCanvas.setAttribute("width",  cc._canvas.width);
             cl.fgCanvas.setAttribute("height", cc._canvas.height);
@@ -82,11 +98,15 @@ define(function (require, exports, module) {
             cc.view.resizeWithBrowserSize(true);
 
 
+            var paused = false;
             window.addEventListener("focus", function() {
-                cc.director.resume();
+                if(!paused) {
+                    cc.director.resume();
+                }
             });
 
             window.addEventListener("blur", function() {
+                paused = cc.director.isPaused();
                 cc.director.pause();
             });
 
@@ -158,7 +178,7 @@ define(function (require, exports, module) {
 
     }
 
-    initConfig();
-    initCocos();
+    _initConfig();
+    _initCocos();
 
 });

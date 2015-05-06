@@ -78,13 +78,10 @@ define(function (require, exports, module) {
         Undo.endUndoBatch();
     }
 
-    function init() {
-        document.body.addEventListener('copy',  copy);
-        document.body.addEventListener('cut',   cut);
-        document.body.addEventListener('paste', paste);
-    }
+    document.body.addEventListener('copy',  copy);
+    document.body.addEventListener('cut',   cut);
+    document.body.addEventListener('paste', paste);
 
     EventManager.on(EventManager.SCENE_CLOSED, clear);
 
-    init();
 });

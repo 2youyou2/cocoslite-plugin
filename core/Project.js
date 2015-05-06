@@ -17,7 +17,6 @@ define(function (require, exports, module) {
         Strings            = require("strings"),
         EventManager       = require("core/EventManager");
 
-    var isCocosProject;
     var resFolder, srcFolder;
     var projectClosePromise;
 
@@ -110,12 +109,13 @@ define(function (require, exports, module) {
     }
 
     function reset() {
-        isCocosProject = false;
         resFolder = srcFolder = null;
     }
 
     function handleProjectOpen(e, root) {
 
+        var isCocosProject = false;
+        
         function load() {
             loadSources().then(function(){
                 EventManager.trigger(EventManager.PROJECT_OPEN);

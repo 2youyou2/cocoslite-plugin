@@ -10,22 +10,22 @@ define(function (require, exports, module) {
     var Commands         = require("core/Commands"),
         EventManager     = require("core/EventManager");
 
-    var ide = null;
-    var scriptChanged = false;
+    var _ide           = null;
+    var _scriptChanged = false;
 
     function openIDE () {
-        if(!ide) {
-            ide = window.open(window.location.href+"?editorType=IDE");
+        if(!_ide) {
+            _ide = window.open(window.location.href+"?editorType=IDE");
 
-            ide.onbeforeunload = function() {
-                ide = null;
+            _ide.onbeforeunload = function() {
+                _ide = null;
             }
 
-            ide.addEventListener('focus', function() {
+            _ide.addEventListener('focus', function() {
                 EventManager.trigger(EventManager.IDE_FOCUS);
             });
         }
-        ide.focus();
+        _ide.focus();
     }
 
     function handleComponentChanged(e, fullPath) {
@@ -116,11 +116,11 @@ define(function (require, exports, module) {
     }
 
     function handleBeforeScriptChanged() {
-        scriptChanged = true;
+        _scriptChanged = true;
     }
 
     function handleScriptChanged(e, fullPath, scriptErr) {
-        scriptChanged = false;
+        _scriptChanged = false;
 
         if(scriptErr) { return; }
 
@@ -133,35 +133,35 @@ define(function (require, exports, module) {
 
 
     function handleOpenScript(fullPath) {
-        if(!ide) {
+        if(!_ide) {
 
             openIDE();
 
-            ide.initIDE = function(module) {
-                ide = module;
-                ide.openFile(fullPath);
+            _ide.initIDE = function(module) {
+                _ide = module;
+                _ide.openFile(fullPath);
 
-                ide.on("beforeScriptChanged", handleBeforeScriptChanged);
-                ide.on("scriptChanged", handleScriptChanged);
+                _ide.on("beforeScriptChanged", handleBeforeScriptChanged);
+                _ide.on("_scriptChanged", handleScriptChanged);
             };
 
         } else {
-            ide.openFile(fullPath);
+            _ide.openFile(fullPath);
         }
     }
 
     function handleWindowClose() {
-        if(ide) {
-            ide.close();
+        if(_ide) {
+            _ide.close();
         }
-        ide = null;
+        _ide = null;
     }
 
     function hackGameObject() {
 
         var originUpdate = cl.GameObject.prototype.update;
         cl.GameObject.prototype.update = function(dt) {
-            if(scriptChanged) { return; }
+            if(_scriptChanged) { return; }
 
             try{
                 originUpdate.call(this, dt);

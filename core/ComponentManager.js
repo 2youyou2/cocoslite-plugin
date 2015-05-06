@@ -151,8 +151,6 @@ define(function (require, exports, module) {
         if(menu) {
             Menus.removeMenu(Commands.CMD_COMPONENT);
         }
-
-        // cl.ComponentManager.clear();
     }
 
     function unregisterComponent(component) {

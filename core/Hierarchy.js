@@ -1,7 +1,8 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var Resizer        = brackets.getModule("utils/Resizer");
+    var Resizer        = brackets.getModule("utils/Resizer"),
+        AppInit        = brackets.getModule("utils/AppInit");
 
     var html           = require("text!html/Hierarchy.html"),
         Selector       = require("core/Selector"),
@@ -9,34 +10,23 @@ define(function (require, exports, module) {
         EventManager   = require("core/EventManager"),
         Vue            = require("thirdparty/vue");
 
-    var $sidebar = $("#sidebar");
-    var $content = $("<div id='hierarchy-content' class='hierarchy-content quiet-scrollbars' />");
-    $content.attr("tabindex", 99);
-    $content.insertAfter($sidebar.find(".horz-resizer"));
+    var _$content;
+    var _keyManager;
 
-    var $title = $('<div class="hierarchy-header panel-header" style="display: block;">' +
-                       '<span class="hierarchy-header-title">Hierarchy</span>' +
-                   '</div>');
-
-    $title.insertBefore($content);
-
-
-    var keyManager;
-
-    var root     = {children:[]};
-    var tempRoot = null;
-    var objMap   = {};
+    var _root     = {children:[]};
+    var _tempRoot = null;
+    var _objMap   = {};
 
     function createContent(){
-        $content.empty();
-        $content.append($(html));
+        _$content.empty();
+        _$content.append($(html));
 
         function select(item, e){
 
-            var obj = item ? objMap[item.id] : null;
+            var obj = item ? _objMap[item.id] : null;
 
             var ctrlKey = brackets.platform === 'mac' ? 91 : cc.KEY.ctrl;
-            var ctrlKeyDown = keyManager.matchKeyDown(ctrlKey);
+            var ctrlKeyDown = _keyManager.matchKeyDown(ctrlKey);
 
             Selector.clickOnObject(obj, ctrlKeyDown);
 
@@ -47,7 +37,7 @@ define(function (require, exports, module) {
 
         function getObject(data) {
             var id = data.id;
-            var obj = objMap[id];
+            var obj = _objMap[id];
             if(!obj) {
                 console.error("object with id [%s] can't find.", id);
             }
@@ -84,14 +74,14 @@ define(function (require, exports, module) {
         var tree = new Vue({
             el: '#hierarchy',
             data: {
-                children: root.children,
+                children: _root.children,
                 currentObjects: []
             }
         });
 
-        Resizer.makeResizable($content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined, undefined, undefined, true);
+        Resizer.makeResizable(_$content[0], Resizer.DIRECTION_VERTICAL, Resizer.POSITION_BOTTOM, 10, false, undefined, undefined, undefined, true);
 
-        $content.click(function(){
+        _$content.click(function(){
             select(null);
         });
     }
@@ -118,14 +108,14 @@ define(function (require, exports, module) {
         var data = createData(obj);
 
         obj._innerData = data;
-        objMap[data.id] = obj;
+        _objMap[data.id] = obj;
 
         var parent = obj.getParent();
         var parentData = parent._innerData;
 
         if(!parentData) {
-            parent._innerData = root;
-            parentData = root;
+            parent._innerData = _root;
+            parentData = _root;
         }
 
         parentData.children.push(data);
@@ -142,13 +132,13 @@ define(function (require, exports, module) {
     }
 
     function selectedObjects(e, objs){
-        if(root.currentObjects) {
-            root.currentObjects.forEach(function(item){
+        if(_root.currentObjects) {
+            _root.currentObjects.forEach(function(item){
                 item.selected = false;
             });
         }
 
-        root.currentObjects = [];
+        _root.currentObjects = [];
 
         objs.forEach(function(item){
             var data = item._innerData;
@@ -156,12 +146,12 @@ define(function (require, exports, module) {
             
             expandToPath(data);
 
-            root.currentObjects.push(data);
+            _root.currentObjects.push(data);
         });
     }
 
     function expandToPath(data) {
-        var obj = objMap[data.id];
+        var obj = _objMap[data.id];
 
         if(obj) {
             var parent = obj.getParent();
@@ -174,24 +164,34 @@ define(function (require, exports, module) {
     }
 
     function clear() {
-        $content.find("#hierarchy").empty();
-        root = {children:[]};
-        tempRoot = null;
-        objMap = {};
+        _$content.find("#hierarchy").empty();
+        _root = {children:[]};
+        _tempRoot = null;
+        _objMap = {};
     }
 
     function temp(e, tempScene) {
-        tempRoot = root;
-        root = {children:[]};
+        _tempRoot = _root;
+        _root = {children:[]};
     }
 
     function recover() {
-        root = tempRoot;
-        tempRoot = null;
+        _root = _tempRoot;
+        _tempRoot = null;
         createContent();
     }
 
+    AppInit.htmlReady(function() {
+        // Hierarchy content
+        _$content = $("<div id='hierarchy-content' class='hierarchy-content quiet-scrollbars' />");
+        _$content.attr("tabindex", 99);
+        _$content.insertAfter($("#sidebar").find(".horz-resizer"));
 
+        // Hierarchy title
+        $('<div class="hierarchy-header panel-header" style="display: block;">' +
+            '<span class="hierarchy-header-title">Hierarchy</span>' +
+        '</div>').insertBefore(_$content);
+    });
 
     EventManager.on(EventManager.OBJECT_PROPERTY_CHANGED, function(e, object, property) {
         var properties = object.properties;
@@ -206,7 +206,7 @@ define(function (require, exports, module) {
     });
 
     EventManager.on(EventManager.PROJECT_OPEN, function() {
-        keyManager = new cl.KeyManager($content[0]);
+        _keyManager = new cl.KeyManager(_$content[0]);
     })
 
     EventManager.on(EventManager.OBJECT_ADDED,         addObject);

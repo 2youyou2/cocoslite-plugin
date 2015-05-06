@@ -9,19 +9,19 @@ define(function (require, exports, module) {
         Undo            = require("core/Undo");
 
 
-    var inited = false;
+    var _inited = false;
 
-    var mousedown = false;
+    var _mousedown = false;
     
-    var tempSelectedObjects = [];
-    var selectedObjects = [];
+    var _tempSelectedObjects = [];
+    var _selectedObjects = [];
 
-    var currentDelegate = null;
+    var _currentDelegate = null;
 
-    var enable = true;
+    var _enable = true;
 
     function setEnable(e) {
-        enable = e;
+        _enable = e;
     }
     
 
@@ -33,12 +33,12 @@ define(function (require, exports, module) {
             var ctrlKey = brackets.platform === 'mac' ? 91 : cc.KEY.ctrl;
 
             if(ctrlKeyDown || cl.keyManager.matchKeyDown(ctrlKey)) {
-                var index = selectedObjects.indexOf(obj);
+                var index = _selectedObjects.indexOf(obj);
 
                 if(index === -1) {
-                    objs = selectedObjects.concat(objs);
+                    objs = _selectedObjects.concat(objs);
                 } else {
-                    objs = selectedObjects.filter(function(v, k) {
+                    objs = _selectedObjects.filter(function(v, k) {
                         return k !== index;
                     });
                 }
@@ -48,29 +48,29 @@ define(function (require, exports, module) {
         selectObjects(objs);
     }
 
-    function initListener(){
-        if(inited) {
+    function initListener() {
+        if(_inited) {
             return;
         }
-        inited = true;
+        _inited = true;
 
         cc.eventManager.addListener(cc.EventListener.create({
             event: cc.EventListener.TOUCH_ONE_BY_ONE,
             onTouchBegan: function (touch, event) {
                 
-                if(!enable) {
+                if(!_enable) {
                     return;
                 }
 
-                mousedown = true;
+                _mousedown = true;
 
                 Undo.beginUndoBatch();
 
-                currentDelegate = null;
+                _currentDelegate = null;
                 var delegates = EditorManager.getOrderedEditors();
                 for(var i=0; i<delegates.length; i++){
                     if(delegates[i].onTouchBegan && delegates[i].onTouchBegan(touch)){
-                        currentDelegate = delegates[i];
+                        _currentDelegate = delegates[i];
                         return true;
                     }
                 }
@@ -105,17 +105,17 @@ define(function (require, exports, module) {
             },
             onTouchMoved: function(touch, event){
 
-                if(currentDelegate && currentDelegate.onTouchMoved){
-                    currentDelegate.onTouchMoved(touch, selectedObjects);
+                if(_currentDelegate && _currentDelegate.onTouchMoved){
+                    _currentDelegate.onTouchMoved(touch, _selectedObjects);
                     return;
                 }
 
             },
             onTouchEnded: function(touch, event){
-                mousedown = false;
+                _mousedown = false;
 
-                if(currentDelegate && currentDelegate.onTouchEnded){
-                    currentDelegate.onTouchEnded(touch);
+                if(_currentDelegate && _currentDelegate.onTouchEnded){
+                    _currentDelegate.onTouchEnded(touch);
                 }
 
                 Undo.endUndoBatch();
@@ -139,12 +139,12 @@ define(function (require, exports, module) {
 
     function selectObjects(objs) {
 
-        // whether selectedObjects changed
-        var selectedObjectsChanged = selectedObjects.length !== objs.length;
+        // whether _selectedObjects changed
+        var selectedObjectsChanged = _selectedObjects.length !== objs.length;
 
         if(!selectedObjectsChanged) {
-            for(var i=0; i<selectedObjects.length; i++){
-                if(selectedObjects[i] != objs[i]){
+            for(var i=0; i<_selectedObjects.length; i++){
+                if(_selectedObjects[i] != objs[i]){
                     selectedObjectsChanged = true;
                     break;
                 }
@@ -159,7 +159,7 @@ define(function (require, exports, module) {
         Undo.beginUndoBatch();
 
         (function(){
-            var oldObjs = selectedObjects.slice(0);
+            var oldObjs = _selectedObjects.slice(0);
             var newObjs = objs.slice(0);
 
             function undo(){
@@ -172,40 +172,40 @@ define(function (require, exports, module) {
             Undo.objectPropertyChanged(undo, redo, false);
         })();
 
-        selectedObjects = objs;
-        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
+        _selectedObjects = objs;
+        EventManager.trigger(EventManager.SELECT_OBJECTS, _selectedObjects);
 
         Undo.endUndoBatch();
 
     }
 
     function clear() {
-        tempSelectedObjects = selectedObjects = [];
+        _tempSelectedObjects = _selectedObjects = [];
     }
 
     function handleBeginPlaying(e, s) {
-        tempSelectedObjects = selectedObjects;
-        selectedObjects = [];
+        _tempSelectedObjects = _selectedObjects;
+        _selectedObjects = [];
 
         Undo.setEnable(false);
-        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
+        EventManager.trigger(EventManager.SELECT_OBJECTS, _selectedObjects);
         Undo.setEnable(true);
     }
 
     function handleEndPlaying() {
-        selectedObjects = tempSelectedObjects;
-        tempSelectedObjects = [];
+        _selectedObjects = _tempSelectedObjects;
+        _tempSelectedObjects = [];
 
         Undo.setEnable(false);
-        EventManager.trigger(EventManager.SELECT_OBJECTS, selectedObjects);
+        EventManager.trigger(EventManager.SELECT_OBJECTS, _selectedObjects);
         Undo.setEnable(true);
     }
 
     function handleSceneSwitchState(e, state) {
         if(state === 'game') {
-            enable = false;
+            _enable = false;
         } else if(state === 'scene') {
-            enable = true;
+            _enable = true;
         }
     }
 
@@ -218,6 +218,6 @@ define(function (require, exports, module) {
     exports.selectObjects = selectObjects;
     exports.clickOnObject = clickOnObject;
     exports.setEnable = setEnable;
-    exports.getSelectObjects = function() { return selectedObjects; }
+    exports.getSelectObjects = function() { return _selectedObjects; }
     exports.clear = clear;
 });

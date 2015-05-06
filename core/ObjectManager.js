@@ -11,32 +11,17 @@ define(function (require, exports, module) {
         Strings         = require("strings");
 
 
-    !function(Object, getPropertyDescriptor, getPropertyNames){
-        if (!(getPropertyDescriptor in Object)) {
-            var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-            Object[getPropertyDescriptor] = function getPropertyDescriptor(o, name) {
-                var proto = o, descriptor;
-                while (proto && !(
-                    descriptor = getOwnPropertyDescriptor(proto, name))
-                ) proto = proto.__proto__;
-                return descriptor;
-            };
+    function getPropertyDescriptor(o, name) {
+        var proto = o, 
+            descriptor;
+
+        while (proto && !descriptor) {
+            descriptor = Object.getOwnPropertyDescriptor(proto, name);
+            proto = proto.__proto__;
         }
-        if (!(getPropertyNames in Object)) {
-            var getOwnPropertyNames = Object.getOwnPropertyNames, ObjectProto = Object.prototype, keys = Object.keys;
-            Object[getPropertyNames] = function getPropertyNames(o) {
-                var proto = o, unique = {}, names, i;
-                while (proto != ObjectProto) {
-                    for (names = getOwnPropertyNames(proto), i = 0; i < names.length; i++) {
-                        unique[names[i]] = true;
-                    }
-                    proto = proto.__proto__;
-                }
-                return keys(unique);
-            };
-        }
-    }(Object, "getPropertyDescriptor", "getPropertyNames");
-    
+
+        return descriptor;
+    }
 
     function injectArray(obj, p) {
         var array = obj[p];
@@ -126,50 +111,63 @@ define(function (require, exports, module) {
         }
     }
 
-    function injectObject(obj){
+    function injectObject(obj) {
+
         obj._originProperties = {};
-        for(var i=0; i<obj.properties.length; i++){
+        
+        for(var i=0; i<obj.properties.length; i++) {
+
             var p = obj.properties[i];
             
             (function(p){
-                // if property is array
+                // If property is array
                 if(obj[p] && obj[p].constructor == Array) {
                     injectArray(obj, p);
                     return;
                 }
 
-                var dsc = Object.getPropertyDescriptor(obj, p);
+                var dsc = getPropertyDescriptor(obj, p);
                 if(!dsc) 
                     return;
 
                 var isObject = typeof obj[p] === 'object';
 
 
-                if(dsc.set || dsc.get){
-                    obj._originProperties[p] = {get: dsc.get, set: dsc.set};
-                    cl.defineGetterSetter(obj, p, dsc.get, function(){
-                        var oldValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
+                if(dsc.set || dsc.get) {
+
+                    obj._originProperties[p] = {
+                        get: dsc.get, 
+                        set: dsc.set
+                    };
+                    
+                    cl.defineGetterSetter(obj, p, dsc.get, function() {
+                        var oldValue = isObject && this[p]._undoGet ? this[p]._undoGet() : this[p];
 
                         var func = this._originProperties[p].set;
                         func.apply(this, arguments);
                         EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
-                        var newValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
+                        var newValue = isObject && this[p]._undoGet ? this[p]._undoGet() : this[p];
                         Undo.objectPropertyChanged(oldValue, newValue, this, p);
                     });
+
                 }else{
+
                     obj._originProperties[p] = obj[p];
-                    cl.defineGetterSetter(obj, p, function(){
-                        return this._originProperties[p];
-                    }, function(val){
-                        var oldValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
+                    
+                    cl.defineGetterSetter(obj, p, 
+                        function() {
+                            return this._originProperties[p];
+                        }, 
+                        function(val) {
+                            var oldValue = isObject && this[p]._undoGet ? this[p]._undoGet() : this[p];
 
-                        this._originProperties[p] = val;
-                        EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
+                            this._originProperties[p] = val;
+                            EventManager.trigger(EventManager.OBJECT_PROPERTY_CHANGED, this, p);
 
-                        var newValue = isObject && this[p]._pGet ? this[p]._pGet() : this[p];
-                        Undo.objectPropertyChanged(oldValue, newValue, this, p);
-                    });
+                            var newValue = isObject && this[p]._undoGet ? this[p]._undoGet() : this[p];
+                            Undo.objectPropertyChanged(oldValue, newValue, this, p);
+                        });
 
                 }
             })(p);
@@ -299,10 +297,15 @@ define(function (require, exports, module) {
         }
     }
 
+    function initUndoGet() {
+        cc.Sprite.prototype._undoGet = cc.Sprite.prototype.toJSON;
+    }
+
 
     function handleCocosLoaded() {
         hackGameObject();
         hackComponent();
+        initUndoGet();
     }
 
 
@@ -311,7 +314,7 @@ define(function (require, exports, module) {
         var currentObjects = Selector.getSelectObjects();
 
         var objs = [];
-        if(currentObjects && currentObjects.length>0){
+        if(currentObjects && currentObjects.length>0) {
             for(var i in currentObjects){
                 var obj = new cl.GameObject();
                 currentObjects[i].addChild(obj);
@@ -334,7 +337,7 @@ define(function (require, exports, module) {
         var currentObjects = Selector.getSelectObjects();
 
         var objs = [];
-        if(currentObjects && currentObjects.length>0){
+        if(currentObjects && currentObjects.length>0) {
             for(var i in currentObjects){
                 var obj = new cl.GameObject();
                 currentObjects[i].parent.addChild(obj);

@@ -22,61 +22,56 @@ define(function (require, exports, module) {
         InspectorHtml              = require("text!html/Inspector.html");
 
 
-    // inspector content, include title and component inspector view
-    var $content;
-    // main view content 
-    var $mainContent;
+    // Inspector content, include title and component inspector view
+    var _$content               = null;
+    // Main view content 
+    var _$mainContent           = null;
 
-    // component inspector view
-    var $inspector;
-    // add-component button
-    var $addComponent;
+    // Component inspector view
+    var _$inspector             = null;
+    // Add-component button
+    var _$addComponent          = null;
 
-    var currentObject = null, tempObject = null;
-    var showing = false;
+    var _currentObject          = null;
+    var _tempObject             = null;
+    
+    var _showing                = false;
 
     function width() {
-        return $content.width();
+        return _$content.width();
     }
 
     function onResize() {
-        $mainContent.css({"right": width() + "px"});
+        _$mainContent.css({"right": width() + "px"});
         cc.view._resizeEvent();
     }
 
-    function show(speed){
-        showing = true;
+    function show() {
 
-        if(speed === undefined) {
-            speed = 500;
-        }
-        
-        $content.css({"right":"0px"});
-        $mainContent.css({"right": width() + "px"});
+        _showing = true;
+
+        _$content.css({"right":"0px"});
+        _$mainContent.css({"right": width() + "px"});
         
         if(cc.view) {
             cc.view._resizeEvent();
         }
     }
 
-    function hide(speed){
-        showing = false;
+    function hide() {
+        _showing = false;
 
-        if(speed === undefined) {
-            speed = 500;
-        }
-
-        $content.css({"right":-$content.width()+"px"});
-        $mainContent.css({"right": "0px"});
+        _$content.css({"right":-$content.width()+"px"});
+        _$mainContent.css({"right": "0px"});
         
         if(cc.view) {
             cc.view._resizeEvent();
         }
     }
     
-    function bindInput(input, obj, key){
+    function bindInput(input, obj, key) {
 
-        input.finishEdit = function(stopUndoBatch){
+        input.finishEdit = function(stopUndoBatch) {
             if(!stopUndoBatch) {
                 Undo.beginUndoBatch();
             }
@@ -113,7 +108,7 @@ define(function (require, exports, module) {
         input.innerChanged = false;
     }
 
-    function createInputForArray(array, $input){
+    function createInputForArray(array, $input) {
         for(var i=0; i<array.length; i++){
             var $item = $("<div class='array-item'>");
             $item.append($("<span class='number'>#"+i+"</span>"));
@@ -160,7 +155,7 @@ define(function (require, exports, module) {
                 input.setAttribute('type', 'text');
             }
             else if(typeof value === 'number') {
-                $input.updateValue = function(){
+                $input.updateValue = function() {
                     this.realValue = parseFloat(this.value);
                 };
             }
@@ -171,7 +166,7 @@ define(function (require, exports, module) {
                 }
             };
 
-            input.onblur = function(event){
+            input.onblur = function(event) {
                 if(typeof $input.finishEdit === 'function'){
                     if($input.updateValue) {
                         $input.updateValue();
@@ -182,7 +177,7 @@ define(function (require, exports, module) {
                 }    
             };
 
-            cl.defineGetterSetter($input, "value", function(){
+            cl.defineGetterSetter($input, "value", function() {
                 return input.value;
             }, function(val){
                 input.value = val;
@@ -198,31 +193,32 @@ define(function (require, exports, module) {
 
         if(value.constructor === cl.Point){
             /*jshint multistr: true */
-            $input = $("<span>\
-                        <span style='width:50%;margin-right:2px;float:left;display:block;overflow:hidden;'><input class='x-input'></span>\
-                        <span style='display:block;overflow:hidden;'><input class='y-input'></span>\
-                        </span>");
+            $input = $("<span>" +
+                       "<span style='width:50%;margin-right:2px;float:left;display:block;overflow:hidden;'><input class='x-input'></span>" +
+                       "<span style='display:block;overflow:hidden;'><input class='y-input'></span>" +
+                       "</span>");
+
             var xInput = $input.find('.x-input')[0];
             var yInput = $input.find('.y-input')[0];
 
-            cl.defineGetterSetter($input, "value", function(){
+            cl.defineGetterSetter($input, "value", function() {
                 var x = parseFloat(xInput.value);
                     var y = parseFloat(yInput.value);
                     return cl.p(x, y);
-            }, function(val){
+            }, function(val) {
                 xInput.value = val.x;
                 yInput.value = val.y;
             });
 
-            $input.find("input").each(function(i, e){
-                this.onkeypress = function(event){
+            $input.find("input").each(function(i, e) {
+                this.onkeypress = function(event) {
                     if(typeof $input.finishEdit === 'function' && event.keyCode === 13) {
                         $input.finishEdit();
                     }
                 };
 
-                this.onblur = function(event){
-                    if(typeof $input.finishEdit === 'function'){
+                this.onblur = function(event) {
+                    if(typeof $input.finishEdit === 'function') {
                         if($input.updateValue) {
                             $input.updateValue();
                         }
@@ -235,6 +231,7 @@ define(function (require, exports, module) {
         }
         else if(value.constructor === cl.EnumValue) {
             $input = $('<span style="overflow:initial"><select></span>');
+
             var $select = $input.find('select');
             $select.attr('id', obj.className + '_' + key);
 
@@ -271,7 +268,7 @@ define(function (require, exports, module) {
                 });
             });
 
-            cl.defineGetterSetter($input, "value", function(){
+            cl.defineGetterSetter($input, "value", function() {
                 return $img.attr("src").replace(cc.loader.resPath, "");
             }, function(file){
                 if(typeof file === "object") {
@@ -298,7 +295,7 @@ define(function (require, exports, module) {
             var noNeedSync = false;
 
             $input.colorpicker({color:'#fff'})
-            .on('changeColor.colorpicker', function(event){
+            .on('changeColor.colorpicker', function(event) {
                 $input.color = event.color.toRGB();
                 if(!noNeedSync) {
                     $input.finishEdit(true);
@@ -330,7 +327,7 @@ define(function (require, exports, module) {
         return $input;
     }
 
-    function createInput(obj, key, el, discardKey){
+    function createInput(obj, key, el, discardKey) {
         var $input;
         var value = obj[key];
 
@@ -362,7 +359,7 @@ define(function (require, exports, module) {
             $input = createInputForObject(obj, key, value);
         }
         
-        if($input){
+        if($input) {
             bindInput($input, obj, key);
         }
         else {
@@ -382,11 +379,11 @@ define(function (require, exports, module) {
         el.append($input);
     }
 
-    function initComponentUI(component){
+    function initComponentUI(component) {
         component._inspectorInputMap = {};
 
         var el = $('<div>');
-        el.appendTo($inspector);
+        el.appendTo(_$inspector);
         el.attr('id', component.className);
         el.addClass('component');
 
@@ -416,7 +413,7 @@ define(function (require, exports, module) {
         });
 
         var ps = component.properties;
-        for(var k=0; k<ps.length; k++){
+        for(var k=0; k<ps.length; k++) {
             var p = ps[k];
             
             var row = $('<div class="row">');
@@ -427,19 +424,19 @@ define(function (require, exports, module) {
     }
 
     function initObjectUI(){
-        var cs = currentObject.components;
+        var cs = _currentObject.components;
         if(!cs) {
             return;
         }
 
-        for(var i=0; i<cs.length; i++){
+        for(var i=0; i<cs.length; i++) {
             initComponentUI(cs[i]);
         }
 
-        $inspector.css('max-height', $content[0].offsetHeight - 40 - $addComponent[0].offsetHeight);
+        _$inspector.css('max-height', _$content[0].offsetHeight - 40 - _$addComponent[0].offsetHeight);
     }
 
-    function handleSelectedObject(event, objs){
+    function handleSelectedObject(event, objs) {
         clear();
 
         var obj = objs[0];
@@ -447,14 +444,14 @@ define(function (require, exports, module) {
             return;
         }
 
-        currentObject = obj;
+        _currentObject = obj;
 
-        $addComponent.show();
+        _$addComponent.show();
         initObjectUI();
     }
 
     function handleComponentAdded(event, component) {
-        if(component.target !== currentObject) {
+        if(component.target !== _currentObject) {
             return;
         }
 
@@ -462,11 +459,11 @@ define(function (require, exports, module) {
     }
 
     function handleComponentRemoved(event, component) {
-        if(component.target != currentObject) {
+        if(component.target != _currentObject) {
             return;
         }
 
-        $inspector.find('#'+component.className).remove();
+        _$inspector.find('#'+component.className).remove();
     }
 
     function handleObjectPropertyChanged(event, o, p) {
@@ -474,7 +471,7 @@ define(function (require, exports, module) {
             return;
         }
 
-        if(o.constructor === Array && p===""){
+        if(o.constructor === Array && p==="") {
             if(o._inspectorInput.innerChanged) {
                 return;
             }
@@ -491,35 +488,34 @@ define(function (require, exports, module) {
     }
 
     function clear() {
-        currentObject = null;
-        $inspector.empty();
-        $addComponent.hide();
+        _currentObject = null;
+        _$inspector.empty();
+        _$addComponent.hide();
     }
     
     function initAddComponentButton() {
-        AddComponentPanel.attachButton($addComponent);
+        AddComponentPanel.attachButton(_$addComponent);
     }
 
     AppInit.htmlReady(function() {
 
-        $mainContent = $(".main-view .content");
-        $content = $(InspectorHtml);
-        $content.insertAfter($mainContent);
+        _$mainContent = $(".main-view .content");
+        _$content = $(InspectorHtml);
+        _$content.insertAfter(_$mainContent);
 
-        $inspector    = $content.find(".inspector");
-        $addComponent = $content.find(".add-component");
+        _$inspector    = _$content.find(".inspector");
+        _$addComponent = _$content.find(".add-component");
 
-        Resizer.makeResizable($content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
+        Resizer.makeResizable(_$content, Resizer.DIRECTION_HORIZONTAL, Resizer.POSITION_LEFT, 250);
 
-        $content.on("panelResizeUpdate", onResize);
+        _$content.on("panelResizeUpdate", onResize);
 
         $.include(["thirdparty/colorpicker/css/bootstrap-colorpicker.css",
                    "thirdparty/webui-popover/jquery.webui-popover.css"]);
 
 
-        $inspector.css('max-height', $content.css('height') -25);
+        _$inspector.css('max-height', _$content.css('height') -25);
     });
-
 
 
     EventManager.on(EventManager.SELECT_OBJECTS,          handleSelectedObject);
@@ -532,7 +528,7 @@ define(function (require, exports, module) {
     exports.show  = show;
     exports.hide  = hide;
     exports.clear = clear;
-    exports.__defineGetter__("showing", function(){
-        return showing;
+    exports.__defineGetter__("_showing", function(){
+        return _showing;
     });
 });

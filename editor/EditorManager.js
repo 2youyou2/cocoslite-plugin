@@ -6,34 +6,33 @@ define(function (require, exports, module) {
 
     var EventManager = require("core/EventManager");
 
-    var editors = {};
-    var orderedEditors = [];
+    var _editors        = {};
+    var _orderedEditors = [];
 
     function getEditors() {
-        return editors;
+        return _editors;
     }
 
     function getOrderedEditors() {
-        return orderedEditors;
+        return _orderedEditors;
     }
 
     function register(name, editor) {
-        editors[name] = editor;
+        _editors[name] = editor;
         editor.name = name;
 
         editor._order = editor._order ? editor._order : 0;
-        orderedEditors.push(editor);
-        orderedEditors.sort(function(a,b){return a._order>b._order?-1:1});
+        _orderedEditors.push(editor);
+        _orderedEditors.sort(function(a,b){return a._order>b._order?-1:1});
     }
     function remove(name) {
-        editors[name] = null;
+        _editors[name] = null;
 
-        var index = this.indexOf(orderedEditors);
+        var index = this.indexOf(_orderedEditors);
         if (index > -1) {
-            orderedEditors.splice(index, 1);
+            _orderedEditors.splice(index, 1);
         }
     }
-
 
 
     exports.getEditors = getEditors;

@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     var AppInit                 = brackets.getModule("utils/AppInit"),
         Menus                   = brackets.getModule("command/Menus"),
         CommandManager          = brackets.getModule("command/CommandManager"),
+        DocumentManager         = brackets.getModule("document/DocumentManager"),
         bracketsEditorManager   = brackets.getModule("editor/EditorManager"),
         ProjectManager          = brackets.getModule("project/ProjectManager"),
         StatusBar               = brackets.getModule("widgets/StatusBar");
@@ -133,6 +134,9 @@ define(function (require, exports, module) {
             EventManager.trigger(EventManager.SCENE_BEFORE_PLAYING);
 
             cl.SceneManager.loadSceneWithContent(tempJson, function(tempScene) {
+                if(_paused) {
+                    tempScene.unscheduleUpdate();
+                }
                 cc.director.runScene(tempScene);
 
                 EventManager.trigger(EventManager.SCENE_BEGIN_PLAYING, tempScene);
@@ -166,8 +170,10 @@ define(function (require, exports, module) {
 
             if(_paused) {
                 $pauseBtn.addClass('active');
+                cc.director.getRunningScene().unscheduleUpdate();
             } else {
                 $pauseBtn.removeClass('active');
+                cc.director.getRunningScene().scheduleUpdate();
             }
         }
 
@@ -195,22 +201,25 @@ define(function (require, exports, module) {
     }
 
     function initEditor() {
+        var doc = _editor.document;
 
-        var originGetText = _editor.document.getText;
-        _editor.document.getText = function() {
-            var text = "";
-            
-            if(_scene) {
-                text = sceneToString();
-            } else {
-                text = originGetText.apply(this, arguments);
-            }
+        if(!doc._originGetText) {
+            doc._originGetText = doc.getText;
+            doc.getText = function() {
+                var text = "";
+                
+                if(_scene) {
+                    text = sceneToString();
+                } else {
+                    text = this._originGetText.apply(this, arguments);
+                }
 
-            return text;
-        };
+                return text;
+            };
+        }
 
         var resFolder = Project.getResourceFolder();
-        _editor.document.saveAsDefaultPath = resFolder ? resFolder.fullPath : null;
+        doc.saveAsDefaultPath = resFolder ? resFolder.fullPath : null;
 
         var $el = $("<div class='scene-editor'>");
         $el.append(_$scene);
@@ -270,6 +279,12 @@ define(function (require, exports, module) {
         } else {
             _lazyInitEditor = true;
         }
+    }
+
+    function handleDocumentSaved() {
+        // update current codemirror's text
+        var doc = _editor.document;
+        doc.setText(doc.getText());
     }
 
     function handleProjectOpen() {
@@ -350,6 +365,7 @@ define(function (require, exports, module) {
     Undo.registerUndoType(".scene");
 
     bracketsEditorManager.on("activeEditorChange", handleActiveEditorChange);
+    DocumentManager.on('documentSaved',            handleDocumentSaved);
 
     EventManager.on(EventManager.PROJECT_OPEN,  handleProjectOpen);
     EventManager.on(EventManager.PROJECT_CLOSE, handleProjectClose);

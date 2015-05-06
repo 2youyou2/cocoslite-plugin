@@ -306,6 +306,10 @@ define(function (require, exports, module) {
                 Undo.beginUndoBatch();
             });
 
+            $input.on('remove', function() {
+                $input.colorpicker('destroy');
+            });
+
             cl.defineGetterSetter($input, "value", function() {
                 return $input.color;
             }, function(color) {

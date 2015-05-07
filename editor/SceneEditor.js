@@ -178,7 +178,7 @@ define(function (require, exports, module) {
 
         function nextFrame() {
             _paused = false;
-            cc.director.getScheduler().update(cc.director.getAnimationInterval());
+            cc.director.getScheduler().update(1/60);
             _paused = true;
         }
 

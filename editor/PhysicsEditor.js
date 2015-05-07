@@ -26,7 +26,7 @@ define(function (require, exports, module) {
         var secondID;
 
         this.renderScene = function(ctx, selectedObjects) {
-            if(!cl.space) {
+            if(!cl.space || _playing) {
                 return;
             }
             if(selectedObjects && selectedObjects.length === 1) {
@@ -37,15 +37,15 @@ define(function (require, exports, module) {
                 ctx.transform(mat.a, mat.b, mat.c, mat.d, mat.tx, mat.ty);
 
                 ctx.globalAlpha = 0.5;
-                ctx.fillStyle = "#f00";
+                ctx.fillStyle   = "#f00";
                 ctx.strokeStyle = "#f00"; 
-                ctx.lineWidth = 2;
+                ctx.lineWidth   = 2;
 
                 for(var i=0; i<cs.length; i++) {
                     var className = cs[i].className;
-                    var shape = cs[i];
+                    var shape     = cs[i];
+                    var func      = null;
 
-                    var func = null;
                     switch(className) {
                         case 'PhysicsSegment' :
                             func = renderSegment;
@@ -77,10 +77,11 @@ define(function (require, exports, module) {
         }
 
         function renderBox(ctx, shape) {
-            var w  = shape.width;
+            var w = shape.width;
             var h = shape.height;
+            var a = shape.anchor;
 
-            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.fillRect(-w*a.x, -h*a.y, w, h);
         }
 
         function renderPoly(ctx, shape) {

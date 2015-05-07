@@ -30,7 +30,7 @@ define(function (require, exports, module) {
             "frameRate"     : 15,
             "id"            : "gameCanvas",
             "renderMode"    : 2,
-            "modules"       : ["chipmunk", "box2d"]
+            "modules"       : ["chipmunk", "box2d", "spine"]
         };
 
         cc.game._initConfig();
